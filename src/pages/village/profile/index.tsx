@@ -153,6 +153,7 @@ export default function ProfileVillage() {
         }
       }
     };
+    console.log("fetching village data");
     fetchVillageData();
   });
 
