@@ -51,6 +51,8 @@ function TopBar(props: TopBarProps) {
       height="56px"
       zIndex="999"
       alignContent="center"
+      display="flex"
+      alignItems="center"
     >
       <Flex
         justify={
@@ -59,6 +61,7 @@ function TopBar(props: TopBarProps) {
             : "flex-start"
         }
         align="center"
+        width="100%"
       >
         {!!onBack && (
           <ArrowBackIcon

@@ -5,6 +5,7 @@ import {
   InputRightElement,
   Text,
 } from "@chakra-ui/react";
+import TopBar from "Components/topBar/index";
 import { paths } from "Consts/path";
 import { User } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
@@ -109,112 +110,113 @@ const Register: React.FC = () => {
 
   return (
     <Background>
-      <Container>
-        <Title>Halo!</Title>
-        <Description>Silahkan melakukan registrasi akun</Description>
+      <TopBar title="" onBack={() => navigate(-1)}/>
+        <Container>
+          <Title>Halo!</Title>
+          <Description>Silahkan melakukan registrasi akun</Description>
 
-        <form onSubmit={onSubmit}>
-          <Text fontSize="10pt" mt="12px">
-            Email
-          </Text>
-          <Input
-            name="email"
-            type="email"
-            onChange={onChange}
-            required
-            placeholder="Email"
-            mt="4px"
-          />
-          <Text fontSize="10pt" mt="12px">
-            Kata sandi
-          </Text>
-
-          <InputGroup mt="4px" alignItems="center">
-            <Input
-              name="password"
-              type={show ? "text" : "password"}
-              onChange={onChange}
-              required
-              placeholder="Kata sandi"
-            />
-            <InputRightElement
-              onClick={onShowPassword}
-              cursor="pointer"
-              mt="4px"
-            >
-              {show ? <FaEyeSlash /> : <FaEye />}
-            </InputRightElement>
-          </InputGroup>
-
-          <Text fontSize="10pt" mt="12px">
-            Konfirmasi kata sandi
-          </Text>
-
-          <InputGroup mt="4px" alignItems="center">
-            <Input
-              name="password"
-              type={show ? "text" : "password"}
-              onChange={handleConfirmPasswordChange} // Gunakan handleConfirmPasswordChange
-              required
-              placeholder="Konfirmasi kata sandi"
-            />
-            <InputRightElement
-              onClick={onShowPassword}
-              cursor="pointer"
-              mt="4px"
-            >
-              {show ? <FaEyeSlash /> : <FaEye />}
-            </InputRightElement>
-          </InputGroup>
-
-          <Label mt={12}>Daftar sebagai:</Label>
-          <CheckboxContainer mt={12}>
-            <input
-              name="role"
-              type="radio"
-              value="innovator"
-              onChange={onChange}
-              required
-            />
-            <Label>Inovator</Label>
-          </CheckboxContainer>
-
-          <CheckboxContainer mt={12}>
-            <input
-              name="role"
-              type="radio"
-              value="village"
-              onChange={onChange}
-              required
-            />
-            <Label>Perangkat desa</Label>
-          </CheckboxContainer>
-
-          {(error || userError) && (
-            <Text textAlign="center" color="red" fontSize="10pt" mt={2}>
-              {error ||
-                FIREBASE_ERRORS[
-                  userError?.message as keyof typeof FIREBASE_ERRORS
-                ]}
+          <form onSubmit={onSubmit}>
+            <Text fontSize="10pt" mt="12px">
+              Email
             </Text>
-          )}
+            <Input
+              name="email"
+              type="email"
+              onChange={onChange}
+              required
+              placeholder="Email"
+              mt="4px"
+            />
+            <Text fontSize="10pt" mt="12px">
+              Kata sandi
+            </Text>
 
-          <Button
-            mt={4}
-            type="submit"
-            alignItems="center"
-            width="100%"
-            isLoading={loading}
-          >
-            Registrasi
-          </Button>
-        </form>
+            <InputGroup mt="4px" alignItems="center">
+              <Input
+                name="password"
+                type={show ? "text" : "password"}
+                onChange={onChange}
+                required
+                placeholder="Kata sandi"
+              />
+              <InputRightElement
+                onClick={onShowPassword}
+                cursor="pointer"
+                mt="4px"
+              >
+                {show ? <FaEyeSlash /> : <FaEye />}
+              </InputRightElement>
+            </InputGroup>
 
-        <ActionContainer mt={24}>
-          <Label>Sudah memiliki akun?</Label>
-          <Action onClick={() => navigate(paths.LOGIN_PAGE)}>Login</Action>
-        </ActionContainer>
-      </Container>
+            <Text fontSize="10pt" mt="12px">
+              Konfirmasi kata sandi
+            </Text>
+
+            <InputGroup mt="4px" alignItems="center">
+              <Input
+                name="password"
+                type={show ? "text" : "password"}
+                onChange={handleConfirmPasswordChange} // Gunakan handleConfirmPasswordChange
+                required
+                placeholder="Konfirmasi kata sandi"
+              />
+              <InputRightElement
+                onClick={onShowPassword}
+                cursor="pointer"
+                mt="4px"
+              >
+                {show ? <FaEyeSlash /> : <FaEye />}
+              </InputRightElement>
+            </InputGroup>
+
+            <Label mt={12}>Daftar sebagai:</Label>
+            <CheckboxContainer mt={12}>
+              <input
+                name="role"
+                type="radio"
+                value="innovator"
+                onChange={onChange}
+                required
+              />
+              <Label>Inovator</Label>
+            </CheckboxContainer>
+
+            <CheckboxContainer mt={12}>
+              <input
+                name="role"
+                type="radio"
+                value="village"
+                onChange={onChange}
+                required
+              />
+              <Label>Perangkat desa</Label>
+            </CheckboxContainer>
+
+            {(error || userError) && (
+              <Text textAlign="center" color="red" fontSize="10pt" mt={2}>
+                {error ||
+                  FIREBASE_ERRORS[
+                    userError?.message as keyof typeof FIREBASE_ERRORS
+                  ]}
+              </Text>
+            )}
+
+            <Button
+              mt={4}
+              type="submit"
+              alignItems="center"
+              width="100%"
+              isLoading={loading}
+            >
+              Registrasi
+            </Button>
+          </form>
+
+          <ActionContainer mt={24}>
+            <Label>Sudah memiliki akun?</Label>
+            <Action onClick={() => navigate(paths.LOGIN_PAGE)}>Login</Action>
+          </ActionContainer>
+        </Container>
     </Background>
   );
 };
