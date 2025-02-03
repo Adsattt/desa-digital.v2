@@ -8,7 +8,7 @@ import { GridContainer,
         Column } from "./_innovatorStyle";
 import CardInnovator from "Components/card/innovator";
 import { paths } from "Consts/path";
-import { Box, Select,} from "@chakra-ui/react";
+import { Box, Select } from "@chakra-ui/react";
 import SearchBarInnov from "./components/hero/SearchBarInnov";
 import { collection, DocumentData, getDocs } from "firebase/firestore";
 import { firestore } from "../../firebase/clientApp";
@@ -29,22 +29,31 @@ const categories = [
 
 function Innovator() {
   const navigate = useNavigate();
-  // const { data: users, isFetched } = useQuery<any>("innovators", getUsers);
-  // const innovators = users?.filter((item: any) => item.role === "innovator");
-
-  const innovatorsRef = collection(firestore, "innovators")
-  const [innovators, setInnovators] = useState<DocumentData[]>([])
+  const innovatorsRef = collection(firestore, "innovators");
+  const [innovators, setInnovators] = useState<DocumentData[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [innovatorsShowed, setInnovatorsShowed] = useState<DocumentData[]>([]);
+  const [categoryFilter, setCategoryFilter] = useState<string>("Semua Kategori");
 
   useEffect(() => {
     const fetchData = async () => {
-      const snapShot = await getDocs(innovatorsRef)
-      const innovatorsData = snapShot.docs.map((doc) => doc.data())
-      
-      setInnovators(innovatorsData)
-    }
-    fetchData()
-  }, [firestore])
-  
+      const snapShot = await getDocs(innovatorsRef);
+      const innovatorsData = snapShot.docs.map((doc) => doc.data());
+      setInnovators(innovatorsData);
+      setInnovatorsShowed(innovatorsData);
+    };
+    fetchData();
+  }, [firestore]);
+
+  function filterSearch(searchKey: string, categoryKey: string) {
+    const filteredInnovators = innovators.filter((item: any) => {
+      const isNameMatch = item.namaInovator?.toLowerCase().includes(searchKey.toLowerCase());
+      const isCategoryMatch = categoryKey === "Semua Kategori" || item.kategori === categoryKey;
+      return isNameMatch && isCategoryMatch;
+    });
+    setInnovatorsShowed(filteredInnovators);
+  }
+
   return (
     <Box>
       <Hero />
@@ -65,6 +74,11 @@ function Innovator() {
                 border: "1px solid",
                 borderColor: "#E5E7EB",
               }}
+              value={categoryFilter}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                setCategoryFilter(e.target.value);
+                filterSearch(searchQuery, e.target.value);
+              }}
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -72,23 +86,28 @@ function Innovator() {
                 </option>
               ))}
             </Select>
-            <SearchBarInnov placeholder="Search" />
+            <SearchBarInnov 
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setSearchQuery(e.target.value);
+                filterSearch(e.target.value, categoryFilter);
+              }} 
+            />
           </Column>
         </CardContent>
         <Text>
           {" "}
           Menampilkan semua inovator untuk{" "}
-          <Texthighlight> "Semua Kategori" </Texthighlight>{" "}
+          <Texthighlight> "{categoryFilter}" </Texthighlight>{" "}
         </Text>
         <GridContainer>
-          {innovators?.map((item: any, idx: number) => (
+          {innovatorsShowed.map((item: any, idx: number) => (
             <CardInnovator
               key={idx}
               {...item}
               onClick={() =>
-                navigate(
-                  generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id })
-                )
+                navigate(generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id }))
               }
             />
           ))}
@@ -97,5 +116,5 @@ function Innovator() {
     </Box>
   );
 }
-     
+
 export default Innovator;

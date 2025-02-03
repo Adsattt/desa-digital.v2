@@ -15,11 +15,13 @@ export const Container = styled.div`
   background-color: white;
   width: 100%;
   color: #374151;
+  margin-top: 35px;
 `
 export const Title = styled.p`
   font-size: 24px;
   font-weight: 700;
   text-align: center;
+  margin-top: -7px;
 `
 
 export const Description = styled.p`

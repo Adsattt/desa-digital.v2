@@ -35,6 +35,9 @@ export const Title = styled.p`
   font-size: 12px;
   font-weight: 700;
   color: black;
+  white-space: nowrap;
+  overflow: hidden;            
+  text-overflow: ellipsis;         
 `
 
 export const Description = styled.p`
