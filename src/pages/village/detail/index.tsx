@@ -66,7 +66,7 @@ function DetailVillage() {
           <Label>{benefit}</Label>
         </ChipContainer>
       </ContentContainer>
-      <Button size="m" fullWidth mt={12} type="submit" onClick={onClickHere}>
+      <Button size="l" fullWidth mt={12} type="submit" onClick={onClickHere}>
         Kontak Desa
       </Button>{" "}
     </Container>
