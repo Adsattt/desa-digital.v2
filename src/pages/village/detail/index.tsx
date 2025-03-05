@@ -455,16 +455,15 @@ export default function DetailVillage() {
             </CardContainer>
           </div>
           <Box
-            left={580}
-            position="fixed" 
-            bottom="0" 
-            height="11%"
-            width="23.8%" 
+            position="fixed"
+            bottom="0"
+            left="50%"
+            transform="translateX(-50%)" 
+            width="100%"
+            maxWidth="360px" 
             bg="white"
-            boxShadow="mt"
-            borderWidth="1px"
-            borderRadius="lg"
-            borderColor="gray.200"
+            p="3.5"
+            boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
           >
             {/* Logika untuk Admin */}
             {admin ? (
@@ -483,14 +482,9 @@ export default function DetailVillage() {
               )
             ) : (
               // Logika untuk Non-Admin
-              <Flex flexGrow={1} position="fixed" bottom="0">
+              <Flex>
                 <Button
-                  left={590}
-                  width="21.8%"
-                  fontSize="14px"
-                  mb={5}
-                  position="fixed"
-                  bottom="0"
+                  width="100%"
                   onClick={onOpen}
                 >
                   Kontak Desa
