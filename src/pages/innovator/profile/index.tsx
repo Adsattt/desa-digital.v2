@@ -77,6 +77,14 @@ const ProfileInnovator: React.FC = () => {
     onClose();
   };
 
+  const toPengajuanInovasi = () => {
+    navigate(paths.PENGAJUAN_INOVASI_PAGE);
+  };
+
+  const toEditInovator = () => {
+    navigate(paths.INNOVATOR_FORM);
+  }
+
   const handleReject = async () => {
     setLoading(true);
     try {
@@ -206,7 +214,7 @@ const ProfileInnovator: React.FC = () => {
             {owner && (
               <Button
               leftIcon={<Image src={Send} alt="send" />}
-              onClick={onOpen}
+              onClick={toPengajuanInovasi}
               fontSize="12px"
               fontWeight="500"
               height="29px"
@@ -409,10 +417,20 @@ const ProfileInnovator: React.FC = () => {
         )
       ) : (
         <NavbarButton>
-          <Button width="100%" onClick={onOpen}>
-            Kontak Inovator
+          <Button
+            width="100%"
+            onClick={() => {
+              if (owner) {
+                toEditInovator(); // Arahkan ke halaman edit inovator jika owner
+              } else {
+                onOpen(); // Buka modal jika bukan owner
+              }
+            }}
+          >
+            {owner ? "Edit" : "Kontak"}
           </Button>
         </NavbarButton>
+
       )}
       <RejectionModal
         isOpen={openModal}

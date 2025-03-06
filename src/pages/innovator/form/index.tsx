@@ -58,6 +58,7 @@ const InnovatorForm: React.FC = () => {
     label: string;
     value: string;
   } | null>(null);
+  const [owner, setOwner] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState<string>("");
   const [selectedHeader, setSelectedHeader] = useState<string>("");
   const selectLogoRef = useRef<HTMLInputElement>(null);
@@ -343,6 +344,22 @@ const InnovatorForm: React.FC = () => {
     fetchData();
   }, [user]);
 
+  useEffect(() => {
+    const checkIfOwner = async () => {
+      if (user?.uid) {
+        const docRef = doc(firestore, "innovators", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setOwner(true);
+          setStatus("Terverifikasi"); // Set status for owner
+        } else {
+          setOwner(false);
+        }
+      }
+    };
+    checkIfOwner();
+  }, [user]);
+
   const customStyles = {
     control: (styles: any) => ({
       ...styles,
@@ -377,7 +394,9 @@ const InnovatorForm: React.FC = () => {
 
   return (
     <Container page>
-      <TopBar title="Register Inovator" onBack={() => navigate(-1)} />
+      <TopBar
+        title={owner ? "Edit Profil Inovator" : "Register Inovator"} 
+        onBack={() => navigate(-1)} />
       <Box p="0 16px">
         <form onSubmit={onSubmitForm}>
           <Flex direction="column" marginTop="24px">
@@ -413,7 +432,8 @@ const InnovatorForm: React.FC = () => {
                 isSearchable
                 isDisabled={!isEditable}
               />
-              <Text fontWeight="400" fontSize="14px">
+              
+              {/* <Text fontWeight="400" fontSize="14px">
                 Model Bisnis Digital <span style={{ color: "red" }}>*</span>
               </Text>
               <ChakraSelect
@@ -439,7 +459,7 @@ const InnovatorForm: React.FC = () => {
                     {model}
                   </option>
                 ))}
-              </ChakraSelect>
+              </ChakraSelect> */}
 
               <FormSection
                 isTextArea
@@ -535,15 +555,25 @@ const InnovatorForm: React.FC = () => {
           {status !== "Menunggu" && (
             <Button
               type="submit"
-              mt="20px"
+              mt="30px"
+              mb="-10"
               width="100%"
               height="44px"
               isLoading={loading}
             >
-              {status === "Ditolak" ? "Kirim Ulang" : "Daftarkan Akun"}
+              {user?.uid ? (
+                // Jika status sudah "Ditolak" dan pengguna adalah owner
+                status === "Ditolak" 
+                  ? "Kirim Ulang" 
+                  : owner
+                  ? "Update Inovator" // Jika owner, tombol berubah jadi "Update Inovator"
+                  : "Daftarkan Akun" // Jika bukan owner, tetap "Daftarkan Akun"
+              ) : (
+                "Daftarkan Akun" // Jika tidak ada user yang terautentikasi, tetap "Daftarkan Akun"
+              )}
             </Button>
           )}
-        </form>
+        </form >
       </Box>
     </Container>
   );
