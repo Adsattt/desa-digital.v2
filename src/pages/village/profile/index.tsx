@@ -104,6 +104,10 @@ export default function ProfileVillage() {
     onClose();
   };
 
+const toEditVillage = () => {
+  navigate(paths.VILLAGE_FORM);
+};
+
   const handleReject = async () => {
     setLoading(true);
     try {
@@ -528,9 +532,18 @@ export default function ProfileVillage() {
           )
         ) : (
           <NavbarButton>
-            <Button width="100%" onClick={onOpen}>
-              Edit Profil
-            </Button>{" "}
+            <Button 
+              width="100%" 
+              onClick={() => {
+                if (owner) {
+                  toEditVillage();
+                 } else {
+                   onOpen();
+                 }
+              }}>
+              
+              {owner ? "Edit Profile" : " "}
+            </Button>
           </NavbarButton>
         )}
         <RejectionModal

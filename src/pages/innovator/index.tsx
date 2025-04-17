@@ -13,6 +13,7 @@ import SearchBarInnov from "./components/hero/SearchBarInnov";
 import { collection, DocumentData, getDocs } from "firebase/firestore";
 import { firestore } from "../../firebase/clientApp";
 import { useEffect, useState } from "react";
+import { paddingStyle } from "Consts/sizing";
 
 const categories = [
   "Semua Kategori",
@@ -62,7 +63,7 @@ function Innovator() {
           <Column>
             <Text>Pilih Inovator</Text>
             <Select
-              placeholder="Pilih Kategori Inovator"
+              // placeholder="Pilih Kategori Inovator"
               name="category"
               fontSize="10pt"
               variant="outline"
@@ -72,9 +73,9 @@ function Innovator() {
                 outline: "none",
                 bg: "white",
                 border: "1px solid",
-                borderColor: "#E5E7EB",
+                borderColor: "#E5E7EB"
               }}
-              value={categoryFilter}
+              value={categoryFilter} 
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                 setCategoryFilter(e.target.value);
                 filterSearch(searchQuery, e.target.value);

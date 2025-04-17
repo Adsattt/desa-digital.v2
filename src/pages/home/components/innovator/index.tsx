@@ -28,7 +28,7 @@ function Innovator() {
       <Title>Inovator Unggulan</Title>
       <CardContainer>
         <Horizontal>
-          {innovators.map((item, idx) => (
+          {/* {innovators.map((item, idx) => (
             <CardInnovator
               key={idx}
               id={item.id}
@@ -42,6 +42,25 @@ function Innovator() {
                   generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id })
                 )
               }
+            />
+          ))} */}
+          {[...innovators]
+          .sort((a, b) => b.jumlahInovasi - a.jumlahInovasi) // urutkan dari terbanyak
+          .slice(0, 5) // ambil 5 teratas
+          .map((item, idx) => (
+            <CardInnovator
+              key={idx}
+              id={item.id}
+              header={item.header || defaultHeader}
+              logo={item.logo || defaultLogo}
+              namaInovator={item.namaInovator}
+              jumlahDesaDampingan={item.jumlahDesaDampingan}
+              jumlahInovasi={item.jumlahInovasi}
+              onClick={() =>
+                navigate(
+                  generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id })
+                )
+            }
             />
           ))}
         </Horizontal>

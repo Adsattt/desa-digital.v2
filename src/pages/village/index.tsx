@@ -71,8 +71,9 @@ const Village: React.FC = () => {
     const provinceId = event.target.value;
     const provinceName = event.target.options[event.target.selectedIndex].text;
     setSelectedProvince(provinceName);
-    handleFetchRegencies(provinceId);
+
     setRegencies([]);
+    handleFetchRegencies(provinceId);
   };
 
   const handleRegencyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -101,6 +102,15 @@ const Village: React.FC = () => {
     fetchData();
   }, [villagesRef]);
 
+  // filter villages by selected province and regency
+  const filteredVillages = villages.filter((item: any) => {
+    const isProvinceMatch =
+      selectedProvince === "" || item.provinsi === selectedProvince;
+    const isRegencyMatch =
+      selectedRegency === "" || item.kabupatenKota === selectedRegency;
+    return isProvinceMatch && isRegencyMatch;
+  });
+
   //TODO: onchange dropdown juga perlu diperbaiki
   return (
     <Box>
@@ -127,13 +137,13 @@ const Village: React.FC = () => {
           </Column1>
           <Column1>
             <SearchBarVil
-            placeholder="Cari desa" />
+              placeholder="Cari desa" />
           </Column1>
         </CardContent>
         <Text>
           {" "}
           Menampilkan semua desa untuk{" "}
-          <Texthighlight>"Semua Provinsi"</Texthighlight>{" "}
+          <Texthighlight>"{selectedProvince || "Semua Provinsi"}"</Texthighlight>{" "}
         </Text>
         <GridContainer>
           {isFetched &&
