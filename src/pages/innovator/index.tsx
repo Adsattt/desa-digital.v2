@@ -39,16 +39,19 @@ function Innovator() {
   useEffect(() => {
     const fetchData = async () => {
       const snapShot = await getDocs(innovatorsRef);
-      const innovatorsData = snapShot.docs.map((doc) => doc.data());
+      const innovatorsData = snapShot.docs.map((doc) => ({
+        id: doc.id, // Tambahkan ID dokumen
+        ...doc.data(),
+      })); // Pastikan semua data tersimpan
       setInnovators(innovatorsData);
       setInnovatorsShowed(innovatorsData);
     };
     fetchData();
-  }, [firestore]);
+  }, []);
 
   function filterSearch(searchKey: string, categoryKey: string) {
     const filteredInnovators = innovators.filter((item: any) => {
-      const isNameMatch = item.namaInovator?.toLowerCase().includes(searchKey.toLowerCase());
+      const isNameMatch = item.namaInovator?.toLowerCase().includes(searchKey.trim().toLowerCase());
       const isCategoryMatch = categoryKey === "Semua Kategori" || item.kategori === categoryKey;
       return isNameMatch && isCategoryMatch;
     });
@@ -88,7 +91,7 @@ function Innovator() {
               ))}
             </Select>
             <SearchBarInnov 
-              placeholder="Search"
+              placeholder="Cari Inovator..."
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 setSearchQuery(e.target.value);
@@ -105,7 +108,7 @@ function Innovator() {
         <GridContainer>
           {innovatorsShowed.map((item: any, idx: number) => (
             <CardInnovator
-              key={idx}
+              key={item.id}
               {...item}
               onClick={() =>
                 navigate(generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id }))
