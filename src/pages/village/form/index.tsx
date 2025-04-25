@@ -101,6 +101,12 @@ const AddVillage: React.FC = () => {
     "Profil masih kosong. Silahkan isi data di bawah terlebih dahulu."
   );
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+    }
+  }
+
    const fetchProvinces = async () => {
      try {
        const provincesData = await getProvinces();
@@ -236,6 +242,7 @@ const AddVillage: React.FC = () => {
   const onTextChange = ({
     target: { name, value },
   }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
     if (
       textInputValue.name ||
       textInputValue.whatsapp ||
@@ -244,12 +251,10 @@ const AddVillage: React.FC = () => {
     ) {
       setTextInputValue((prev) => ({ ...prev, [name]: value }));
     } else if (textInputValue.description) {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
-      if (wordCount <= 50) {
+      if (wordCount <= 100) {
         setTextInputValue((prev) => ({ ...prev, [name]: value }));
       }
     } else {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
       if (wordCount <= 30) {
         setTextInputValue((prev) => ({ ...prev, [name]: value }));
       }
@@ -593,10 +598,12 @@ const AddVillage: React.FC = () => {
   }, [user]);
 
   return (
-    <Container page>
+    <Container page pb={24}>
       <TopBar title="Registrasi Profil Desa" onBack={() => navigate(-1)} />
       <Box p="0 16px">
-        <form onSubmit={onSubmitForm}>
+        <form 
+          onSubmit={onSubmitForm}
+          onKeyDown={handleKeyDown}>
           <Flex direction="column" marginTop="24px">
             <Stack spacing="12px" width="100%">
               <Alert

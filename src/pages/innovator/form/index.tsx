@@ -42,6 +42,7 @@ const categories = [
   "Pemerintah Daerah",
   "Perusahaan",
   "Start Up",
+  "UMKM",
 ];
 
 const businessModels = [
@@ -115,9 +116,16 @@ const InnovatorForm: React.FC = () => {
   const onTextChange = ({
     target: { name, value },
   }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
     if (name === "description") {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
       if (wordCount <= 80) {
+        setTextInputsValue((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    } else if (name === "name") {
+      if (wordCount <= 10) {
         setTextInputsValue((prev) => ({
           ...prev,
           [name]: value,
@@ -129,6 +137,12 @@ const InnovatorForm: React.FC = () => {
         [name]: value,
       }));
     }
+  };
+
+  const getNameWordCount = () => {
+    return textInputsValue.name
+      .split(/\s+/)
+      .filter((word) => word !== "").length;
   };
 
   const getDescriptionWordCount = () => {
@@ -416,6 +430,8 @@ const InnovatorForm: React.FC = () => {
                 placeholder="Nama Inovator"
                 value={textInputsValue.name}
                 onChange={onTextChange}
+                wordCount={getNameWordCount()}
+                maxWords={10}
                 disabled={!isEditable}
               />
               <Text fontWeight="400" fontSize="14px" mb="-2">

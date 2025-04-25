@@ -6,6 +6,7 @@ export const paths = {
   EMAIL_RESET_PASSWORD_PAGE: "/emailreset",
   NEW_PASSWORD_PAGE: "/resetpassword/newpassword",
   NOTIFICATION_PAGE: "/notification",
+  BANTUAN_FAQ_PAGE: "/bantuanFAQ",
 
   // ! admin
   ADMIN_PAGE: "/admin",

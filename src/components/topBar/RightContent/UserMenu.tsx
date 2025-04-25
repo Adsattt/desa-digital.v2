@@ -189,6 +189,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
                 {profileExists ? "Profile" : "Isi Profile"}
               </MenuItem>
               <MenuItem onClick={handleLogout}>Logout</MenuItem>
+              <MenuItem onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)}>Bantuan dan FAQ</MenuItem>
             </>
           ) : (
             <>

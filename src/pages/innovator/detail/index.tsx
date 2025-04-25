@@ -206,6 +206,7 @@ const DetailInnovator: React.FC = () => {
       : text;
   };
 
+  
   return (
     <Container page>
       <TopBar title="Profil Inovator" onBack={() => navigate(-1)} />
@@ -437,6 +438,7 @@ const DetailInnovator: React.FC = () => {
           loading={loading}
         />
       </ContentContainer>
+
       <ActionDrawer
         isOpen={isOpen}
         onClose={onClose}
@@ -445,9 +447,16 @@ const DetailInnovator: React.FC = () => {
         setOpenModal={setOpenModal}
         loading={loading}
         role="inovator"
+        contactData={{
+          whatsapp: innovatorData.whatsapp || "", 
+          instagram: innovatorData.instagram || "",
+          website: innovatorData?.website || ""
+        }}
       />
     </Container>
   );
 };
+
+
 
 export default DetailInnovator;

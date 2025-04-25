@@ -32,6 +32,7 @@ import Notification from "./pages/notification/Notification";
 import InnovationListPage from "./pages/innovator/detail/ProdukInovasi/InnovationListPage";
 import PengajuanInovasi from "./pages/innovator/profile/pengajuanInovasi/PengajuanInovasi";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
+import BantuanFAQ from "./pages/bantuanFAQ";
 import DesaYangMenerapkan from "./pages/innovation/desaYangMenerapkan";
 
 const queryClient = new QueryClient();
@@ -178,8 +179,13 @@ const routes = [
     exact: true,
   },
   {
+    path: paths.BANTUAN_FAQ_PAGE,
+    element: <BantuanFAQ />, 
+    exact: true,
+  },
+  {
     path: paths.DESA_YANG_MENERAPKAN_PAGE,
-    element: <DesaYangMenerapkan />, 
+    element: <DesaYangMenerapkan />,
     exact: true,
   },
 ];

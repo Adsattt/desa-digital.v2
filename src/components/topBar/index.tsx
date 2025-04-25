@@ -1,5 +1,5 @@
 import { ArrowBackIcon } from "@chakra-ui/icons";
-import { Box, Button, Flex, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, IconButton } from "@chakra-ui/react";
 import { paths } from "Consts/path";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -7,6 +7,7 @@ import { auth, firestore } from "../../firebase/clientApp";
 import UserMenu from "./RightContent/UserMenu";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
+import faq from "Assets/icons/faq.svg";
 
 type TopBarProps = {
   title: string | undefined;
@@ -97,17 +98,28 @@ function TopBar(props: TopBarProps) {
           (user ? (
             <UserMenu user={user} />
           ) : (
-            <Button
-              fontSize="14px"
-              fontWeight="700"
-              color="white"
-              cursor="pointer"
-              onClick={() => navigate(paths.LOGIN_PAGE)}
-              variant="link"
-              mt="2px"
-            >
-              Login
-            </Button>
+            <Flex gap="1px">
+              <Button
+                as={IconButton}
+                icon={<img src={faq} alt="faq" width="20px" height="20px" />}
+                alignSelf="center"
+                color="white"
+                cursor="pointer"
+                padding={2}
+                onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)} // Arahkan ke halaman Register
+              >
+              </Button>
+              <Button
+                fontSize="14px"
+                fontWeight="700"
+                color= "#FFEB84"
+                cursor="pointer"
+                onClick={() => navigate(paths.LOGIN_PAGE)}
+                variant="link"
+              >
+                Masuk
+              </Button>
+            </Flex>
           ))}
       </Flex>
     </Box>

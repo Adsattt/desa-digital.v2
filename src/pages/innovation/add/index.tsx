@@ -68,6 +68,7 @@ const categoryOptions = [
   { value: "Sistem Informasi", label: "Sistem Informasi" },
 ];
 
+{/*
 const targetUsersOptions = [
   { value: "Agen keuangan/perbankan", label: "Agen keuangan/perbankan" },
   { value: "Agen pemerintah", label: "Agen pemerintah" },
@@ -87,6 +88,7 @@ const targetUsersOptions = [
   { value: "Wanita pedesaan", label: "Wanita pedesaan" },
   { value: "Lainnya", label: "Lainnya" },
 ];
+*/}
 
 const predefinedModels = [
   "Gratis",
@@ -118,7 +120,7 @@ const AddInnovation: React.FC = () => {
     villages: "",
     priceMin: "",
     priceMax: "",
-    customTargetUser: "",
+    //customTargetUser: "",
   });
   const [category, setCategory] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
@@ -130,7 +132,7 @@ const AddInnovation: React.FC = () => {
   );
   const [selectedTargetUser, setSelectedTargetUser] =
     useState<OptionType | null>(null);
-  const [customTargetUser, setCustomTargetUser] = useState<string>("");
+  //const [customTargetUser, setCustomTargetUser] = useState<string>("");
   const [benefit, setBenefit] = useState([{ benefit: "", description: "" }]);
   const [alertStatus, setAlertStatus] = useState<"info" | "warning" | "error">(
     "warning"
@@ -168,12 +170,14 @@ const AddInnovation: React.FC = () => {
     }
   };
 
+  {/*
   const handleTargetUserChange = (selectedOption: OptionType | null) => {
     setSelectedTargetUser(selectedOption);
     if (selectedOption && selectedOption.value === "Lainnya") {
       setCustomTargetUser(""); // Reset input custom jika dipilih "Lainnya"
     }
   };
+  */}
 
   const onTextChange = ({
     target: { name, value },
@@ -325,6 +329,7 @@ const AddInnovation: React.FC = () => {
 
     const innovatorData = innovatorDocSnap.data();
 
+    {/*}
     let finalTargetUser = selectedTargetUser?.value || "";
     if (
       selectedTargetUser?.value === "Lainnya" &&
@@ -332,6 +337,7 @@ const AddInnovation: React.FC = () => {
     ) {
       finalTargetUser = customTargetUser.trim();
     }
+    */}
 
     const modelBisnis = selectedModels.filter((model) => model !== "Lain-lain");
     if (
@@ -401,7 +407,7 @@ const AddInnovation: React.FC = () => {
           statusInovasi: selectedStatus,
           namaInovasi: name,
           kategori: selectedCategory?.label,
-          targetPengguna: finalTargetUser,
+          //targetPengguna: finalTargetUser,
           tahunDibuat: year,
           modelBisnis: selectedModels,
           deskripsi: description,
@@ -424,7 +430,7 @@ const AddInnovation: React.FC = () => {
             statusInovasi: selectedStatus,
             namaInovasi: name,
             kategori: selectedCategory?.label,
-            targetPengguna: finalTargetUser,
+            //targetPengguna: finalTargetUser,
             tahunDibuat: year,
             inputDesaMenerapkan: villages,
             deskripsi: description,
@@ -532,7 +538,7 @@ const AddInnovation: React.FC = () => {
           priceMin: data.hargaMinimal || "",
           priceMax: data.hargaMaksimal || "",
           otherBusinessModel: data.otherBusinessModel || "",
-          customTargetUser: data.customTargetUser || "",
+          //customTargetUser: data.customTargetUser || "",
         });
         setSelectedStatus(data.statusInovasi || "");
         setSelectedCategory({
@@ -718,6 +724,7 @@ const AddInnovation: React.FC = () => {
                 isClearable
               />
 
+              {/*
               <Text fontWeight="400" fontSize="14px" mb="-2">
                 Target Pengguna <span style={{ color: "red" }}>*</span>
               </Text>
@@ -747,6 +754,7 @@ const AddInnovation: React.FC = () => {
                   mt="2"
                 />
               )}
+              */}
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
                 Tahun dibuat inovasi <span style={{ color: "red" }}>*</span>

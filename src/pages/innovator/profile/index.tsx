@@ -448,6 +448,11 @@ const ProfileInnovator: React.FC = () => {
         role="Inovator"
         loading={loading}
         setOpenModal={setOpenModal}
+        contactData={{
+          whatsapp: innovatorData.whatsapp || "", 
+          instagram: innovatorData.instagram || "",
+          website: innovatorData?.website || ""
+        }}
       />
     </>
   );

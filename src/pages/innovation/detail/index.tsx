@@ -28,6 +28,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { query, where, getDocs, collection } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { FaCircle } from "react-icons/fa"; // Import ikon elips
 import { generatePath, useNavigate, useParams } from "react-router-dom";
@@ -60,13 +61,19 @@ function DetailInnovation() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [user] = useAuthState(auth);
   const [data, setData] = useState<DocumentData>({});
-  const [datainnovator, setDatainnovator] = useState<DocumentData>({});
+  const [innovatorData, setDatainnovator] = useState<DocumentData>({});
+  const [village, setVillage] = useState<DocumentData[]>([]);
   const [admin, setAdmin] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [modalInput, setModalInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const villageSafe = Array.isArray(village) ? (village as Village[]) : [];
+  const villageMap = new Map(
+    villageSafe.map((v) => [v.namaDesa, { userId: v.userId, logo: v.logo }])
+  );
 
+ 
   useEffect(() => {
     const fetchUser = async () => {
       if (user?.uid) {
@@ -106,7 +113,57 @@ function DetailInnovation() {
         });
     }
   }, [data.innovatorId]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
 
+      console.log("Fetching innovation data for ID:", id);
+
+      // Fetch data dari collection innovations berdasarkan id
+      const innovationRef = doc(firestore, "innovations", id);
+      const innovationSnap = await getDoc(innovationRef);
+
+      if (innovationSnap.exists()) {
+        const innovationData = innovationSnap.data();
+        console.log("Innovation Data:", innovationData);
+        const inputDesaMenerapkan = innovationData?.inputDesaMenerapkan || [];
+
+
+        if (inputDesaMenerapkan.length > 0) {
+          console.log("Fetching villages for:", inputDesaMenerapkan);
+          try {
+            const villagesRef = collection(firestore, "villages");
+            const villagesQuery = query(
+              villagesRef,
+              where("namaDesa", "in" , inputDesaMenerapkan)
+            );
+            const villagesSnapshot = await getDocs(villagesQuery);
+
+            const villagesData = villagesSnapshot.docs.map((doc) => doc.data());
+            console.log("Fetched Villages Data:", villagesData);
+
+            setVillage(villagesData);
+          } catch (error) {
+            console.error("Error fetching villages:", error);
+          }
+        } else {
+          console.log("No villages to fetch, inputDesaMenerapkan is empty.");
+        }
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+
+  type Village = {
+    namaDesa: string;
+    logo: string;
+    userId: string
+  };
+  
+  
   const handleVerify = async () => {
     setLoading(true);
     try {
@@ -263,10 +320,10 @@ function DetailInnovation() {
             )
           }
         >
-          <Logo src={datainnovator.logo} alt="logo" />
+          <Logo src={innovatorData.logo} alt="logo" />
           <div>
             <Text2>Inovator</Text2>
-            <Text1>{datainnovator.namaInovator}</Text1>
+            <Text1>{innovatorData.namaInovator}</Text1>
           </div>
         </ActionContainer>
         <Stack spacing="8px">
@@ -339,11 +396,14 @@ function DetailInnovation() {
             </Text>
             <Text fontSize="12px" fontWeight="400" color="#4B5563">
               {data.hargaMinimal
-                ? `Rp. ${data.hargaMinimal}${
-                    data.hargaMaksimal ? ` - Rp. ${data.hargaMaksimal}` : ""
-                }`
+                ? `Rp. ${new Intl.NumberFormat("id-ID").format(data.hargaMinimal)}${
+                    data.hargaMaksimal
+                      ? ` - Rp. ${new Intl.NumberFormat("id-ID").format(data.hargaMaksimal)}`
+                      : ""
+                  }`
                 : "Harga tidak tersedia"}
             </Text>
+
           </div>
         </Stack>
 
@@ -426,7 +486,7 @@ function DetailInnovation() {
             <Description>No specific needs listed.</Description>
           )}
         </div>
-        <Flex flexDirection="column">
+        <Flex flexDirection="column" paddingBottom="70px" gap="8px">
           <Flex justifyContent="space-between" alignItems="flex-end" align-self="stretch">
             <SubText>Desa yang Menerapkan</SubText>
             <Text
@@ -443,12 +503,28 @@ function DetailInnovation() {
               paddingBottom="12px"
             > Lihat Semua </Text>
           </Flex>
-          <ActionContainer>
-          <Logo src={datainnovator.log} alt="logo" />
-            <Text1>Belum tersedia</Text1>
-          </ActionContainer>
-        </Flex>
-
+          {(data.inputDesaMenerapkan as string[] || []).map((desa: string, index: number) => {
+            const village = villageMap.get(desa); // Ambil data desa berdasarkan nama
+            return (
+              <ActionContainer 
+                key={index} 
+                onClick={() => village?.userId && navigate(generatePath(paths.DETAIL_VILLAGE_PAGE, { id: village.userId }))} 
+                style={{ cursor: "pointer" }}
+              >
+                <Logo 
+                  src={village?.logo || innovatorData.logo} 
+                  alt="logo" 
+                  style={{ 
+                    boxShadow: "0px 0px 3px rgba(0, 0, 0, 1)", 
+                    borderRadius: "50%" 
+                  }} 
+                />
+                <Text1>{desa ?? "Belum tersedia"}</Text1>
+              </ActionContainer>
+            );
+          })}
+          </Flex>
+          
         {owner && ( // Conditionally render the Edit button
           <Button
             width="100%"
@@ -465,12 +541,22 @@ function DetailInnovation() {
           </Button>
         )}
         {!owner && (
-        <div>
+        <Box
+          position="fixed"
+          bottom="0"
+          left="50%"
+          transform="translateX(-50%)" 
+          width="100%"
+          maxWidth="360px" 
+          bg="white"
+          p="3.5"
+          boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
+        >
           {admin ? (
             data.status === "Terverifikasi" || data.status === "Ditolak" ? (
               <StatusCard message={data.catatanAdmin} status={data.status} />
             ) : (
-              <Button width="100%" fontSize="14px" mb={8} onClick={onOpen}>
+              <Button width="100%" fontSize="14px" onClick={onOpen}>
                 Verifikasi Permohonan Inovasi
               </Button>
             )
@@ -479,7 +565,8 @@ function DetailInnovation() {
               Ketahui lebih lanjut
             </Button>
           )}
-        </div>
+        </Box>
+
         )}
         <RejectionModal
           isOpen={openModal}
@@ -497,6 +584,11 @@ function DetailInnovation() {
           onVerify={handleVerify}
           setOpenModal={setOpenModal}
           role="Inovator"
+          contactData={{
+            whatsapp: innovatorData?.whatsapp || "", 
+            instagram: innovatorData?.instagram || "",
+            website: innovatorData?.website || ""
+          }}
         />
       </ContentContainer>
     </Box>

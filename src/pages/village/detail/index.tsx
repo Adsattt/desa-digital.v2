@@ -454,7 +454,17 @@ export default function DetailVillage() {
               </Horizontal>
             </CardContainer>
           </div>
-          <Box>
+          <Box
+            position="fixed"
+            bottom="0"
+            left="50%"
+            transform="translateX(-50%)" 
+            width="100%"
+            maxWidth="360px" 
+            bg="white"
+            p="3.5"
+            boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
+          >
             {/* Logika untuk Admin */}
             {admin ? (
               village?.status === "Terverifikasi" ||
@@ -472,13 +482,9 @@ export default function DetailVillage() {
               )
             ) : (
               // Logika untuk Non-Admin
-              <Flex flexGrow={1} position="sticky" bottom="0">
+              <Flex>
                 <Button
                   width="100%"
-                  fontSize="14px"
-                  mb={8}
-                  position="sticky"
-                  bottom="0"
                   onClick={onOpen}
                 >
                   Kontak Desa
@@ -504,6 +510,11 @@ export default function DetailVillage() {
             onVerify={handleVerify}
             setOpenModal={setOpenModal}
             role="Desa"
+            contactData={{
+              whatsapp: village?.whatsapp || "", 
+              instagram: village?.instagram || "",
+              website: village?.website || ""
+            }}
           />
     </Box>
   );
