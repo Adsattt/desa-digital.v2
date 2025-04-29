@@ -12,6 +12,7 @@ import {
     DrawerCloseButton,
     SimpleGrid,
     Checkbox,
+    Select,
     useDisclosure,
 } from "@chakra-ui/react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
@@ -23,114 +24,155 @@ import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-const SebaranProvinsiDashboardDesa: React.FC = () => {
+const SebaranDesaDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { isOpen, onOpen, onClose } = useDisclosure();
-    const [selectedProvinces, setSelectedProvinces] = useState<string[]>([]);
-    const [provinceData, setProvinceData] = useState<{ name: string; count: number }[]>([]);
-    const [filteredData, setFilteredData] = useState(provinceData);
+    const [selectedProvinces, setSelectedProvinces] = useState<string | null>(null);
+    const [selectedRegencies, setSelectedRegencies] = useState<string | null>(null);
+    const [selectedDistricts, setSelectedDistricts] = useState<string | null>(null);
+    const [filteredData, setFilteredData] = useState<any[]>([]);
     const [markers, setMarkers] = useState<{ [key: string]: { lat: number; lon: number } }>({});
+    const [villageData, setVillageData] = useState<any[]>([]);
 
-    async function getCoordinates(provinsi: string) {
-        try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(provinsi + ", Indonesia")}`
-            );
-            const data = await response.json();
-            if (data.length > 0) {
-                return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-            }
-        } catch (error) {
-            console.error("Error fetching coordinates:", error);
-        }
-        return null;
-    }
-
-    const fetchProvinceData = async () => {
+    // Fetch data desa
+    const fetchVillageData = async () => {
         try {
             const db = getFirestore();
             const villagesRef = collection(db, "villages");
             const snapshot = await getDocs(villagesRef);
 
-            const provinceCount: { [key: string]: number } = {};
+            const villageList: any[] = [];
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                if (data.lokasi?.provinsi?.label) {
-                    const province = data.lokasi.provinsi.label;
-                    provinceCount[province] = (provinceCount[province] || 0) + 1;
-                }
+                if (
+                    data.namaDesa &&
+                    data.lokasi?.provinsi?.label &&
+                    data.lokasi?.kabupatenKota?.label &&
+                    data.lokasi?.kecamatan?.label
+                  ) {
+                    villageList.push({
+                      name: data.namaDesa.trim(),
+                      provinsi: data.lokasi.provinsi.label.trim(),
+                      kabupaten: data.lokasi.kabupatenKota.label.trim(),
+                      kecamatan: data.lokasi.kecamatan.label.trim(),
+                    });
+                    console.log("✅ Desa dimasukkan:", villageList[villageList.length - 1]);
+                  }                  
             });
 
-            const chartData = Object.keys(provinceCount).map((province) => ({
-                name: province,
-                count: provinceCount[province],
-            }));
-
-            setProvinceData(chartData);
-            setFilteredData(chartData);
+            setVillageData(villageList);
+            setFilteredData(villageList);
         } catch (error) {
-            console.error("Error fetching province data:", error);
+            console.error("Error fetching village data:", error);
         }
     };
 
+    const getCoordinatesByVillage = async (village: any) => {
+        const query = `${village.name}, ${village.kecamatan}, ${village.kabupaten}, ${village.provinsi}, Indonesia`;
+        console.log("🔍 Mencari koordinat untuk:", query);
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+          );
+          const data = await response.json();
+          if (data.length > 0) {
+            return {
+              lat: parseFloat(data[0].lat),
+              lon: parseFloat(data[0].lon),
+            };
+          }
+        } catch (error) {
+          console.error("❌ Gagal ambil koordinat:", error);
+        }
+        return null;
+      };
+      
+
+    useEffect(() => {
+        const updateMarkers = async () => {
+            const newMarkers: typeof markers = {};
+            for (const village of filteredData) {
+                if (!markers[village.name]) {
+                    console.log("Memproses desa:", village.name);
+                    const coords = await getCoordinatesByVillage(village);
+                    console.log("Hasil koordinat:", coords);
+                    if (coords) {
+                        newMarkers[village.name] = coords;
+                    }
+                }
+            }
+            setMarkers((prev) => ({ ...prev, ...newMarkers }));
+
+        };
+
+        if (filteredData.length > 0) {
+            updateMarkers();
+        }
+    }, [filteredData]);
+
+    console.log("Filtered Data:", filteredData);
+    console.log("Markers:", markers);
+
+
+    useEffect(() => {
+        fetchVillageData();
+    }, []);
+
     const handleDownloadExcel = () => {
-        const excelData = provinceData.map((item, index) => ({
+        const excelData = filteredData.map((item, index) => ({
             No: index + 1,
-            Provinsi: item.name,
-            "Jumlah Desa Digital": item.count,
+            Desa: item.name,
+            Provinsi: item.provinsi,
+            Kabupaten: item.kabupaten,
+            Kecamatan: item.kecamatan,
         }));
 
         const worksheet = XLSX.utils.json_to_sheet(excelData);
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Sebaran Provinsi");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Sebaran Desa");
 
-        XLSX.writeFile(workbook, "sebaran_provinsi_desa_digital.xlsx");
+        XLSX.writeFile(workbook, "sebaran_desa_digital.xlsx");
+    };
+
+    const handleProvinceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedProvince = event.target.value;
+        setSelectedProvinces(selectedProvince);
+        setSelectedRegencies(null);  // Reset kabupaten
+        setSelectedDistricts(null);  // Reset kecamatan
+    };
+
+    const handleRegencyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedRegency = event.target.value;
+        setSelectedRegencies(selectedRegency);
+        setSelectedDistricts(null);  // Reset kecamatan
+    };
+
+    const handleDistrictChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedDistrict = event.target.value;
+        setSelectedDistricts(selectedDistrict);
     };
 
     useEffect(() => {
-        async function fetchCoordinates() {
-            const newMarkers: { [key: string]: { lat: number; lon: number } } = {};
-            for (const item of provinceData) {
-                if (!newMarkers[item.name]) {
-                    const coords = await getCoordinates(item.name);
-                    if (coords) {
-                        newMarkers[item.name] = coords;
-                    }
-                }
-            }
-            setMarkers(newMarkers);
-        }
+        const filtered = villageData.filter((village) => {
+            return (
+                (!selectedProvinces || village.provinsi === selectedProvinces) &&
+                (!selectedRegencies || village.kabupaten === selectedRegencies) &&
+                (!selectedDistricts || village.kecamatan === selectedDistricts)
+            );
+        });
+        setFilteredData(filtered);
+    }, [selectedProvinces, selectedRegencies, selectedDistricts, villageData]);
 
-        fetchCoordinates();
-    }, [provinceData]);
-
-    useEffect(() => {
-        fetchProvinceData();
-    }, []);
-
-    const provinces = provinceData.map((d) => d.name);
-
-    const handleCheckboxChange = (provinsi: string) => {
-        setSelectedProvinces((prev) =>
-            prev.includes(provinsi) ? prev.filter((p) => p !== provinsi) : [...prev, provinsi]
-        );
-    };
-
-    const applyFilter = () => {
-        if (selectedProvinces.length === 0) {
-            setFilteredData(provinceData);
-        } else {
-            setFilteredData(provinceData.filter((item) => selectedProvinces.includes(item.name)));
-        }
-        onClose();
-    };
+    const provinces = Array.from(new Set(villageData.map((village) => village.provinsi)));
+    const regencies = selectedProvinces ? Array.from(new Set(villageData.filter((village) => village.provinsi === selectedProvinces).map((village) => village.kabupaten))) : [];
+    const districts = selectedRegencies ? Array.from(new Set(villageData.filter((village) => village.kabupaten === selectedRegencies).map((village) => village.kecamatan))) : [];
 
     return (
         <Box>
             {/* HEADER + FILTER + DOWNLOAD BUTTON */}
             <Flex justify="space-between" align="center" mt="24px" mx="15px">
                 <Text fontSize="sm" fontWeight="bold" color="gray.800">
-                    Sebaran Provinsi Desa Digital
+                    Sebaran Desa Digital
                 </Text>
                 <Flex gap={2}>
                     <Button
@@ -165,7 +207,7 @@ const SebaranProvinsiDashboardDesa: React.FC = () => {
                         onClick={onOpen}
                     >
                         <Text fontSize="10px" fontWeight="medium" color="black" mr={1}>
-                            Provinsi
+                            Wilayah
                         </Text>
                     </Button>
                 </Flex>
@@ -201,7 +243,9 @@ const SebaranProvinsiDashboardDesa: React.FC = () => {
                             <Marker key={index} position={[coords.lat, coords.lon]}>
                                 <Popup>
                                     <Text fontSize="sm" fontWeight="bold">{item.name}</Text>
-                                    <Text fontSize="xs">Total Desa: {item.count}</Text>
+                                    <Text fontSize="xs">Provinsi: {item.provinsi}</Text>
+                                    <Text fontSize="xs">Kabupaten: {item.kabupaten}</Text>
+                                    <Text fontSize="xs">Kecamatan: {item.kecamatan}</Text>
                                 </Popup>
                             </Marker>
                         );
@@ -209,7 +253,7 @@ const SebaranProvinsiDashboardDesa: React.FC = () => {
                 </MapContainer>
             </Box>
 
-            {/* DRAWER FILTER PROVINSI */}
+            {/* DRAWER FILTER */}
             <Drawer isOpen={isOpen} placement="bottom" onClose={onClose}>
                 <DrawerOverlay />
                 <DrawerContent
@@ -221,26 +265,48 @@ const SebaranProvinsiDashboardDesa: React.FC = () => {
                     }}
                 >
                     <DrawerHeader display="flex" justifyContent="space-between" alignItems="center">
-                        <Text fontSize="15px" fontWeight="bold">Filter Provinsi</Text>
+                        <Text fontSize="15px" fontWeight="bold">Filter Wilayah</Text>
                         <DrawerCloseButton />
                     </DrawerHeader>
 
                     <DrawerBody>
-                        <SimpleGrid columns={2} spacingX={2} spacingY={2} w="full">
-                            {provinces.map((provinsi) => (
-                                <Checkbox
-                                    key={provinsi}
-                                    isChecked={selectedProvinces.includes(provinsi)}
-                                    onChange={() => handleCheckboxChange(provinsi)}
-                                >
-                                    {provinsi}
-                                </Checkbox>
-                            ))}
+                        <SimpleGrid columns={1} spacingX={2} spacingY={2} w="full">
+                            <Select
+                                placeholder="Pilih Provinsi"
+                                value={selectedProvinces || ""}
+                                onChange={handleProvinceChange}
+                            >
+                                {provinces.map((provinsi) => (
+                                    <option key={provinsi} value={provinsi}>{provinsi}</option>
+                                ))}
+                            </Select>
+
+                            <Select
+                                placeholder="Pilih Kabupaten"
+                                value={selectedRegencies || ""}
+                                onChange={handleRegencyChange}
+                                isDisabled={!selectedProvinces}
+                            >
+                                {regencies.map((kabupaten) => (
+                                    <option key={kabupaten} value={kabupaten}>{kabupaten}</option>
+                                ))}
+                            </Select>
+
+                            <Select
+                                placeholder="Pilih Kecamatan"
+                                value={selectedDistricts || ""}
+                                onChange={handleDistrictChange}
+                                isDisabled={!selectedRegencies}
+                            >
+                                {districts.map((kecamatan) => (
+                                    <option key={kecamatan} value={kecamatan}>{kecamatan}</option>
+                                ))}
+                            </Select>
                         </SimpleGrid>
                     </DrawerBody>
 
                     <DrawerFooter>
-                        <Button bg="#1E5631" color="white" w="full" _hover={{ bg: "#16432D" }} onClick={applyFilter}>
+                        <Button bg="#1E5631" color="white" w="full" _hover={{ bg: "#16432D" }} onClick={onClose}>
                             Terapkan Filter
                         </Button>
                     </DrawerFooter>
@@ -250,4 +316,4 @@ const SebaranProvinsiDashboardDesa: React.FC = () => {
     );
 };
 
-export default SebaranProvinsiDashboardDesa;
+export default SebaranDesaDashboard;
