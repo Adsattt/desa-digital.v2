@@ -1,3 +1,4 @@
+import { Flex } from "@chakra-ui/react";
 import {
   Container,
   Background,
@@ -36,12 +37,14 @@ function CardVillage(props: CardVillageProps) {
         </ContBadge>
         <Title>{namaDesa}</Title>
         <Description>0 Inovasi diterapkan</Description>
+        <Flex direction="column" marginTop="auto">
         <Location>
           <img src={locationIcon} alt="loc" />
           <Description>
             {kabupatenKota}, {provinsi}{" "}
           </Description>{" "}
         </Location>
+        </Flex>
       </CardContent>
     </Container>
   );

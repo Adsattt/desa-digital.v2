@@ -86,7 +86,7 @@ const EditInnovation: React.FC = () => {
             description: data.deskripsi || "",
           });
           setCategory(data.kategori || "");
-          setRequirements(data.kebutuhan || []);
+          setRequirements(data.infrastruktur || []);
           setSelectedFiles(data.images || []);
         } else {
           console.log("No such document!");
@@ -204,7 +204,7 @@ const EditInnovation: React.FC = () => {
         namaInovasi: name,
         tahunDibuat: year,
         deskripsi: description,
-        kebutuhan: requirements,
+        infrastruktur: requirements,
         kategori: category,
         editedAt: serverTimestamp(),
         images: selectedFiles, // assume previously uploaded images are part of selectedFiles

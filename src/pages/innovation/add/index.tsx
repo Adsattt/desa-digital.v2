@@ -225,8 +225,10 @@ const AddInnovation: React.FC = () => {
   };
 
   const getVillagesWordCount = () => {
-    return textInputsValue.villages.split(/\s+/).filter((word) => word !== "")
-      .length;
+    return textInputsValue.villages
+    .toString()
+    .split(/\s+/)
+    .filter((word) => word !== "").length;
   };
 
   const onAddRequirement = () => {
@@ -912,7 +914,7 @@ const AddInnovation: React.FC = () => {
               </Flex>
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
-                Kisaran harga <span style={{ color: "red" }}>*</span>
+                Kisaran harga <span style={{ color: "red" }}></span>
               </Text>
               <Flex direction="column" alignItems="flex-start">
                 <Text

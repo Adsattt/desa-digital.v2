@@ -14,6 +14,7 @@ interface FormSectionProps {
   wordCount?: number;
   maxWords?: number;
   type?: string;
+  isRequired?: boolean;
 }
 
 const FormSection: React.FC<FormSectionProps> = ({
@@ -27,11 +28,12 @@ const FormSection: React.FC<FormSectionProps> = ({
   maxWords,
   disabled,
   type,
+  isRequired
 }) => {
   return (
     <Box>
       <Text fontWeight="400" fontSize="14px" mb="4px">
-        {title} <span style={{ color: "red" }}>*</span>
+        {title} {isRequired && <span style={{ color: "red" }}>*</span>}
       </Text>
       {isTextArea ? (
         <Textarea

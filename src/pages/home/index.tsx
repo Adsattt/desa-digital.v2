@@ -8,6 +8,7 @@ import {
   doc,
   DocumentData,
   getDoc,
+  getDocs,
   getFirestore,
   onSnapshot,
   query,
@@ -19,6 +20,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Hero from "./components/hero";
 import Innovator from "./components/innovator";
+import Villages from "./components/villages";
 import Menu from "./components/menu";
 import Rediness from "Components/rediness/Rediness";
 import Ads from "Components/ads/Ads";
@@ -47,6 +49,8 @@ function Home() {
   const [userLogin] = useAuthState(auth);
   const [userData, setUserData] = useState<DocumentData | undefined>();
   const [inovator, setInovator] = useState<DocumentData | undefined>();
+  const [villages, setVillages] = useState<DocumentData[]>([]);
+  const villageRef = collection(firestore, "villages");
 
   const toast = useToast();
   useEffect(() => {
@@ -138,6 +142,20 @@ function Home() {
     fetchInnovator();
   });
 
+  useEffect(() => {
+    const fetchVillages = async () => {
+      const villagesSnapshot = await getDocs(villageRef); // Ganti innovationRef ke villageRef
+      const villagesData = villagesSnapshot.docs.map((doc) => ({
+        id: doc.id, // Ambil id dokumen dari Firestore
+        ...doc.data(), // Ambil data lainnya
+      }));
+      setVillages(villagesData); // Ganti setInnovations ke setVillages
+    };
+  
+    fetchVillages();
+  }, [villageRef]); // Ganti dependency menjadi villageRef
+  
+
   const handleAddInnovationClick = () => {
     if (isInnovator && inovator?.status === "Terverifikasi") {
       navigate(paths.ADD_INNOVATION);
@@ -169,6 +187,9 @@ function Home() {
         <BestBanner />
         <Box mt="120px">
           <Innovator />
+        </Box>
+        <Box mt="-10px">
+          <Villages />
         </Box>
       </Stack>
       {userRole === "innovator" && (

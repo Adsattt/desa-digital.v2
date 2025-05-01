@@ -15,7 +15,6 @@ import { paths } from "Consts/path";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import EnlargedImage from "../components/Image";
-
 import {
   Accordion,
   AccordionButton,
@@ -157,11 +156,16 @@ export default function DetailVillage() {
   useEffect(() => {
     const fetchInnovations = async () => {
       const innovationsSnapshot = await getDocs(innovationRef);
-      const innovationsData = innovationsSnapshot.docs.map((doc) => doc.data());
+      const innovationsData = innovationsSnapshot.docs.map((doc) => ({
+        id: doc.id, // Ambil id dokumen dari Firestore
+        ...doc.data(), // Ambil data lainnya
+      }));
       setInnovations(innovationsData);
     };
+  
     fetchInnovations();
   }, [innovationRef]);
+  
 
   useEffect(() => {
     const fetchVillageData = async () => {
@@ -442,13 +446,11 @@ export default function DetailVillage() {
                     tahunDibuat={innovation.tahunDibuat}
                     innovatorLogo={innovation.innovatorImgURL}
                     innovatorName={innovation.namaInnovator}
-                    onClick={() =>
-                      navigate(
-                        generatePath(paths.DETAIL_INNOVATION_PAGE, {
-                          id: innovation.id,
-                        })
-                      )
-                    }
+                    onClick={() => {
+                      if (innovation.id) {
+                        navigate(generatePath(paths.DETAIL_INNOVATION_PAGE, { id: innovation.id }));
+                      }
+                    }}
                   />
                 ))}
               </Horizontal>

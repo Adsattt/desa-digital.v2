@@ -398,6 +398,7 @@ const InnovatorForm: React.FC = () => {
                 value={textInputsValue.name}
                 onChange={onTextChange}
                 disabled={!isEditable}
+                isRequired
               />
               <Text fontWeight="400" fontSize="14px" mb="-2">
                 Kategori Inovator <span style={{ color: "red" }}>*</span>
@@ -451,6 +452,7 @@ const InnovatorForm: React.FC = () => {
                 wordCount={getDescriptionWordCount()}
                 maxWords={80}
                 disabled={!isEditable}
+                isRequired
               />
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -475,7 +477,7 @@ const InnovatorForm: React.FC = () => {
                 />
               </Flex>
               <Text fontWeight="400" fontSize="14px" mb="-2">
-                Header Inovator
+                Header Inovator <span style={{ color: "red" }}>*</span>
               </Text>
               <Flex direction="column" alignItems="flex-start">
                 <Text
@@ -492,6 +494,7 @@ const InnovatorForm: React.FC = () => {
                   selectFileRef={selectHeaderRef}
                   onSelectHeader={onSelectHeader}
                   disabled={!isEditable}
+                  
                 />
               </Flex>
 
@@ -506,6 +509,7 @@ const InnovatorForm: React.FC = () => {
                 value={textInputsValue.whatsapp}
                 onChange={onTextChange}
                 disabled={!isEditable}
+                isRequired
               />
               <FormSection
                 title="Instagram"
