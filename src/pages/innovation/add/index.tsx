@@ -44,6 +44,8 @@ import { useNavigate } from "react-router-dom";
 import Select from "react-select";
 import ImageUpload from "../../../components/form/ImageUpload";
 import { auth, firestore, storage } from "../../../firebase/clientApp";
+import ConfModal from "../../../components/confirmModal/confModal";
+import SecConfModal from "../../../components/confirmModal/secConfModal";
 
 type OptionType = {
   value: string;
@@ -66,8 +68,10 @@ const categoryOptions = [
   { value: "Pengelolaan Sumber Daya", label: "Pengelolaan Sumber Daya" },
   { value: "Pertanian Cerdas", label: "Pertanian Cerdas" },
   { value: "Sistem Informasi", label: "Sistem Informasi" },
+  { value: "UMKM", label: "UMKM" },
 ];
 
+{/*
 const targetUsersOptions = [
   { value: "Agen keuangan/perbankan", label: "Agen keuangan/perbankan" },
   { value: "Agen pemerintah", label: "Agen pemerintah" },
@@ -87,6 +91,7 @@ const targetUsersOptions = [
   { value: "Wanita pedesaan", label: "Wanita pedesaan" },
   { value: "Lainnya", label: "Lainnya" },
 ];
+*/}
 
 const predefinedModels = [
   "Gratis",
@@ -118,7 +123,7 @@ const AddInnovation: React.FC = () => {
     villages: "",
     priceMin: "",
     priceMax: "",
-    customTargetUser: "",
+    //customTargetUser: "",
   });
   const [category, setCategory] = useState("");
   const [requirements, setRequirements] = useState<string[]>([]);
@@ -130,7 +135,7 @@ const AddInnovation: React.FC = () => {
   );
   const [selectedTargetUser, setSelectedTargetUser] =
     useState<OptionType | null>(null);
-  const [customTargetUser, setCustomTargetUser] = useState<string>("");
+  //const [customTargetUser, setCustomTargetUser] = useState<string>("");
   const [benefit, setBenefit] = useState([{ benefit: "", description: "" }]);
   const [alertStatus, setAlertStatus] = useState<"info" | "warning" | "error">(
     "warning"
@@ -143,6 +148,22 @@ const AddInnovation: React.FC = () => {
   const [isEditable, setIsEditable] = useState(true);
   const toast = useToast();
   const [innovationId, setInnovationId] = useState("");
+  const modalBody1 = "Apakah anda yakin ingin menambah inovasi?"; // Konten Modal
+  const modalBody2 =
+    "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan tambah inovasi"; // Konten Modal
+
+  const [isModal1Open, setIsModal1Open] = useState(false);
+  const [isModal2Open, setIsModal2Open] = useState(false);
+  const closeModal = () => {
+    setIsModal1Open(false);
+    setIsModal2Open(false);
+  };
+
+  const handleModal1Yes = () => {
+    setIsModal2Open(true);
+    setIsModal1Open(false); // Tutup modal pertama
+    // Di sini tidak membuka modal kedua
+  };
 
   const onSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -168,16 +189,19 @@ const AddInnovation: React.FC = () => {
     }
   };
 
+  {/*
   const handleTargetUserChange = (selectedOption: OptionType | null) => {
     setSelectedTargetUser(selectedOption);
     if (selectedOption && selectedOption.value === "Lainnya") {
       setCustomTargetUser(""); // Reset input custom jika dipilih "Lainnya"
     }
   };
+  */}
 
   const onTextChange = ({
     target: { name, value },
   }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
     if (name === "priceMin" || name === "priceMax") {
       // Validasi hanya angka
       if (/^\d*$/.test(value)) {
@@ -187,15 +211,13 @@ const AddInnovation: React.FC = () => {
         }));
       }
     } else if (name === "description") {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
       if (wordCount <= 80) {
         setTextInputsValue((prev) => ({
           ...prev,
           [name]: value,
         }));
       }
-    } else if (name === "desa") {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
+    } else if (name === "villages") {
       if (wordCount <= 20) {
         setTextInputsValue((prev) => ({
           ...prev,
@@ -203,7 +225,6 @@ const AddInnovation: React.FC = () => {
         }));
       }
     } else if (name === "otherBusinessModel") {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
       if (wordCount <= 5) {
         setTextInputsValue((prev) => ({
           ...prev,
@@ -293,6 +314,23 @@ const AddInnovation: React.FC = () => {
     event.preventDefault();
     setLoading(true);
     setError("");
+
+    const { name, year, description, villages, priceMax, priceMin } =
+      textInputsValue;
+
+    const modelBisnis = selectedModels.filter((model) => model !== "Lain-lain");
+    if (
+      selectedModels.includes("Lain-lain") &&
+      otherBusinessModel.trim() !== ""
+    ) {
+      modelBisnis.push(otherBusinessModel);
+    }
+
+    if (!selectedStatus || !name || !selectedCategory || !year || !description || !modelBisnis.length || !villages || !priceMin || !priceMax || benefit.length === 0 || selectedFiles.length === 0 || requirements.length === 0) {
+      alert("Mohon lengkapi semua kolom wajib sebelum mengajukan inovasi.");
+      setLoading(false);
+      return;
+    }
     if (selectedModels.length === 0) {
       setError("Pilih setidaknya satu model bisnis digital.");
       return;
@@ -302,9 +340,6 @@ const AddInnovation: React.FC = () => {
       setLoading(false);
       return;
     }
-
-    const { name, year, description, villages, priceMax, priceMin } =
-      textInputsValue;
 
     // Fetch innovator data
     const userId = user.uid;
@@ -327,6 +362,7 @@ const AddInnovation: React.FC = () => {
 
     const innovatorData = innovatorDocSnap.data();
 
+    {/*}
     let finalTargetUser = selectedTargetUser?.value || "";
     if (
       selectedTargetUser?.value === "Lainnya" &&
@@ -334,14 +370,7 @@ const AddInnovation: React.FC = () => {
     ) {
       finalTargetUser = customTargetUser.trim();
     }
-
-    const modelBisnis = selectedModels.filter((model) => model !== "Lain-lain");
-    if (
-      selectedModels.includes("Lain-lain") &&
-      otherBusinessModel.trim() !== ""
-    ) {
-      modelBisnis.push(otherBusinessModel);
-    }
+    */}
 
     const finalRequirements = [...requirements];
     if (
@@ -403,7 +432,7 @@ const AddInnovation: React.FC = () => {
           statusInovasi: selectedStatus,
           namaInovasi: name,
           kategori: selectedCategory?.label,
-          targetPengguna: finalTargetUser,
+          //targetPengguna: finalTargetUser,
           tahunDibuat: year,
           modelBisnis: selectedModels,
           deskripsi: description,
@@ -426,7 +455,7 @@ const AddInnovation: React.FC = () => {
             statusInovasi: selectedStatus,
             namaInovasi: name,
             kategori: selectedCategory?.label,
-            targetPengguna: finalTargetUser,
+            //targetPengguna: finalTargetUser,
             tahunDibuat: year,
             inputDesaMenerapkan: villages,
             deskripsi: description,
@@ -534,7 +563,7 @@ const AddInnovation: React.FC = () => {
           priceMin: data.hargaMinimal || "",
           priceMax: data.hargaMaksimal || "",
           otherBusinessModel: data.otherBusinessModel || "",
-          customTargetUser: data.customTargetUser || "",
+          //customTargetUser: data.customTargetUser || "",
         });
         setSelectedStatus(data.statusInovasi || "");
         setSelectedCategory({
@@ -602,6 +631,23 @@ const AddInnovation: React.FC = () => {
     const midpoint = Math.ceil(models.length / num);
     return [models.slice(0, midpoint), models.slice(midpoint)];
   };
+
+  const isFormValid = () => {
+    return (
+      status !== "" &&
+      textInputsValue.name.trim() !== "" &&
+      category.trim() !== "" &&
+      textInputsValue.year.trim() !== "" &&
+      textInputsValue.description.trim() !== "" &&
+      selectedModels.length > 0 && // array harus ada isinya
+      textInputsValue.villages.trim() !== "" &&
+      textInputsValue.priceMin.trim() !== "" &&
+      textInputsValue.priceMax.trim() !== "" &&
+      benefit.length > 0 && // cek manfaat inovasi
+      requirements.length > 0 // cek persiapan infrastruktur
+    );
+  };
+  
 
   // Bagi daftar model bisnis menjadi dua kolom
   const [firstColumn, secondColumn] = splitModels(predefinedModels, 2);
@@ -703,6 +749,7 @@ const AddInnovation: React.FC = () => {
                 }}
                 value={textInputsValue.name}
                 onChange={onTextChange}
+                required
               />
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -718,37 +765,8 @@ const AddInnovation: React.FC = () => {
                 }
                 styles={customStyles} // Terapkan gaya khusus
                 isClearable
+                required
               />
-
-              <Text fontWeight="400" fontSize="14px" mb="-2">
-                Target Pengguna <span style={{ color: "red" }}>*</span>
-              </Text>
-              <Select
-                placeholder="Pilih target pengguna"
-                options={targetUsersOptions}
-                value={selectedTargetUser}
-                isDisabled={!isEditable}
-                onChange={handleTargetUserChange}
-                styles={customStyles} // Terapkan gaya yang sama
-                isClearable
-              />
-              {selectedTargetUser?.value === "Lainnya" && (
-                <Input
-                  name="customTargetUser"
-                  fontSize="14px"
-                  placeholder="Masukkan target pengguna"
-                  disabled={!isEditable}
-                  _placeholder={{ color: "#9CA3AF" }}
-                  _focus={{
-                    outline: "none",
-                    bg: "white",
-                    borderColor: "black",
-                  }}
-                  value={customTargetUser}
-                  onChange={(e) => setCustomTargetUser(e.target.value)}
-                  mt="2"
-                />
-              )}
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
                 Tahun dibuat inovasi <span style={{ color: "red" }}>*</span>
@@ -766,6 +784,7 @@ const AddInnovation: React.FC = () => {
                 }}
                 value={textInputsValue.year}
                 onChange={onTextChange}
+                required
               />
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -786,6 +805,7 @@ const AddInnovation: React.FC = () => {
                   height="100px"
                   value={textInputsValue.description}
                   onChange={onTextChange}
+                  required
                 />
                 <Text
                   fontWeight="400"
@@ -902,6 +922,7 @@ const AddInnovation: React.FC = () => {
                   value={textInputsValue.villages}
                   disabled={!isEditable}
                   onChange={onTextChange}
+                  required
                 />
                 <Text
                   fontWeight="400"
@@ -947,6 +968,7 @@ const AddInnovation: React.FC = () => {
                       value={textInputsValue.priceMin}
                       onChange={onTextChange}
                       disabled={!isEditable}
+                      required
                     />
                   </InputGroup>
                   <MinusIcon mx="2" color="#9CA3AF" mt="3" />
@@ -971,6 +993,7 @@ const AddInnovation: React.FC = () => {
                       value={textInputsValue.priceMax}
                       onChange={onTextChange}
                       disabled={!isEditable}
+                      required
                     />
                   </InputGroup>
                 </Flex>
@@ -1022,6 +1045,7 @@ const AddInnovation: React.FC = () => {
                       _focus={{ outline: "none", bg: "white", border: "none" }}
                       value={item.benefit}
                       disabled={!isEditable}
+                      required
                       onChange={(e) => {
                         const wordCount = e.target.value
                           .split(/\s+/)
@@ -1072,11 +1096,12 @@ const AddInnovation: React.FC = () => {
                       _focus={{ outline: "none", bg: "white", border: "none" }}
                       value={item.description}
                       disabled={!isEditable}
+                      required
                       onChange={(e) => {
                         const wordCount = e.target.value
                           .split(/\s+/)
                           .filter((word) => word !== "").length;
-                        if (wordCount <= 10) {
+                        if (wordCount <= 20) {
                           // Batas 10 kata
                           const updatedBenefits = [...benefit];
                           updatedBenefits[index].description = e.target.value;
@@ -1095,7 +1120,7 @@ const AddInnovation: React.FC = () => {
                           .split(/\s+/)
                           .filter((word) => word !== "").length
                       }
-                      /10 kata
+                      /20 kata
                     </Text>
                   </Flex>
                 </Flex>
@@ -1152,6 +1177,7 @@ const AddInnovation: React.FC = () => {
                         }}
                         value={requirement}
                         disabled={!isEditable}
+                        required
                         onChange={(e) => {
                           const wordCount = e.target.value
                             .split(/\s+/)
@@ -1213,6 +1239,7 @@ const AddInnovation: React.FC = () => {
                     _focus={{ outline: "none", bg: "white", border: "none" }}
                     value={newRequirement}
                     disabled={!isEditable}
+                    required
                     onChange={(e) => {
                       const wordCount = e.target.value
                         .split(/\s+/)
@@ -1244,7 +1271,16 @@ const AddInnovation: React.FC = () => {
                   </Text>
                   <Button
                     variant="outline"
-                    onClick={onAddRequirement}
+                    onClick={() => {
+                      // Validasi infrastruktur terakhir sebelum menambahkan yang baru
+                      const lastRequirement = requirements[requirements.length - 1];
+                      if (!lastRequirement) {
+                        alert("Silakan isi persiapan infrastruktur sebelum menambahkan yang baru.");
+                        return;
+                      }
+                      // Tambahkan infrastruktur baru
+                      onAddRequirement();
+                    }}
                     _hover={{ bg: "none" }}
                     leftIcon={<AddIcon />}
                     disabled={!isEditable}
@@ -1262,9 +1298,41 @@ const AddInnovation: React.FC = () => {
             </Text>
           )}
           {status !== "Menunggu" && (
-            <Button type="submit" mt="20px" width="100%" isLoading={loading}>
-              {status === "Ditolak" ? "Ajukan Ulang" : "Ajukan Inovasi"}
-            </Button>
+            <div>
+              <Button
+                type="submit"
+                isLoading={loading}
+                mt="20px"
+                width="100%"
+                onClick={() => {
+                  if (isFormValid()) {
+                    setIsModal1Open(true);
+                  } else {
+                    toast({
+                      title: "Form belum lengkap!",
+                      description: "Harap isi semua field wajib.",
+                      status: "error",
+                      duration: 3000,
+                      isClosable: true,
+                    });
+                  }
+                }}
+              >
+                {status === "Ditolak" ? "Ajukan Ulang" : "Ajukan Inovasi"}
+              </Button>
+              <ConfModal
+                isOpen={isModal1Open}
+                onClose={closeModal}
+                modalTitle=""
+                modalBody1={modalBody1} // Mengirimkan teks konten modal
+                onYes={handleModal1Yes}
+              />
+              <SecConfModal
+                isOpen={isModal2Open}
+                onClose={closeModal}
+                modalBody2={modalBody2} // Mengirimkan teks konten modal
+              />
+          </div>
           )}
         </Box>
       </form>

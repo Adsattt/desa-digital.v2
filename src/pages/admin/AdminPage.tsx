@@ -10,6 +10,7 @@ import Hero from "../home/components/hero";
 import Innovator from "../home/components/innovator";
 import Menu from "../home/components/menu";
 import { useNavigate } from "react-router-dom";
+import Dashboard from "Components/dashboard/dashboard";
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ const AdminPage: React.FC = () => {
           <Rediness />
           <Ads />
         </Flex>
+        <Dashboard></Dashboard>
         <BestBanner />
         <Box mt="120px">
           <Innovator />

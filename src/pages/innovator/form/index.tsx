@@ -31,6 +31,8 @@ import ReactSelect from "react-select";
 import HeaderUpload from "../../../components/form/HeaderUpload";
 import LogoUpload from "../../../components/form/LogoUpload";
 import { auth, firestore, storage } from "../../../firebase/clientApp";
+import ConfModal from "../../../components/confirmModal/confModal";
+import SecConfModal from "../../../components/confirmModal/secConfModal";
 
 const categories = [
   "Agribisnis",
@@ -42,6 +44,7 @@ const categories = [
   "Pemerintah Daerah",
   "Perusahaan",
   "Start Up",
+  "UMKM",
 ];
 
 const businessModels = [
@@ -58,6 +61,7 @@ const InnovatorForm: React.FC = () => {
     label: string;
     value: string;
   } | null>(null);
+  const [owner, setOwner] = useState(false);
   const [selectedLogo, setSelectedLogo] = useState<string>("");
   const [selectedHeader, setSelectedHeader] = useState<string>("");
   const selectLogoRef = useRef<HTMLInputElement>(null);
@@ -81,6 +85,33 @@ const InnovatorForm: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState(
     "Profil masih kosong. Silahkan isi data di bawah terlebih dahulu"
   );
+  const modalBody1 = "Apakah anda yakin ingin mendaftarkan profil?"; // Konten Modal
+  const modalBody2 = "Profil sudah didaftarkan. Admin sedang memverifikasi pengajuan daftar profil"; // Konten Modal
+
+  const [isModal1Open, setIsModal1Open] = useState(false);
+  const [isModal2Open, setIsModal2Open] = useState(false);
+  const closeModal = () => {
+    setIsModal1Open(false);
+    setIsModal2Open(false);
+  };
+
+  const handleModal1Yes = () => {
+    setIsModal2Open(true);
+    setIsModal1Open(false); // Tutup modal pertama
+    // Di sini tidak membuka modal kedua
+  };
+
+  const isFormValid = () => {
+    return (
+      selectedCategory !== null &&
+      selectedLogo !== null &&
+      textInputsValue.name.trim() !== "" &&
+      textInputsValue.description.trim() !== "" &&
+      textInputsValue.whatsapp.trim() !== "" &&
+      textInputsValue.website.trim() !== "" &&
+      textInputsValue.instagram.trim() !== ""
+    );
+  };
 
   const categoryOptions = categories.map((category) => ({
     label: category, // Label yang ditampilkan pada dropdown
@@ -114,9 +145,16 @@ const InnovatorForm: React.FC = () => {
   const onTextChange = ({
     target: { name, value },
   }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
     if (name === "description") {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
       if (wordCount <= 80) {
+        setTextInputsValue((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    } else if (name === "name") {
+      if (wordCount <= 10) {
         setTextInputsValue((prev) => ({
           ...prev,
           [name]: value,
@@ -128,6 +166,12 @@ const InnovatorForm: React.FC = () => {
         [name]: value,
       }));
     }
+  };
+
+  const getNameWordCount = () => {
+    return textInputsValue.name
+      .split(/\s+/)
+      .filter((word) => word !== "").length;
   };
 
   const getDescriptionWordCount = () => {
@@ -343,6 +387,22 @@ const InnovatorForm: React.FC = () => {
     fetchData();
   }, [user]);
 
+  useEffect(() => {
+    const checkIfOwner = async () => {
+      if (user?.uid) {
+        const docRef = doc(firestore, "innovators", user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setOwner(true);
+          setStatus("Terverifikasi"); // Set status for owner
+        } else {
+          setOwner(false);
+        }
+      }
+    };
+    checkIfOwner();
+  }, [user]);
+
   const customStyles = {
     control: (styles: any) => ({
       ...styles,
@@ -377,7 +437,9 @@ const InnovatorForm: React.FC = () => {
 
   return (
     <Container page>
-      <TopBar title="Register Inovator" onBack={() => navigate(-1)} />
+      <TopBar
+        title={owner ? "Edit Profil Inovator" : "Register Inovator"} 
+        onBack={() => navigate(-1)} />
       <Box p="0 16px">
         <form onSubmit={onSubmitForm}>
           <Flex direction="column" marginTop="24px">
@@ -397,6 +459,8 @@ const InnovatorForm: React.FC = () => {
                 placeholder="Nama Inovator"
                 value={textInputsValue.name}
                 onChange={onTextChange}
+                wordCount={getNameWordCount()}
+                maxWords={10}
                 disabled={!isEditable}
                 isRequired
               />
@@ -414,7 +478,8 @@ const InnovatorForm: React.FC = () => {
                 isSearchable
                 isDisabled={!isEditable}
               />
-              <Text fontWeight="400" fontSize="14px">
+              
+              {/* <Text fontWeight="400" fontSize="14px">
                 Model Bisnis Digital <span style={{ color: "red" }}>*</span>
               </Text>
               <ChakraSelect
@@ -440,7 +505,7 @@ const InnovatorForm: React.FC = () => {
                     {model}
                   </option>
                 ))}
-              </ChakraSelect>
+              </ChakraSelect> */}
 
               <FormSection
                 isTextArea
@@ -537,17 +602,54 @@ const InnovatorForm: React.FC = () => {
             </Text>
           )}
           {status !== "Menunggu" && (
-            <Button
-              type="submit"
-              mt="20px"
-              width="100%"
-              height="44px"
-              isLoading={loading}
-            >
-              {status === "Ditolak" ? "Kirim Ulang" : "Daftarkan Akun"}
-            </Button>
+            <div>
+              <Button
+                type="submit"
+                mt="30px"
+                mb="-10"
+                width="100%"
+                height="44px"
+                isLoading={loading}
+                onClick={() => {
+                  if (isFormValid()) {
+                    setIsModal1Open(true);
+                  } else {
+                    toast({
+                      title: "Form belum lengkap!",
+                      description: "Harap isi semua field wajib.",
+                      status: "error",
+                      duration: 3000,
+                      isClosable: true,
+                    });
+                  }
+                }}
+              >
+                {user?.uid ? (
+                  // Jika status sudah "Ditolak" dan pengguna adalah owner
+                  status === "Ditolak" 
+                    ? "Kirim Ulang" 
+                    : owner
+                    ? "Update Inovator" // Jika owner, tombol berubah jadi "Update Inovator"
+                    : "Daftarkan Akun" // Jika bukan owner, tetap "Daftarkan Akun"
+                ) : (
+                  "Daftarkan Akun" // Jika tidak ada user yang terautentikasi, tetap "Daftarkan Akun"
+                )}
+              </Button>
+              <ConfModal
+                isOpen={isModal1Open}
+                onClose={closeModal}
+                modalTitle=""
+                modalBody1={modalBody1} // Mengirimkan teks konten modal
+                onYes={handleModal1Yes}
+              />
+              <SecConfModal
+                isOpen={isModal2Open}
+                onClose={closeModal}
+                modalBody2={modalBody2} // Mengirimkan teks konten modal
+              />
+            </div>
           )}
-        </form>
+        </form >
       </Box>
     </Container>
   );

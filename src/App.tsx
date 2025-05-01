@@ -32,7 +32,14 @@ import Notification from "./pages/notification/Notification";
 import InnovationListPage from "./pages/innovator/detail/ProdukInovasi/InnovationListPage";
 import PengajuanInovasi from "./pages/innovator/profile/pengajuanInovasi/PengajuanInovasi";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
+import BantuanFAQ from "./pages/bantuanFAQ";
 import DesaYangMenerapkan from "./pages/innovation/desaYangMenerapkan";
+import DashboardAdmin from "./pages/admin/dashboard";
+import DashboardAdminDesa from "./pages/admin/dashboard/dashboardDesa";
+import DashboardAdminInovator from "./pages/admin/dashboard/dashboardInovator";
+import DashboardAdminInovasi from "./pages/admin/dashboard/dashboardInovasi";
+import DashboardPerangkatDesa from "./pages/village/dashboard";
+import RekomendasiInovasi from "./pages/village/dashboard/rekomendasiDashboard";
 
 const queryClient = new QueryClient();
 
@@ -178,8 +185,43 @@ const routes = [
     exact: true,
   },
   {
+    path: paths.BANTUAN_FAQ_PAGE,
+    element: <BantuanFAQ />, 
+    exact: true,
+  },
+  {
     path: paths.DESA_YANG_MENERAPKAN_PAGE,
-    element: <DesaYangMenerapkan />, 
+    element: <DesaYangMenerapkan />,
+    exact: true,
+  },
+  {
+    path: paths.ADMIN_DASHBOARD,
+    element: <DashboardAdmin />,
+    exact: true,
+  },
+  {
+    path: paths.ADMIN_DASHBOARD_DESA,
+    element: <DashboardAdminDesa />,
+    exact: true,
+  },
+  {
+    path: paths.ADMIN_DASHBOARD_INOVATOR,
+    element: <DashboardAdminInovator />,
+    exact: true,
+  },
+  {
+    path: paths.ADMIN_DASHBOARD_INOVASI,
+    element: <DashboardAdminInovasi />,
+    exact: true,
+  },
+  {
+    path: paths.VILLAGE_DASHBOARD,
+    element: <DashboardPerangkatDesa />,
+    exact: true,
+  },
+  {
+    path: paths.VILLAGE_RECOMENDATION,
+    element: <RekomendasiInovasi />,
     exact: true,
   },
 ];

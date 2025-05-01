@@ -39,6 +39,7 @@ import { AddIcon } from "@chakra-ui/icons";
 import TopBar from "Components/topBar";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { firestore } from "../../firebase/clientApp";
+import Dashboard from "Components/dashboard/dashboard";
 
 function Home() {
   const navigate = useNavigate();
@@ -172,6 +173,7 @@ function Home() {
 
   return (
     <Container page>
+      <ToastContainer />
       <TopBar title="Desa Digital Indonesia" />
       <Hero description="KMS Desa Digital" text="Indonesia"
         isAdmin={userRole === "Admin"}
@@ -184,6 +186,7 @@ function Home() {
           <Rediness />
           <Ads />
         </Flex>
+        {userRole === "village" && <Dashboard />}
         <BestBanner />
         <Box mt="120px">
           <Innovator />
@@ -224,7 +227,6 @@ function Home() {
           </Button>
         </Tooltip>
       )}
-      <ToastContainer />
     </Container>
   );
 }

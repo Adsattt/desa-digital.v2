@@ -1,5 +1,5 @@
 import { ArrowBackIcon } from "@chakra-ui/icons";
-import { Box, Button, Flex, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Text, IconButton } from "@chakra-ui/react";
 import { paths } from "Consts/path";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -7,14 +7,17 @@ import { auth, firestore } from "../../firebase/clientApp";
 import UserMenu from "./RightContent/UserMenu";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
+import faq from "Assets/icons/faq.svg";
+import { SlidersHorizontal } from "lucide-react";
 
 type TopBarProps = {
   title: string | undefined;
   onBack?: () => void;
+  onFilterClick?: () => void;
 };
 
 function TopBar(props: TopBarProps) {
-  const { title, onBack } = props;
+  const { title, onBack,onFilterClick } = props;
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -26,6 +29,14 @@ function TopBar(props: TopBarProps) {
 
   const isClaimButtonVisible =
     location.pathname.includes("/innovation/detail/") && id;
+
+  // Halaman yang diperbolehkan untuk menampilkan ikon filter
+  const showFilterIcon = [
+    paths.ADMIN_DASHBOARD_DESA,
+    paths.ADMIN_DASHBOARD_INOVASI,
+    paths.ADMIN_DASHBOARD_INOVATOR,
+    paths.ADMIN_DASHBOARD,
+  ].includes(location.pathname);
 
   useEffect(() => {
     const fecthVillage = async () => {
@@ -39,6 +50,7 @@ function TopBar(props: TopBarProps) {
     };
     fecthVillage();
   }, [user]);
+
 
   return (
     <Box
@@ -80,6 +92,7 @@ function TopBar(props: TopBarProps) {
         >
           {title}
         </Text>
+                
         {isClaimButtonVisible && village && (
           <Button
             fontSize="12px"
@@ -97,17 +110,28 @@ function TopBar(props: TopBarProps) {
           (user ? (
             <UserMenu user={user} />
           ) : (
-            <Button
-              fontSize="14px"
-              fontWeight="700"
-              color="white"
-              cursor="pointer"
-              onClick={() => navigate(paths.LOGIN_PAGE)}
-              variant="link"
-              mt="2px"
-            >
-              Login
-            </Button>
+            <Flex gap="1px">
+              <Button
+                as={IconButton}
+                icon={<img src={faq} alt="faq" width="20px" height="20px" />}
+                alignSelf="center"
+                color="white"
+                cursor="pointer"
+                padding={2}
+                onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)} // Arahkan ke halaman Register
+              >
+              </Button>
+              <Button
+                fontSize="14px"
+                fontWeight="700"
+                color= "#FFEB84"
+                cursor="pointer"
+                onClick={() => navigate(paths.LOGIN_PAGE)}
+                variant="link"
+              >
+                Masuk
+              </Button>
+            </Flex>
           ))}
       </Flex>
     </Box>
