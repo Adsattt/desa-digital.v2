@@ -1,30 +1,43 @@
-import { useState, useEffect } from "react";
-import { paths } from "Consts/path";
-import Loading from "Components/loading";
 import Container from "Components/container";
-import { generatePath, useNavigate } from "react-router-dom";
-import { MenuContainer, GridContainer, GridItem } from "./_menuStyle";
+import { paths } from "Consts/path";
+import { useEffect, useState } from "react";
 import { useQuery } from "react-query";
+import { generatePath, useNavigate } from "react-router-dom";
 import { getCategories } from "Services/categoryServices";
+import { GridContainer, GridItem, MenuContainer } from "./_menuStyle";
 
-import SmartAgriIcon from "@public/icons/smart-agri.svg";
 import AgriFoodIcon from "@public/icons/agri-food.svg";
 import EGovernmentIcon from "@public/icons/e-government.svg";
 import InformationSystemIcon from "@public/icons/information-system.svg";
 import LocalInfrastructureIcon from "@public/icons/local-infrastructure.svg";
 import MenuAllIcon from "@public/icons/menu-all.svg";
+import SmartAgriIcon from "@public/icons/smart-agri.svg";
 
+import PembuatanIklanIcon from "@public/icons/pembuatan-innovasi.svg";
 import VerifDesaIcon from "@public/icons/verifikasi-desa.svg";
 import VerifInnovatorIcon from "@public/icons/verifikasi-innovator.svg";
 import VerifKlaimIcon from "@public/icons/verifikasi-klaim.svg";
 import VerifTambahInnovasiIcon from "@public/icons/verifikasi-tambah-innovasi.svg";
-import PembuatanIklanIcon from "@public/icons/pembuatan-innovasi.svg";
 
+import { Box, Image, Spinner, Text } from "@chakra-ui/react";
 import React from "react";
-import { Image, Text } from "@chakra-ui/react";
 
 type MenuProps = {
   isAdmin?: boolean;
+};
+
+const LoadingSpinner = () => {
+  return (
+    <Box style={{ display: "flex", justifyContent: "center", padding: "16px" }}>
+      <Spinner
+        thickness="4px"
+        speed="0.65s"
+        emptyColor="gray.200"
+        size="lg"
+        color="#347357"
+      />
+    </Box>
+  );
 };
 
 const Menu: React.FC<MenuProps> = ({ isAdmin = false }) => {
@@ -120,7 +133,7 @@ const Menu: React.FC<MenuProps> = ({ isAdmin = false }) => {
   return (
     <Container>
       <MenuContainer>
-        {isLoading && <Loading />}
+        {isLoading && <LoadingSpinner />}
         {!isAdmin && !isLoading && (
           <Text
             textAlign="center"
@@ -135,26 +148,31 @@ const Menu: React.FC<MenuProps> = ({ isAdmin = false }) => {
         )}
         {isFetched && (
           <GridContainer>
-            {menu?.map(({ icon, title }: { icon: string | JSX.Element; title: string }, idx: number) => (
-              <GridItem key={idx} onClick={() => onClick(title)}>
-                {typeof icon === "string" ? (
-                  <Image src={icon} alt={title} width={10} height={10} />
-                ) : (
-                  icon
-                )}
-                <Text
-                  fontSize="12px"
-                  fontWeight="400"
-                  lineHeight="140%"
-                  textAlign="center"
-                  mt="8px"
-                  width="90px"
-                  height="auto"
-                >
-                  {title}
-                </Text>
-              </GridItem>
-            ))}
+            {menu?.map(
+              (
+                { icon, title }: { icon: string | JSX.Element; title: string },
+                idx: number
+              ) => (
+                <GridItem key={idx} onClick={() => onClick(title)}>
+                  {typeof icon === "string" ? (
+                    <Image src={icon} alt={title} width={10} height={10} />
+                  ) : (
+                    icon
+                  )}
+                  <Text
+                    fontSize="12px"
+                    fontWeight="400"
+                    lineHeight="140%"
+                    textAlign="center"
+                    mt="8px"
+                    width="90px"
+                    height="auto"
+                  >
+                    {title}
+                  </Text>
+                </GridItem>
+              )
+            )}
           </GridContainer>
         )}
       </MenuContainer>

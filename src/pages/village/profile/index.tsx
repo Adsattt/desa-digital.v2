@@ -209,11 +209,12 @@ const toEditVillage = () => {
         <ContentContainer>
           <Flex flexDirection="column" alignItems="flex-end" mb={owner ? 0 : 4}>
             {owner && (
-              <Button size="xs" onClick={() => navigate("/PengajuanKlaim")}>
+              <Button size="xs" onClick={() => navigate(paths.PENGAJUAN_KLAIM_PAGE)}>
                 <Icon src={Send} alt="send" />
                 Pengajuan Klaim
               </Button>
             )}
+            
           </Flex>
 
           <Title> {village?.namaDesa} </Title>

@@ -12,6 +12,10 @@ export const paths = {
   ADMIN_PAGE: "/admin",
   VERIFICATION_PAGE: "/admin/verification/:category",
   MAKE_ADS: "/admin/ads/make",
+  ADMIN_DASHBOARD:"/admin/dashboard",
+  ADMIN_DASHBOARD_DESA: "/admin/dashboard-desa",
+  ADMIN_DASHBOARD_INOVASI: "/admin/dashboard-inovasi",
+  ADMIN_DASHBOARD_INOVATOR: "/admin/dashboard-inovator",
 
   // ! village
   VILLAGE_PAGE: "/village",
@@ -20,6 +24,8 @@ export const paths = {
   VILLAGE_PROFILE_PAGE: "/village/profile/:id",
   KLAIM_INOVASI_PAGE: "/village/klaimInovasi/:id",
   PENGAJUAN_KLAIM_PAGE: "/village/pengajuanKlaim",
+  VILLAGE_DASHBOARD: "/village/dashboard",
+  VILLAGE_RECOMENDATION: "/village/dashboard/rekomendasi",
 
   // ! innovator
   INNOVATOR_PAGE: "/innovator",

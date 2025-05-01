@@ -21,7 +21,9 @@ function Detail() {
   const { category } = useParams();
 
   const [data, setData] = useState<DocumentData[]>([]);
-  const [innovators, setInnovators] = useState<Record<string, DocumentData>>({});
+  const [innovators, setInnovators] = useState<Record<string, DocumentData>>(
+    {}
+  );
   const [loadingInnovators, setLoadingInnovators] = useState<boolean>(true);
 
   useEffect(() => {
@@ -41,7 +43,10 @@ function Detail() {
       const innovatorData: Record<string, DocumentData> = {};
       for (const item of data) {
         if (item.innovatorId) {
-          const detailInnovator = await getDocumentById("innovators", item.innovatorId);
+          const detailInnovator = await getDocumentById(
+            "innovators",
+            item.innovatorId
+          );
           innovatorData[item.innovatorId] = detailInnovator;
         }
       }
@@ -67,10 +72,20 @@ function Detail() {
           key={idx}
           {...item}
           innovatorLogo={
-            loadingInnovators ? <Skeleton circle width={50} height={50} /> : (innovators[item.innovatorId]?.logo || <img src="path/to/placeholder-image.png" alt="Placeholder" />)
+            loadingInnovators ? (
+              <Skeleton circle width={50} height={50} />
+            ) : (
+              innovators[item.innovatorId]?.logo || (
+                <img src="path/to/placeholder-image.png" alt="Placeholder" />
+              )
+            )
           }
           innovatorName={
-            loadingInnovators ? <Skeleton width={100} /> : (innovators[item.innovatorId]?.namaInovator || "Unknown Innovator")
+            loadingInnovators ? (
+              <Skeleton width={100} />
+            ) : (
+              innovators[item.innovatorId]?.namaInovator || "Unknown Innovator"
+            )
           }
           onClick={() =>
             navigate(
@@ -111,7 +126,7 @@ function List(props: ListProps) {
 
   return (
     <React.Fragment>
-      {isLoading && <Loading fullHeight />}
+      {isLoading && <Loading />}
       {isFetched &&
         menu.map((item: any, idx: number) => (
           <CardCategory

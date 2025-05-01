@@ -85,6 +85,14 @@ const ProfileInnovator: React.FC = () => {
     navigate(paths.INNOVATOR_FORM);
   }
 
+  const toPengajuanInovasi = () => {
+    navigate(paths.PENGAJUAN_INOVASI_PAGE);
+  };
+
+  const toEditInovator = () => {
+    navigate(paths.INNOVATOR_FORM);
+  }
+
   const handleReject = async () => {
     setLoading(true);
     try {
@@ -214,7 +222,7 @@ const ProfileInnovator: React.FC = () => {
             {owner && (
               <Button
               leftIcon={<Image src={Send} alt="send" />}
-              onClick={toPengajuanInovasi}
+              onClick={() => navigate(paths.PENGAJUAN_INOVASI_PAGE)}
               fontSize="12px"
               fontWeight="500"
               height="29px"

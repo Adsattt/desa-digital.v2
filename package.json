@@ -7,7 +7,8 @@
     "dev": "concurrently \"vite --port 3000\" \"json-server --watch ./api/db.json --port 3001\"",
     "build": "tsc && vite build",
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "emulator": "firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.1.1",
@@ -23,11 +24,14 @@
     "firebase": "^10.8.1",
 
     "json-server": "^0.17.4",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.477.0",
     "react": "^18.3.1",
     "react-dom": "^18.2.0",
     "react-firebase-hooks": "^5.1.1",
-    "react-hook-form": "^7.54.2",
+    "react-hook-form": "^7.55.0",
     "react-icons": "^5.2.1",
+    "react-leaflet": "^4.2.1",
     "react-loading-skeleton": "^3.4.0",
     "react-query": "^3.39.3",
     "react-router-dom": "^6.11.2",
@@ -35,13 +39,16 @@
     "react-slick": "^0.30.2",
     "react-toastify": "^9.1.3",
     "react-use": "^17.4.0",
+    "recharts": "^2.15.1",
     "select": "^1.1.2",
     "slick-carousel": "^1.8.1",
     "styled-components": "^5.3.11",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@types/json-server": "^0.14.4",
+    "@types/leaflet": "^1.9.16",
     "@types/react": "^18.0.28",
     "@types/react-dom": "^18.0.11",
     "@types/react-slick": "^0.23.13",

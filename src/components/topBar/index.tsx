@@ -8,14 +8,16 @@ import UserMenu from "./RightContent/UserMenu";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import faq from "Assets/icons/faq.svg";
+import { SlidersHorizontal } from "lucide-react";
 
 type TopBarProps = {
   title: string | undefined;
   onBack?: () => void;
+  onFilterClick?: () => void;
 };
 
 function TopBar(props: TopBarProps) {
-  const { title, onBack } = props;
+  const { title, onBack,onFilterClick } = props;
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -27,6 +29,14 @@ function TopBar(props: TopBarProps) {
 
   const isClaimButtonVisible =
     location.pathname.includes("/innovation/detail/") && id;
+
+  // Halaman yang diperbolehkan untuk menampilkan ikon filter
+  const showFilterIcon = [
+    paths.ADMIN_DASHBOARD_DESA,
+    paths.ADMIN_DASHBOARD_INOVASI,
+    paths.ADMIN_DASHBOARD_INOVATOR,
+    paths.ADMIN_DASHBOARD,
+  ].includes(location.pathname);
 
   useEffect(() => {
     const fecthVillage = async () => {
@@ -40,6 +50,7 @@ function TopBar(props: TopBarProps) {
     };
     fecthVillage();
   }, [user]);
+
 
   return (
     <Box
@@ -81,6 +92,7 @@ function TopBar(props: TopBarProps) {
         >
           {title}
         </Text>
+                
         {isClaimButtonVisible && village && (
           <Button
             fontSize="12px"

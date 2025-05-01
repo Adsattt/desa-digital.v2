@@ -1,22 +1,58 @@
-import { Button, Flex, Text } from "@chakra-ui/react";
-import React from "react";
-import Video from "Assets/icons/video-camera.svg";
+import { Button, Flex, Spinner, Text } from "@chakra-ui/react";
+import React, { useState } from "react";
 import { DeleteIcon } from "@chakra-ui/icons";
+import Video from "Assets/icons/video-camera.svg";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { storage } from "../../firebase/clientApp";
 
 
 type VidUploadProps = {
-    selectedVid: string;
+    selectedVid: string; // Menyimpan URL video
     setSelectedVid: (value: string) => void;
     selectVidRef: React.RefObject<HTMLInputElement>;
-    onSelectVid: (event: React.ChangeEvent<HTMLInputElement>) => void;
-};
-
-const VidUpload: React.FC<VidUploadProps> = ({
+    onSelectVid?: (event: React.ChangeEvent<HTMLInputElement>) => void; 
+  };
+  
+  const VidUpload: React.FC<VidUploadProps> = ({
     selectedVid,
     setSelectedVid,
     selectVidRef,
-    onSelectVid,
-}) => {
+  }) => {
+    const [uploading, setUploading] = useState(false);
+
+    const handleSelectVid = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+    
+        setUploading(true);
+    
+        try {
+          const storageRef = ref(storage, `videos/${file.name}`);
+          const uploadTask = uploadBytesResumable(storageRef, file);
+    
+          uploadTask.on(
+            "state_changed",
+            null,
+            (error) => {
+              console.error("Upload failed", error);
+              setUploading(false);
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              setSelectedVid(downloadURL);
+              setUploading(false);
+            }
+          );
+        } catch (error) {
+          console.error("Error uploading video:", error);
+          setUploading(false);
+        }
+      };
+    
+      const handleDeleteVid = () => {
+        setSelectedVid("");
+      };
+    
     return (
         <Flex justifyContent="space-between" >
             {selectedVid ? (
@@ -47,7 +83,7 @@ const VidUpload: React.FC<VidUploadProps> = ({
                             textOverflow="ellipsis" /* Tambahkan ellipsis untuk teks terpotong */
                             overflow="hidden"
                         >
-                            {selectedVid}
+                            {decodeURIComponent(selectedVid.split("/").pop() || "Video")}
                         </Text>
 
                     </Flex>
@@ -58,7 +94,7 @@ const VidUpload: React.FC<VidUploadProps> = ({
                         height="32px"
                         variant="solid"
                         size="md"
-                        onClick={() => setSelectedVid("")}
+                        onClick={handleDeleteVid}
                     >
                         <DeleteIcon />
                     </Button>
@@ -79,6 +115,7 @@ const VidUpload: React.FC<VidUploadProps> = ({
                     onClick={() => selectVidRef.current?.click()}
                     fontSize="10pt" color="#347357" fontWeight="400"
                     justifyContent="left"
+                    isDisabled={uploading}
                 >
                     Pilih Video
                     <input
@@ -87,7 +124,7 @@ const VidUpload: React.FC<VidUploadProps> = ({
                         hidden
                         accept="video/mp4"
                         ref={selectVidRef}
-                        onChange={onSelectVid}
+                        onChange={handleSelectVid}
                     />
                 </Button>
             )}

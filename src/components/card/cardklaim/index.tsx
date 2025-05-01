@@ -11,7 +11,7 @@ import { Flex } from "@chakra-ui/react";
 type CardKlaimProps = {
     description: string;
     title: string;
-    date: number
+    date: string;
     onClick?:() => void
     klaimbadge:  'menunggu' | 'terverifikasi' | 'ditolak'; 
 };

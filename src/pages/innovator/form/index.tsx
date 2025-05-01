@@ -31,6 +31,8 @@ import ReactSelect from "react-select";
 import HeaderUpload from "../../../components/form/HeaderUpload";
 import LogoUpload from "../../../components/form/LogoUpload";
 import { auth, firestore, storage } from "../../../firebase/clientApp";
+import ConfModal from "../../../components/confirmModal/confModal";
+import SecConfModal from "../../../components/confirmModal/secConfModal";
 
 const categories = [
   "Agribisnis",
@@ -83,6 +85,33 @@ const InnovatorForm: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState(
     "Profil masih kosong. Silahkan isi data di bawah terlebih dahulu"
   );
+  const modalBody1 = "Apakah anda yakin ingin mendaftarkan profil?"; // Konten Modal
+  const modalBody2 = "Profil sudah didaftarkan. Admin sedang memverifikasi pengajuan daftar profil"; // Konten Modal
+
+  const [isModal1Open, setIsModal1Open] = useState(false);
+  const [isModal2Open, setIsModal2Open] = useState(false);
+  const closeModal = () => {
+    setIsModal1Open(false);
+    setIsModal2Open(false);
+  };
+
+  const handleModal1Yes = () => {
+    setIsModal2Open(true);
+    setIsModal1Open(false); // Tutup modal pertama
+    // Di sini tidak membuka modal kedua
+  };
+
+  const isFormValid = () => {
+    return (
+      selectedCategory !== null &&
+      selectedLogo !== null &&
+      textInputsValue.name.trim() !== "" &&
+      textInputsValue.description.trim() !== "" &&
+      textInputsValue.whatsapp.trim() !== "" &&
+      textInputsValue.website.trim() !== "" &&
+      textInputsValue.instagram.trim() !== ""
+    );
+  };
 
   const categoryOptions = categories.map((category) => ({
     label: category, // Label yang ditampilkan pada dropdown
@@ -569,25 +598,52 @@ const InnovatorForm: React.FC = () => {
             </Text>
           )}
           {status !== "Menunggu" && (
-            <Button
-              type="submit"
-              mt="30px"
-              mb="-10"
-              width="100%"
-              height="44px"
-              isLoading={loading}
-            >
-              {user?.uid ? (
-                // Jika status sudah "Ditolak" dan pengguna adalah owner
-                status === "Ditolak" 
-                  ? "Kirim Ulang" 
-                  : owner
-                  ? "Update Inovator" // Jika owner, tombol berubah jadi "Update Inovator"
-                  : "Daftarkan Akun" // Jika bukan owner, tetap "Daftarkan Akun"
-              ) : (
-                "Daftarkan Akun" // Jika tidak ada user yang terautentikasi, tetap "Daftarkan Akun"
-              )}
-            </Button>
+            <div>
+              <Button
+                type="submit"
+                mt="30px"
+                mb="-10"
+                width="100%"
+                height="44px"
+                isLoading={loading}
+                onClick={() => {
+                  if (isFormValid()) {
+                    setIsModal1Open(true);
+                  } else {
+                    toast({
+                      title: "Form belum lengkap!",
+                      description: "Harap isi semua field wajib.",
+                      status: "error",
+                      duration: 3000,
+                      isClosable: true,
+                    });
+                  }
+                }}
+              >
+                {user?.uid ? (
+                  // Jika status sudah "Ditolak" dan pengguna adalah owner
+                  status === "Ditolak" 
+                    ? "Kirim Ulang" 
+                    : owner
+                    ? "Update Inovator" // Jika owner, tombol berubah jadi "Update Inovator"
+                    : "Daftarkan Akun" // Jika bukan owner, tetap "Daftarkan Akun"
+                ) : (
+                  "Daftarkan Akun" // Jika tidak ada user yang terautentikasi, tetap "Daftarkan Akun"
+                )}
+              </Button>
+              <ConfModal
+                isOpen={isModal1Open}
+                onClose={closeModal}
+                modalTitle=""
+                modalBody1={modalBody1} // Mengirimkan teks konten modal
+                onYes={handleModal1Yes}
+              />
+              <SecConfModal
+                isOpen={isModal2Open}
+                onClose={closeModal}
+                modalBody2={modalBody2} // Mengirimkan teks konten modal
+              />
+            </div>
           )}
         </form >
       </Box>

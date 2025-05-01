@@ -6,7 +6,10 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import ConfModal from "../../../components/confirmModal/confModal";
 import SecConfModal from "../../../components/confirmModal/secConfModal";
 import ImageUpload from "../../../components/form/ImageUpload";
+import DocUpload from "../../../components/form/DocUpload";
+import VidUpload from "../../../components/form/VideoUpload";
 import { auth, firestore, storage } from "../../../firebase/clientApp";
+import { useToast } from "@chakra-ui/react";
 
 import { Box, Flex } from "@chakra-ui/react";
 import {
@@ -43,6 +46,7 @@ const KlaimInovasi: React.FC = () => {
   const modalBody1 = "Apakah Anda yakin ingin mengajukan klaim?"; // Konten Modal
   const modalBody2 =
     "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan klaim inovasi. Silahkan cek pada halaman pengajuan klaim"; // Konten Modal
+  const toast = useToast();
 
   const handleCheckboxChange = (checkbox: string) => {
     if (selectedCheckboxes.includes(checkbox)) {
@@ -56,6 +60,54 @@ const KlaimInovasi: React.FC = () => {
     }
   };
 
+  const handleAjukanKlaim = () => {
+    if (selectedCheckboxes.length === 0) {
+      toast({
+        title: "Jenis Bukti Wajib Dipilih",
+        description: "Pilih minimal satu jenis bukti klaim sebelum melanjutkan.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          maxWidth: "320px",
+          margin: "0 auto",
+        },
+      });
+      return;
+    }
+  
+    // Validasi upload file sesuai yang dicentang
+    let isValid = true;
+    if (selectedCheckboxes.includes("foto") && selectedFiles.length === 0) {
+      isValid = false;
+    }
+    if (selectedCheckboxes.includes("video") && selectedVid === "") {
+      isValid = false;
+    }
+    if (selectedCheckboxes.includes("dokumen") && selectedDoc.length === 0) {
+      isValid = false;
+    }
+  
+    if (!isValid) {
+      toast({
+        title: "Upload Bukti Wajib",
+        description: "Upload minimal satu file untuk setiap jenis bukti yang dipilih.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+        containerStyle: {
+          maxWidth: "320px",
+          margin: "0 auto",
+        },
+      });
+      return;
+    }
+  
+    // Kalau semua valid ➔ buka modal konfirmasi
+    setIsModal1Open(true);
+  };  
 
   const onSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -120,6 +172,11 @@ const KlaimInovasi: React.FC = () => {
       setLoading(false);
       return;
     }
+    if (selectedCheckboxes.length === 0) {
+      setError("Minimal pilih 1 jenis bukti klaim (Foto, Video, atau Dokumen)");
+      setLoading(false);
+      return;
+    }  
     try {
       const userId = user.uid;
       const docRef = doc(firestore, "claimInnovations", userId);
@@ -281,7 +338,7 @@ const KlaimInovasi: React.FC = () => {
             </Field>
           </Collapse>
 
-          {/* <Collapse in={selectedCheckboxes.includes("video")} animateOpacity>
+          <Collapse in={selectedCheckboxes.includes("video")} animateOpacity>
             <Field>
               <Flex flexDirection="column" gap="2px">
                 <Text1>
@@ -297,9 +354,9 @@ const KlaimInovasi: React.FC = () => {
                 onSelectVid={onSelectVid}
               />
             </Field>
-          </Collapse> */}
+          </Collapse>
 
-          {/* <Collapse in={selectedCheckboxes.includes("dokumen")} animateOpacity>
+          <Collapse in={selectedCheckboxes.includes("dokumen")} animateOpacity>
             <Field>
               <Flex flexDirection="column" gap="2px">
                 <Text1>
@@ -312,14 +369,15 @@ const KlaimInovasi: React.FC = () => {
                 selectedDoc={selectedDoc}
                 setSelectedDoc={setSelectedDoc}
                 selectDocRef={selectedDocRef}
-                onSelectDoc={onSelectDoc}
+                onSelectDoc={onSelectDoc} // Ensure this matches the updated DocUploadProps
               />
             </Field>
-          </Collapse> */}
+          </Collapse>
+
         </Container>
         <div>
           <NavbarButton>
-            <Button size="m" fullWidth onClick={() => setIsModal1Open(true)}>
+            <Button size="m" fullWidth onClick={handleAjukanKlaim}>
               Ajukan Klaim
             </Button>
           </NavbarButton>
