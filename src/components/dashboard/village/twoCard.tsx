@@ -19,9 +19,10 @@ import { getAuth } from "firebase/auth";
 
 interface CardItemProps {
   icon: React.ReactNode;
-  mainText: string;
+  mainText: React.ReactNode; // Ubah dari string ke React.ReactNode
   subText: string;
   label: string;
+  mainTextSize?: string;
 }
 
 const CardItem: React.FC<CardItemProps> = ({
@@ -48,9 +49,7 @@ const CardItem: React.FC<CardItemProps> = ({
       maxW="150px"
     >
       <Flex justify="space-between" align="center">
-        <Text fontSize="23px" fontWeight="bold">
-          {mainText}
-        </Text>
+        <Box>{mainText}</Box>
         <Box
           bg={iconBg}
           w={9}
@@ -74,8 +73,8 @@ const CardItem: React.FC<CardItemProps> = ({
 };
 
 const TwoCard: React.FC = () => {
-  const [totalInovasi, setTotalInovasi] = useState("0/0");
-  const [totalInovator, setTotalInovator] = useState("0/0");
+  const [totalInovasi, setTotalInovasi] = useState({ desa: 0, total: 0 });
+  const [totalInovator, setTotalInovator] = useState({ desa: 0, total: 0 });
   const [userDesa, setUserDesa] = useState("Desa");
 
   useEffect(() => {
@@ -105,7 +104,6 @@ const TwoCard: React.FC = () => {
           setUserDesa("Desa Tidak Diketahui");
         }
 
-        // Ambil semua inovasi
         const inovasiSnap = await getDocs(collection(db, "innovations"));
         const totalAllInovasi = inovasiSnap.size;
 
@@ -117,9 +115,11 @@ const TwoCard: React.FC = () => {
             );
         });
 
-        setTotalInovasi(`${desaInovasi.length}/${totalAllInovasi}`);
+        setTotalInovasi({
+          desa: desaInovasi.length,
+          total: totalAllInovasi,
+        });
 
-        // Ambil semua inovator
         const innovatorSnap = await getDocs(collection(db, "innovators"));
         const totalAllInnovators = innovatorSnap.size;
 
@@ -127,8 +127,10 @@ const TwoCard: React.FC = () => {
           desaInovasi.map((doc) => doc.data().innovatorId)
         );
 
-        setTotalInovator(`${innovatorIds.size}/${totalAllInnovators}`);
-
+        setTotalInovator({
+          desa: innovatorIds.size,
+          total: totalAllInnovators,
+        });
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -137,17 +139,28 @@ const TwoCard: React.FC = () => {
     fetchData();
   }, []);
 
+  const formatStyledText = (x: number, y: number) => (
+    <Text as="span" display="flex" alignItems="baseline" fontWeight="bold">
+      <Text as="span" fontSize="35px">
+        {x}
+      </Text>
+      <Text as="span" fontSize="16px" ml={0.5} fontWeight="normal">
+        /{y}
+      </Text>
+    </Text>
+  );
+
   return (
     <Flex direction={{ base: "column", md: "row" }} gap={2}>
       <CardItem
         icon={<Image src={InnovationActive} alt="Innovation Icon" w={5} h={5} />}
-        mainText={totalInovasi}
+        mainText={formatStyledText(totalInovasi.desa, totalInovasi.total)}
         label="Inovasi"
         subText={`Telah diterapkan oleh ${userDesa}`}
       />
       <CardItem
         icon={<FaUsers size={20} color="#347357" />}
-        mainText={totalInovator}
+        mainText={formatStyledText(totalInovator.desa, totalInovator.total)}
         label="Inovator"
         subText={`Telah memberikan inovasi untuk ${userDesa}`}
       />
