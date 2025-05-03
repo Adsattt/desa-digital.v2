@@ -162,7 +162,10 @@ const Top5InovatorVillage: React.FC = () => {
 
     // State untuk data inovator
     const [inovatorData, setInovatorData] = useState<
-        { no: number; namaInovator: string; jumlahInovasi: number; jumlahDesaDampingan: number }[]
+        {
+            namaDesaDampingan: any;
+            namaInovasi: any; no: number; namaInovator: string; jumlahInovasi: number; jumlahDesaDampingan: number 
+}[]
     >([]);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -231,7 +234,9 @@ const Top5InovatorVillage: React.FC = () => {
 
                         return {
                             namaInovator: data.namaInovator ? limitWords(data.namaInovator) : "Tidak Ada Nama",
+                            namaInovasi: data.Inovasi,
                             jumlahInovasi: stats.jumlahInovasi,
+                            namaDesaDampingan: data.DesaDampingan,
                             jumlahDesaDampingan: data.jumlahDesaDampingan || 0,
                         };
                     })
@@ -280,7 +285,7 @@ const Top5InovatorVillage: React.FC = () => {
                 <Text fontSize="m" fontWeight="bold" color="gray.800">
                     Top 5 Inovator Terbaik
                 </Text>
-                <Button
+                {/* <Button
                     size="sm"
                     bg="white"
                     boxShadow="md"
@@ -295,7 +300,7 @@ const Top5InovatorVillage: React.FC = () => {
                     cursor="pointer"
                     onClick={handleDownload}
                 ><DownloadIcon boxSize={3} color="black" />
-                </Button>
+                </Button> */}
             </Flex>
 
             <Box

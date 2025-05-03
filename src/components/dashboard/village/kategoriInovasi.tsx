@@ -184,7 +184,7 @@ const KategoriInovasiDesa: React.FC = () => {
                 <Text fontSize="sm" fontWeight="bold" color="gray.800">
                     Kategori Inovasi yang Diterapkan
                 </Text>
-                <Button
+                {/* <Button
                     size="sm"
                     bg="white"
                     boxShadow="md"
@@ -199,7 +199,7 @@ const KategoriInovasiDesa: React.FC = () => {
                     cursor="pointer"
                     onClick={handleDownload}
                 ><DownloadIcon boxSize={3} color="black" />
-                </Button>
+                </Button> */}
             </Flex>
 
             {/* 🔹 Chart */}
