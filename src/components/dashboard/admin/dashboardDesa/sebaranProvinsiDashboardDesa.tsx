@@ -175,7 +175,7 @@ const SebaranDesaDashboard: React.FC = () => {
                     Sebaran Desa Digital
                 </Text>
                 <Flex gap={2}>
-                    <Button
+                    {/* <Button
                         size="sm"
                         bg="white"
                         boxShadow="md"
@@ -190,7 +190,7 @@ const SebaranDesaDashboard: React.FC = () => {
                         onClick={handleDownloadExcel}
                     >
                         <DownloadIcon boxSize={3} color="black" />
-                    </Button>
+                    </Button> */}
                     <Button
                         size="sm"
                         bg="white"

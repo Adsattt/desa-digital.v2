@@ -143,7 +143,7 @@ import {
           <Text fontSize="m" fontWeight="bold">
             Informasi Umum
           </Text>
-          <Button
+          {/* <Button
             size="sm"
             bg="white"
             boxShadow="md"
@@ -158,7 +158,7 @@ import {
             onClick={handleDownload}
           >
             <DownloadIcon boxSize={3} color="black" />
-          </Button>
+          </Button> */}
         </Flex>
   
         <InfoCard

@@ -19,7 +19,7 @@ import PerkembanganInovasiDesa from "Components/dashboard/village/perkembanganIn
 import KategoriInovasiDesa from "Components/dashboard/village/kategoriInovasi";
 import Top5InovatorVillage from "Components/dashboard/village/top5Inovator2";
 import TwoCard from "Components/dashboard/village/twoCard";
-import DownloadReport, { InovatorReportData } from "Components/dashboard/village/downloadReport";
+import DownloadReport from "Components/dashboard/village/downloadreport";
 
 
 const DashboardPerangkatDesa: React.FC = () => {
@@ -61,27 +61,12 @@ const DashboardPerangkatDesa: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  const dummyReportData: InovatorReportData[] = [
-    {
-      no: 1,
-      namaInovator: "Budi",
-      jumlahInovasi: 4,
-      jumlahDesaDampingan: 3,
-    },
-    {
-      no: 2,
-      namaInovator: "Sari",
-      jumlahInovasi: 2,
-      jumlahDesaDampingan: 1,
-    },
-  ];
-
   return (
     <Box>
       <TopBar
         title="Dashboard"
         onBack={() => navigate(-1)}
-        rightElement={<DownloadReport data={dummyReportData} />}
+        rightElement={<DownloadReport />}
       />
 
       <Stack gap="16px" paddingTop="55px" />

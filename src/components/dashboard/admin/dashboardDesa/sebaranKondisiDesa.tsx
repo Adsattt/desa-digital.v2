@@ -214,7 +214,7 @@ const SebaranKondisiDesa: React.FC = () => {
           Sebaran Kondisi Desa
         </Text>
         <Flex gap={2}>
-          <Button
+          {/* <Button
             size="sm"
             bg="white"
             boxShadow="md"
@@ -226,7 +226,7 @@ const SebaranKondisiDesa: React.FC = () => {
             onClick={handleDownloadExcel}
           >
             <DownloadIcon boxSize={3} color="black" />
-          </Button>
+          </Button> */}
           <Button
             size="sm"
             bg="white"

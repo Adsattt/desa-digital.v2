@@ -147,7 +147,7 @@ const SebaranPotensiDesa: React.FC = () => {
                 <Text fontSize="sm" fontWeight="bold" color="gray.800">
                     Sebaran Potensi Desa
                 </Text>
-                <Button
+                {/* <Button
                     size="sm"
                     bg="white"
                     boxShadow="md"
@@ -162,7 +162,7 @@ const SebaranPotensiDesa: React.FC = () => {
                     onClick={handleDownload}
                 >
                     <DownloadIcon boxSize={3} color="black" />
-                </Button>
+                </Button> */}
             </Flex>
 
             {/* 🔹 Chart */}

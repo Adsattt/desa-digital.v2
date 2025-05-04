@@ -114,7 +114,7 @@ import {
           <Text fontSize="sm" fontWeight="bold" color="gray.800">
             Top 5 Inovasi Terbaik
           </Text>
-          <Button
+          {/* <Button
             size="sm"
             bg="white"
             boxShadow="md"
@@ -129,7 +129,7 @@ import {
             onClick={handleDownload}
           >
             <DownloadIcon boxSize={3} color="black" />
-          </Button>
+          </Button> */}
         </Flex>
   
         {/* 🔹 Bar Chart */}
