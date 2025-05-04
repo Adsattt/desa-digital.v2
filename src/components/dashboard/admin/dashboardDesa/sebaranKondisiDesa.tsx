@@ -281,7 +281,7 @@ const SebaranKondisiDesa: React.FC = () => {
 
       {/* Table */}
       <Box bg="white" borderRadius="xl" pt={0} pb={3} mx="15px" boxShadow="md" mt={4}>
-        <TableContainer>
+        <TableContainer borderRadius="md">
           <Table variant="simple" size="sm">
             <Thead bg="#C6D8D0">
               <Tr>
