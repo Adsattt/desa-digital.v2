@@ -26,7 +26,7 @@ const ScoreCardDashboardInnovations: React.FC = () => {
       label: "Inovasi",
       value: totalInnovations,
       icon: InnovationActive,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
   ];
 

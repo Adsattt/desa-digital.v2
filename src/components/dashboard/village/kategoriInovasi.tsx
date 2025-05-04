@@ -252,7 +252,7 @@ const KategoriInovasiDesa: React.FC = () => {
                 <TableContainer maxWidth="100%" width="auto" borderRadius="md">
                     <Table variant="simple" size="sm"> {/* Mengurangi ukuran tabel */}
                         {/* Header Tabel */}
-                        <Thead bg="#F0FFF4">
+                        <Thead bg="#C6D8D0">
                             <Tr>
                                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                                 <Th p={1} fontSize="8px" textAlign="center">Kategori Potensi</Th>

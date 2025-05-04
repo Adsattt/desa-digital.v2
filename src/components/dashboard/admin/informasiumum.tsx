@@ -27,7 +27,7 @@ import {
   import { FaUsers } from "react-icons/fa";
   import VillageActive from 'Assets/icons/village-active.svg';
   import UserActive from 'Assets/icons/user-active.svg'
-  import InnovationActive from "Assets/icons/innovation2.svg";
+  import InnovationActive from "Assets/icons/innovation3.svg";
   import { DownloadIcon } from "@chakra-ui/icons";
   import * as XLSX from "xlsx";
   
@@ -200,7 +200,7 @@ import {
         transition="all 0.2s ease-in-out"
         height="100px"
       >
-        <Box bg="green.50" p="8px" borderRadius="full">
+        <Box bg="#C6D8D0" p="8px" borderRadius="full">
           {icon}
         </Box>
         <Box>

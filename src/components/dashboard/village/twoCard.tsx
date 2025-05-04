@@ -7,7 +7,7 @@ import {
   Image,
 } from "@chakra-ui/react";
 import { FaUsers } from "react-icons/fa";
-import InnovationActive from "Assets/icons/innovation2.svg";
+import InnovationActive from "Assets/icons/innovation3.svg";
 import {
   getFirestore,
   collection,
@@ -32,7 +32,7 @@ const CardItem: React.FC<CardItemProps> = ({
   label,
 }) => {
   const cardBg = useColorModeValue("white", "gray.800");
-  const iconBg = useColorModeValue("#F0FFF4", "green.700");
+  const iconBg = useColorModeValue("#C6D8D0", "green.700");
   const textSecondary = useColorModeValue("gray.500", "gray.400");
 
   return (

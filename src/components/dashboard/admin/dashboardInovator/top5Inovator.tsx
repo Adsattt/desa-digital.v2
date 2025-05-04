@@ -195,7 +195,7 @@ import {
         >
           <TableContainer maxWidth="100%" width="auto" borderRadius="md">
             <Table variant="simple" size="sm">
-              <Thead bg="#F0FFF4">
+              <Thead bg="#C6D8D0">
                 <Tr>
                   <Th p={3} fontSize="8px" textAlign="center">No</Th>
                   <Th p={1} fontSize="8px" textAlign="center">Nama Inovator</Th>
