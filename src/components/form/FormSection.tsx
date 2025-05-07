@@ -27,11 +27,11 @@ const FormSection: React.FC<FormSectionProps> = ({
   wordCount,
   maxWords,
   disabled,
-  type,
-  isRequired
+  type = "text",
+  isRequired = false,
 }) => {
   return (
-    <Box>
+    <Box mb={4}>
       <Text fontWeight="400" fontSize="14px" mb="4px">
         {title} {isRequired && <span style={{ color: "red" }}>*</span>}
       </Text>
@@ -51,6 +51,7 @@ const FormSection: React.FC<FormSectionProps> = ({
           value={value}
           onChange={onChange}
           disabled={disabled}
+          isRequired={isRequired}
         />
       ) : (
         <Input
@@ -68,10 +69,11 @@ const FormSection: React.FC<FormSectionProps> = ({
           onChange={onChange}
           type={type}
           disabled={disabled}
+          isRequired={isRequired}
         />
       )}
       {wordCount !== undefined && maxWords !== undefined && (
-        <Text fontWeight="400" fontSize="10px" mb="6px" color="#9CA3AF">
+        <Text fontWeight="400" fontSize="10px" mt="4px" color="#9CA3AF">
           {wordCount}/{maxWords} kata
         </Text>
       )}
