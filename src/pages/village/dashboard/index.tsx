@@ -19,7 +19,7 @@ import PerkembanganInovasiDesa from "Components/dashboard/village/perkembanganIn
 import KategoriInovasiDesa from "Components/dashboard/village/kategoriInovasi";
 import Top5InovatorVillage from "Components/dashboard/village/top5Inovator2";
 import TwoCard from "Components/dashboard/village/twoCard";
-import DownloadReport from "Components/dashboard/village/downloadreport";
+import DownloadReport from "Components/dashboard/village/downloadReport";
 
 
 const DashboardPerangkatDesa: React.FC = () => {
