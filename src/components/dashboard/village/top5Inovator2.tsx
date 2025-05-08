@@ -33,7 +33,7 @@ const CustomTooltip = ({
         return (
             <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
                 <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
-                <p style={{ margin: 0 }}>Total : {data.valueAsli}</p>
+                <p style={{ margin: 0 }}>Total Inovasi: {data.valueAsli}</p>
             </div>
         );
     }

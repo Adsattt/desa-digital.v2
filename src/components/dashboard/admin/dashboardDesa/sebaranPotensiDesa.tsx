@@ -54,6 +54,30 @@ const CustomLabel: React.FC<CustomLabelProps> = ({ x, y, width, value }) => {
     );
 };
 
+// 🔹 Custom Tooltip for "Total Desa"
+const CustomTooltip = ({
+    active,
+    payload,
+    label,
+}: {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+}) => {
+    if (active && payload && payload.length > 0) {
+        const data = payload[0].payload;
+
+        return (
+            <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
+                <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
+                <p style={{ margin: 0 }}>Total Desa: {data.valueAsli}</p> {/* Menampilkan Total Desa */}
+            </div>
+        );
+    }
+
+    return null;
+};
+
 const SebaranPotensiDesa: React.FC = () => {
     const [barData, setBarData] = useState<ChartData[]>([]);
     const [allPotensiData, setAllPotensiData] = useState<Record<string, number>>({});
@@ -181,7 +205,7 @@ const SebaranPotensiDesa: React.FC = () => {
                 <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={barData} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
                         <XAxis dataKey="name" axisLine={false} tickLine={false} hide />
-                        <Tooltip cursor={{ fill: "transparent" }} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
                         <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#1E5631">
                             <LabelList
                                 dataKey="name"
