@@ -1,4 +1,4 @@
-import { Box, Flex, Text, Icon, Link as ChakraLink } from "@chakra-ui/react";
+import { Box, Flex, Text, Link as ChakraLink } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
@@ -13,10 +13,11 @@ type CustomLabelProps = {
     value: string;
 };
 
-interface VillageData {
+interface InnovationData {
     rank: string;
     name: string;
     value: number;
+    valueAsli: number; // Untuk menyimpan jumlah asli klaim inovasi
 }
 
 // 🔹 Custom label untuk Chart
@@ -35,24 +36,47 @@ const CustomLabel: React.FC<CustomLabelProps> = ({ x, y, width, value }) => {
     );
 };
 
+// 🔹 Custom Tooltip untuk menampilkan "Total Klaim Inovasi"
+const CustomTooltip = ({
+    active,
+    payload,
+    label,
+}: {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+}) => {
+    if (active && payload && payload.length > 0) {
+        const data = payload[0].payload; // Mengambil data dari tooltip
+
+        return (
+            <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
+                <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
+                <p style={{ margin: 0 }}>Total Klaim Inovasi: {data.valueAsli}</p> {/* Menampilkan Total Klaim Inovasi */}
+            </div>
+        );
+    }
+
+    return null;
+};
+
 // 🔹 Komponen utama
 const InovasiUnggulan: React.FC = () => {
     const navigate = useNavigate();
-    const [userRole, setUserRole] = useState<string | null>(null); // Perbaikan tipe state
-    const [chartData, setChartData] = useState<VillageData[]>([]);
+    const [chartData, setChartData] = useState<InnovationData[]>([]);
 
     useEffect(() => {
         const fetchTopInnovation = async () => {
             try {
                 const db = getFirestore();
-                const innovationRef = collection(db, "innovations"); // ✅ Ambil dari collection "innovations"
+                const innovationRef = collection(db, "innovations"); // Ambil dari collection "innovations"
                 const snapshot = await getDocs(innovationRef);
 
                 // Ambil data inovasi dan urutkan berdasarkan jumlahDesaKlaim (desc)
                 const innovations = snapshot.docs
                     .map((doc) => ({
-                        name: doc.data().namaInovasi as string, // ✅ Ganti "namaDesa" ke "namaInovasi"
-                        value: doc.data().jumlahDesaKlaim as number || 0, // ✅ Ganti "jumlahInovasi" ke "jumlahDesaKlaim"
+                        name: doc.data().namaInovasi as string, // Ganti "namaDesa" ke "namaInovasi"
+                        value: doc.data().jumlahDesaKlaim as number || 0, // Ganti "jumlahInovasi" ke "jumlahDesaKlaim"
                     }))
                     .sort((a, b) => b.value - a.value) // Urutkan dari terbesar ke terkecil
                     .slice(0, 5); // Ambil top 5 inovasi
@@ -64,6 +88,7 @@ const InovasiUnggulan: React.FC = () => {
                 const rankedInnovations = customOrder.map((index, rankIndex) => ({
                     name: innovations[index]?.name || "",
                     value: customHeights[rankIndex], // dipakai buat chart
+                    valueAsli: innovations[index]?.value || 0, // hanya buat info internal
                     rank: `${["4th", "2nd", "1st", "3rd", "5th"][rankIndex]}`,
                 }));
 
@@ -111,7 +136,7 @@ const InovasiUnggulan: React.FC = () => {
                 <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 0 }}>
                         <XAxis dataKey="name" axisLine={false} tickLine={false} hide />
-                        <Tooltip cursor={{ fill: 'transparent' }} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'transparent' }} />
                         <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#1E5631">
                             <LabelList dataKey="name" position="top" fontSize="10px" formatter={(name: string) => name.replace(/^Desa\s+/i, "")} />
                             <LabelList dataKey="rank" content={<CustomLabel x={0} y={0} width={0} value={""} />} />

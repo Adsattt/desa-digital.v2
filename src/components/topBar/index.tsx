@@ -1,3 +1,4 @@
+// src/components/topBar.tsx
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { Box, Button, Flex, Text, IconButton } from "@chakra-ui/react";
 import { paths } from "Consts/path";
@@ -8,16 +9,16 @@ import UserMenu from "./RightContent/UserMenu";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import faq from "Assets/icons/faq.svg";
-import { SlidersHorizontal } from "lucide-react";
 
 type TopBarProps = {
   title: string | undefined;
   onBack?: () => void;
   onFilterClick?: () => void;
+  rightElement?: React.ReactNode; // ← Tambahkan prop baru
 };
 
 function TopBar(props: TopBarProps) {
-  const { title, onBack,onFilterClick } = props;
+  const { title, onBack, onFilterClick, rightElement } = props;
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
@@ -26,17 +27,8 @@ function TopBar(props: TopBarProps) {
 
   const allowedPaths = [paths.LANDING_PAGE, paths.ADMIN_PAGE];
   const isUserMenuVisible = allowedPaths.includes(location.pathname);
-
   const isClaimButtonVisible =
     location.pathname.includes("/innovation/detail/") && id;
-
-  // Halaman yang diperbolehkan untuk menampilkan ikon filter
-  const showFilterIcon = [
-    paths.ADMIN_DASHBOARD_DESA,
-    paths.ADMIN_DASHBOARD_INOVASI,
-    paths.ADMIN_DASHBOARD_INOVATOR,
-    paths.ADMIN_DASHBOARD,
-  ].includes(location.pathname);
 
   useEffect(() => {
     const fecthVillage = async () => {
@@ -51,7 +43,6 @@ function TopBar(props: TopBarProps) {
     fecthVillage();
   }, [user]);
 
-
   return (
     <Box
       padding="0 16px"
@@ -64,75 +55,72 @@ function TopBar(props: TopBarProps) {
       zIndex="999"
       alignContent="center"
     >
-      <Flex
-        justify={
-          isClaimButtonVisible || isUserMenuVisible
-            ? "space-between"
-            : "flex-start"
-        }
-        align="center"
-      >
-        {!!onBack && (
-          <ArrowBackIcon
+      <Flex justify="space-between" align="center" height="100%">
+        <Flex align="center">
+          {!!onBack && (
+            <ArrowBackIcon
+              color="white"
+              fontSize="14pt"
+              cursor="pointer"
+              onClick={onBack}
+              mt="2px"
+              mr="8px"
+            />
+          )}
+          <Text
+            fontSize={title && title.split(" ").length > 3 ? "14px" : "16px"}
+            fontWeight="700"
             color="white"
-            fontSize="14pt"
-            cursor="pointer"
-            onClick={onBack}
-            mt="2px"
-          />
-        )}
-        <Text
-          fontSize={title && title.split(" ").length > 3 ? "14px" : "16px"}
-          fontWeight="700"
-          color="white"
-          ml={onBack ? "8px" : "0"}
-          lineHeight="56px"
-          flex={1}
-          textAlign="left"
-        >
-          {title}
-        </Text>
-                
-        {isClaimButtonVisible && village && (
-          <Button
-            fontSize="12px"
-            fontWeight="500"
-            variant="inverted"
-            height="32px"
-            _hover={{ bg: "gray.200" }}
-            onClick={() => navigate(`/village/klaimInovasi/${id}`)}
+            lineHeight="56px"
           >
-            Klaim Inovasi
-          </Button>
-        )}
-        {!isClaimButtonVisible &&
-          isUserMenuVisible &&
-          (user ? (
-            <UserMenu user={user} />
-          ) : (
-            <Flex gap="1px">
-              <Button
-                as={IconButton}
-                icon={<img src={faq} alt="faq" width="20px" height="20px" />}
-                alignSelf="center"
-                color="white"
-                cursor="pointer"
-                padding={2}
-                onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)} // Arahkan ke halaman Register
-              >
-              </Button>
-              <Button
-                fontSize="14px"
-                fontWeight="700"
-                color= "#FFEB84"
-                cursor="pointer"
-                onClick={() => navigate(paths.LOGIN_PAGE)}
-                variant="link"
-              >
-                Masuk
-              </Button>
-            </Flex>
-          ))}
+            {title}
+          </Text>
+        </Flex>
+
+        {/* Komponen kanan (Download, dll) */}
+        <Flex align="center" gap={2}>
+          {rightElement}
+
+          {isClaimButtonVisible && village && (
+            <Button
+              fontSize="12px"
+              fontWeight="500"
+              variant="inverted"
+              height="32px"
+              _hover={{ bg: "gray.200" }}
+              onClick={() => navigate(`/village/klaimInovasi/${id}`)}
+            >
+              Klaim Inovasi
+            </Button>
+          )}
+
+          {!isClaimButtonVisible &&
+            isUserMenuVisible &&
+            (user ? (
+              <UserMenu user={user} />
+            ) : (
+              <Flex gap="1px">
+                <Button
+                  as={IconButton}
+                  icon={<img src={faq} alt="faq" width="20px" height="20px" />}
+                  color="white"
+                  cursor="pointer"
+                  padding={2}
+                  onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)}
+                />
+                <Button
+                  fontSize="14px"
+                  fontWeight="700"
+                  color="#FFEB84"
+                  cursor="pointer"
+                  onClick={() => navigate(paths.LOGIN_PAGE)}
+                  variant="link"
+                >
+                  Masuk
+                </Button>
+              </Flex>
+            ))}
+        </Flex>
       </Flex>
     </Box>
   );
