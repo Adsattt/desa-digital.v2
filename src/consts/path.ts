@@ -22,8 +22,9 @@ export const paths = {
   VILLAGE_FORM: "/village/form",
   DETAIL_VILLAGE_PAGE: "/village/detail/:id",
   VILLAGE_PROFILE_PAGE: "/village/profile/:id",
-  KLAIM_INOVASI_PAGE: "/village/klaimInovasi/:id",
-  PENGAJUAN_KLAIM_PAGE: "/village/pengajuanKlaim",
+  KLAIM_INOVASI_PAGE: "/village/klaimInovasi",
+  EDIT_KLAIM_INOVASI_PAGE: "/village/klaimInovasi/detail/:id",
+  PENGAJUAN_KLAIM_PAGE: "/village/pengajuan/:id",
   VILLAGE_DASHBOARD: "/village/dashboard",
   VILLAGE_RECOMENDATION: "/village/dashboard/rekomendasi",
 
