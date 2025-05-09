@@ -4,8 +4,7 @@ import {
   Collapse,
   Flex,
   Text,
-  useDisclosure,
-  useToast,
+  useDisclosure
 } from "@chakra-ui/react";
 import TopBar from "Components/topBar";
 import React, { useEffect, useRef, useState } from "react";
@@ -28,6 +27,10 @@ import {
   Text2,
 } from "./_klaimStyles";
 
+import StatusCard from "Components/card/status/StatusCard";
+import RejectionModal from "Components/confirmModal/RejectionModal";
+import ActionDrawer from "Components/drawer/ActionDrawer";
+import Loading from "Components/loading";
 import {
   addDoc,
   collection,
@@ -39,12 +42,8 @@ import {
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useUser } from "src/contexts/UserContext";
-import Loading from "Components/loading";
-import StatusCard from "Components/card/status/StatusCard";
-import RejectionModal from "Components/confirmModal/RejectionModal";
-import ActionDrawer from "Components/drawer/ActionDrawer";
-import { toast } from "react-toastify"
 
 const KlaimInovasi: React.FC = () => {
   // const navigate = useNavigate();
@@ -63,9 +62,9 @@ const KlaimInovasi: React.FC = () => {
   const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const modalBody1 = "Apakah Anda yakin ingin mengajukan klaim?"; // Konten Modal
+  const modalBody1 = "Apakah Anda yakin ingin mengajukan klaim?"; 
   const modalBody2 =
-    "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan klaim inovasi. Silahkan cek pada halaman pengajuan klaim"; 
+    "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan klaim inovasi. Silahkan cek pada halaman pengajuan klaim";
   const [openModal, setOpenModal] = useState(false);
   const [modalInput, setModalInput] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -228,10 +227,7 @@ const KlaimInovasi: React.FC = () => {
         inovatorId: dataInov?.innovatorId,
         status: "Menunggu",
         catatanAdmin: "",
-        checkboxes: selectedCheckboxes,
         createdAt: serverTimestamp(),
-        catatanAdmin: "",
-        status: "Menunggu",
       });
       console.log("Document written with ID: ", docRef.id);
       if (selectedFiles.length > 0) {
@@ -266,6 +262,24 @@ const KlaimInovasi: React.FC = () => {
         });
         console.log("Video uploaded", downloadURL);
       }
+
+      if (selectedDoc.length > 0) {
+        const storageRef = ref(storage, `claimInnovations/${userId}/docs`);
+        const docUrls: string[] = [];
+        for (let i = 0; i < selectedDoc.length; i++) {
+          const file = selectedDoc[i];
+          const docRef = ref(storageRef, `${Date.now()}_${i}`);
+          const response = await fetch(file);
+          const blob = await response.blob();
+          await uploadBytes(docRef, blob);
+          const downloadURL = await getDownloadURL(docRef);
+          docUrls.push(downloadURL);
+        }
+        await updateDoc(docRef, {
+          dokumen: docUrls,
+        });
+        console.log("Documents uploaded", docUrls);
+      }
       setIsModal1Open(false);
       toast.success("Klaim inovasi berhasil diajukan", {
         position: "top-center",
@@ -283,7 +297,7 @@ const KlaimInovasi: React.FC = () => {
       // setIsModal2Open(true);
       navigate(`/village/pengajuan/${user?.uid}`);
     }
-  };  
+  };
 
   const [isModal1Open, setIsModal1Open] = useState(false);
   const [isModal2Open, setIsModal2Open] = useState(false);
@@ -385,14 +399,12 @@ const KlaimInovasi: React.FC = () => {
       console.log("Claim rejected successfully");
     } catch (error) {
       setError("Failed to reject claim");
-      
     } finally {
       setLoading(false);
       setOpenModal(false);
       onClose();
     }
-  }
-
+  };
 
   if (fetchLoading) {
     return <Loading />;
@@ -512,15 +524,15 @@ const KlaimInovasi: React.FC = () => {
           </Collapse>
         </Container>
         <div>
-          <NavbarButton>
-            {isAdmin ? (
-              claimData.status === "Terverifikasi" ||
-              claimData.status === "Ditolak" ? (
-                <StatusCard
-                  status={claimData.status}
-                  message={claimData.catatanAdmin}
-                />
-              ) : (
+          {isAdmin ? (
+            claimData.status === "Terverifikasi" ||
+            claimData.status === "Ditolak" ? (
+              <StatusCard
+                status={claimData.status}
+                message={claimData.catatanAdmin}
+              />
+            ) : (
+              <NavbarButton>
                 <Button
                   width="100%"
                   isLoading={loading}
@@ -529,8 +541,10 @@ const KlaimInovasi: React.FC = () => {
                 >
                   Verifikasi Permohonan Klaim
                 </Button>
-              )
-            ) : (
+              </NavbarButton>
+            )
+          ) : (
+            <NavbarButton>
               <Button
                 width="100%"
                 isLoading={loading}
@@ -539,8 +553,8 @@ const KlaimInovasi: React.FC = () => {
               >
                 Ajukan Klaim
               </Button>
-            )}
-          </NavbarButton>
+            </NavbarButton>
+          )}
           <ConfModal
             isOpen={isModal1Open}
             onClose={closeModal}

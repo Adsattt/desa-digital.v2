@@ -22,7 +22,7 @@ import Container from "Components/container";
 import { auth, firestore } from "../../../firebase/clientApp";
 import { paths } from "Consts/path";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { collection, getDocs, orderBy, query, startAfter, limit } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, startAfter, limit, where } from "firebase/firestore";
 import CardNotification from "Components/card/notification/CardNotification";
 
 const SkeletonCard = () => (
@@ -73,6 +73,7 @@ const PengajuanKlaim: React.FC = () => {
         if (isNextPage && lastVisible) {
           q = query(
             collection(firestore, "claimInnovations"),
+            where("desaId", "==", user?.uid),
             orderBy("createdAt", "desc"),
             startAfter(lastVisible),
             limit(itemsPerPage)
@@ -80,6 +81,7 @@ const PengajuanKlaim: React.FC = () => {
         } else {
           q = query(
             collection(firestore, "claimInnovations"),
+            where("desaId", "==", user?.uid),
             orderBy("createdAt", "desc"),
             limit(itemsPerPage)
           );
