@@ -1,3 +1,5 @@
+import { DetailContainer } from "src/pages/innovation/_innovationStyle";
+
 export const paths = {
   LANDING_PAGE: "/",
   LOGIN_PAGE: "/login",

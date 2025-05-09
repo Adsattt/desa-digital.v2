@@ -199,8 +199,8 @@ const KlaimInovasi: React.FC = () => {
 
   const submitClaim = async () => {
     setLoading(true);
-    if (!user?.uid) {
-      setError("User not found");
+    if (!user?.uid || !id) {
+      setError("User atau ID inovasi tidak ditemukan");
       setLoading(false);
       return;
     }
@@ -226,6 +226,9 @@ const KlaimInovasi: React.FC = () => {
         jenisDokumen: selectedCheckboxes,
         inovasiId: inovasiId,
         inovatorId: dataInov?.innovatorId,
+        status: "Menunggu",
+        catatanAdmin: "",
+        checkboxes: selectedCheckboxes,
         createdAt: serverTimestamp(),
         catatanAdmin: "",
         status: "Menunggu",
@@ -280,7 +283,7 @@ const KlaimInovasi: React.FC = () => {
       // setIsModal2Open(true);
       navigate(`/village/pengajuan/${user?.uid}`);
     }
-  };
+  };  
 
   const [isModal1Open, setIsModal1Open] = useState(false);
   const [isModal2Open, setIsModal2Open] = useState(false);
