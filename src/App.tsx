@@ -24,7 +24,7 @@ import DashboardAdminInovator from "./pages/admin/dashboard/dashboardInovator";
 import VerificationPage from "./pages/admin/verification/VerificationPage";
 import BantuanFAQ from "./pages/bantuanFAQ";
 import EmailReset from "./pages/emailreset/EmailReset";
-import AddInnovation from "./pages/innovation/add";
+import AddInnovation from "./pages/innovation/Add";
 import DesaYangMenerapkan from "./pages/innovation/desaYangMenerapkan";
 import EditInnovation from "./pages/innovation/edit";
 import InnovationListPage from "./pages/innovator/detail/ProdukInovasi/InnovationListPage";
@@ -41,6 +41,7 @@ import KlaimInovasi from "./pages/village/klaimInovasi";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
 import { Bounce, ToastContainer } from "react-toastify";
+import InovationForm from "./pages/innovation/Add/InovationForm";
 
 const queryClient = new QueryClient();
 
@@ -87,6 +88,14 @@ const routes = [
     element: <AddInnovation />,
   },
   {
+    path: "/innovation/form",
+    element: <InovationForm />
+  }, 
+  {
+    path: "/innovation/form/:id",
+    element: <InovationForm />
+  },
+  {
     path: paths.INNOVATION_CATEGORY_PAGE,
     element: <Innovation />,
   },
@@ -126,6 +135,10 @@ const routes = [
     path: paths.KLAIM_INOVASI_PAGE,
     element: <KlaimInovasi />,
   },
+  {
+    path: paths.EDIT_KLAIM_INOVASI_PAGE,
+    element: <KlaimInovasi />,
+  }, 
   {
     path: paths.NEW_PASSWORD_PAGE,
     element: <NewPassword />,
