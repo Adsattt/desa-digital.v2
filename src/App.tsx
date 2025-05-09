@@ -24,7 +24,7 @@ import DashboardAdminInovator from "./pages/admin/dashboard/dashboardInovator";
 import VerificationPage from "./pages/admin/verification/VerificationPage";
 import BantuanFAQ from "./pages/bantuanFAQ";
 import EmailReset from "./pages/emailreset/EmailReset";
-import AddInnovation from "./pages/innovation/Add";
+import AddInnovation from "./pages/innovation/add/index";
 import DesaYangMenerapkan from "./pages/innovation/desaYangMenerapkan";
 import EditInnovation from "./pages/innovation/edit";
 import InnovationListPage from "./pages/innovator/detail/ProdukInovasi/InnovationListPage";
