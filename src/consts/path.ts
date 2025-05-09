@@ -1,3 +1,5 @@
+import { DetailContainer } from "src/pages/innovation/_innovationStyle";
+
 export const paths = {
   LANDING_PAGE: "/",
   LOGIN_PAGE: "/login",
@@ -24,6 +26,7 @@ export const paths = {
   VILLAGE_PROFILE_PAGE: "/village/profile/:id",
   KLAIM_INOVASI_PAGE: "/village/klaimInovasi/:id",
   PENGAJUAN_KLAIM_PAGE: "/village/pengajuanKlaim",
+  DETAIL_KLAIM_PAGE: "/village/detailKlaim/:id",
   VILLAGE_DASHBOARD: "/village/dashboard",
   VILLAGE_RECOMENDATION: "/village/dashboard/rekomendasi",
 
