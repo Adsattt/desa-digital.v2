@@ -128,7 +128,7 @@ const routes = [
     element: <KlaimInovasi />,
   },
   {
-    path: paths.EDIT_KLAIM_INOVASI_PAGE,
+    path: paths.DETAIL_KLAIM_INOVASI_PAGE,
     element: <KlaimInovasi />,
   }, 
   {

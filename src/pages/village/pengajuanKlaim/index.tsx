@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, generatePath, useParams } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -39,6 +39,7 @@ const SkeletonCard = () => (
 );
 
 const PengajuanKlaim: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   const [data, setData] = useState<any[]>([]);
@@ -199,7 +200,7 @@ const PengajuanKlaim: React.FC = () => {
               status={item.status || "Unknown"}
               date={formatTimestamp(item.createdAt)}
               description={item.deskripsi || "Tidak ada deskripsi"}
-              onClick={() => navigate(paths.DETAIL_KLAIM_PAGE.replace(":id", item.id))}
+              onClick={() => navigate(paths.DETAIL_KLAIM_INOVASI_PAGE.replace(":id", item.id))}
             />
           ))
         )}
