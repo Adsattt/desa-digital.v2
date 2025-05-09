@@ -41,7 +41,6 @@ import KlaimInovasi from "./pages/village/klaimInovasi";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
 import { Bounce, ToastContainer } from "react-toastify";
-import InovationForm from "./pages/innovation/Add/InovationForm";
 
 const queryClient = new QueryClient();
 
@@ -86,14 +85,6 @@ const routes = [
   {
     path: paths.ADD_INNOVATION,
     element: <AddInnovation />,
-  },
-  {
-    path: "/innovation/form",
-    element: <InovationForm />
-  }, 
-  {
-    path: "/innovation/form/:id",
-    element: <InovationForm />
   },
   {
     path: paths.INNOVATION_CATEGORY_PAGE,
