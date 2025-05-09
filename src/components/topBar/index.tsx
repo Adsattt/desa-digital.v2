@@ -1,4 +1,3 @@
-// src/components/topBar.tsx
 import { ArrowBackIcon } from "@chakra-ui/icons";
 import { Box, Button, Flex, Text, IconButton } from "@chakra-ui/react";
 import { paths } from "Consts/path";
@@ -9,6 +8,9 @@ import UserMenu from "./RightContent/UserMenu";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import faq from "Assets/icons/faq.svg";
+import { SlidersHorizontal } from "lucide-react";
+import { useUser } from "src/contexts/UserContext";
+import { toast } from "react-toastify";
 
 type TopBarProps = {
   title: string | undefined;
@@ -24,6 +26,7 @@ function TopBar(props: TopBarProps) {
   const { id } = useParams<{ id: string }>();
   const [user] = useAuthState(auth);
   const [village, setVillage] = useState(false);
+  const { isVillageVerified } = useUser();
 
   const allowedPaths = [paths.LANDING_PAGE, paths.ADMIN_PAGE];
   const isUserMenuVisible = allowedPaths.includes(location.pathname);
@@ -43,6 +46,25 @@ function TopBar(props: TopBarProps) {
     fecthVillage();
   }, [user]);
 
+  const handleClick = () => {
+    if (!isVillageVerified) {
+      toast.warning(
+        "Akun anda belum terdaftar atau terverifikaasi sebagai desa digital",
+        {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+    } else {
+      navigate("/village/klaimInovasi", { state: { id } });
+    }
+  };
+
   return (
     <Box
       padding="0 16px"
@@ -55,29 +77,35 @@ function TopBar(props: TopBarProps) {
       zIndex="999"
       alignContent="center"
     >
-      <Flex justify="space-between" align="center" height="100%">
-        <Flex align="center">
-          {!!onBack && (
-            <ArrowBackIcon
-              color="white"
-              fontSize="14pt"
-              cursor="pointer"
-              onClick={onBack}
-              mt="2px"
-              mr="8px"
-            />
-          )}
-          <Text
-            fontSize={title && title.split(" ").length > 3 ? "14px" : "16px"}
-            fontWeight="700"
+      <Flex
+        justify={
+          isClaimButtonVisible || isUserMenuVisible
+            ? "space-between"
+            : "flex-start"
+        }
+        align="center"
+      >
+        {!!onBack && (
+          <ArrowBackIcon
             color="white"
-            lineHeight="56px"
-          >
-            {title}
-          </Text>
-        </Flex>
+            fontSize="14pt"
+            cursor="pointer"
+            onClick={onBack}
+            mt="2px"
+          />
+        )}
+        <Text
+          fontSize={title && title.split(" ").length > 3 ? "14px" : "16px"}
+          fontWeight="700"
+          color="white"
+          ml={onBack ? "8px" : "0"}
+          lineHeight="56px"
+          flex={1}
+          textAlign="left"
+        >
+          {title}
+        </Text>
 
-        {/* Komponen kanan (Download, dll) */}
         <Flex align="center" gap={2}>
           {rightElement}
 
