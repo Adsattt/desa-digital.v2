@@ -9,34 +9,29 @@ import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import faq from "Assets/icons/faq.svg";
 import { SlidersHorizontal } from "lucide-react";
+import { useUser } from "src/contexts/UserContext";
+import { toast } from "react-toastify";
 
 type TopBarProps = {
   title: string | undefined;
   onBack?: () => void;
   onFilterClick?: () => void;
+  rightElement?: React.ReactNode; // ← Tambahkan prop baru
 };
 
 function TopBar(props: TopBarProps) {
-  const { title, onBack,onFilterClick } = props;
+  const { title, onBack, onFilterClick, rightElement } = props;
   const navigate = useNavigate();
   const location = useLocation();
   const { id } = useParams<{ id: string }>();
   const [user] = useAuthState(auth);
   const [village, setVillage] = useState(false);
+  const { isVillageVerified } = useUser();
 
   const allowedPaths = [paths.LANDING_PAGE, paths.ADMIN_PAGE];
   const isUserMenuVisible = allowedPaths.includes(location.pathname);
-
   const isClaimButtonVisible =
     location.pathname.includes("/innovation/detail/") && id;
-
-  // Halaman yang diperbolehkan untuk menampilkan ikon filter
-  const showFilterIcon = [
-    paths.ADMIN_DASHBOARD_DESA,
-    paths.ADMIN_DASHBOARD_INOVASI,
-    paths.ADMIN_DASHBOARD_INOVATOR,
-    paths.ADMIN_DASHBOARD,
-  ].includes(location.pathname);
 
   useEffect(() => {
     const fecthVillage = async () => {
@@ -51,6 +46,24 @@ function TopBar(props: TopBarProps) {
     fecthVillage();
   }, [user]);
 
+  const handleClick = () => {
+    if (!isVillageVerified) {
+      toast.warning(
+        "Akun anda belum terdaftar atau terverifikaasi sebagai desa digital",
+        {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+    } else {
+      navigate("/village/klaimInovasi", { state: { id } });
+    }
+  };
 
   return (
     <Box
@@ -92,47 +105,50 @@ function TopBar(props: TopBarProps) {
         >
           {title}
         </Text>
-                
-        {isClaimButtonVisible && village && (
-          <Button
-            fontSize="12px"
-            fontWeight="500"
-            variant="inverted"
-            height="32px"
-            _hover={{ bg: "gray.200" }}
-            onClick={() => navigate(`/village/klaimInovasi/${id}`)}
-          >
-            Klaim Inovasi
-          </Button>
-        )}
-        {!isClaimButtonVisible &&
-          isUserMenuVisible &&
-          (user ? (
-            <UserMenu user={user} />
-          ) : (
-            <Flex gap="1px">
-              <Button
-                as={IconButton}
-                icon={<img src={faq} alt="faq" width="20px" height="20px" />}
-                alignSelf="center"
-                color="white"
-                cursor="pointer"
-                padding={2}
-                onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)} // Arahkan ke halaman Register
-              >
-              </Button>
-              <Button
-                fontSize="14px"
-                fontWeight="700"
-                color= "#FFEB84"
-                cursor="pointer"
-                onClick={() => navigate(paths.LOGIN_PAGE)}
-                variant="link"
-              >
-                Masuk
-              </Button>
-            </Flex>
-          ))}
+
+        <Flex align="center" gap={2}>
+          {rightElement}
+
+          {isClaimButtonVisible && village && (
+            <Button
+              fontSize="12px"
+              fontWeight="500"
+              variant="inverted"
+              height="32px"
+              _hover={{ bg: "gray.200" }}
+              onClick={() => navigate(`/village/klaimInovasi/${id}`)}
+            >
+              Klaim Inovasi
+            </Button>
+          )}
+
+          {!isClaimButtonVisible &&
+            isUserMenuVisible &&
+            (user ? (
+              <UserMenu user={user} />
+            ) : (
+              <Flex gap="1px">
+                <Button
+                  as={IconButton}
+                  icon={<img src={faq} alt="faq" width="20px" height="20px" />}
+                  color="white"
+                  cursor="pointer"
+                  padding={2}
+                  onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)}
+                />
+                <Button
+                  fontSize="14px"
+                  fontWeight="700"
+                  color="#FFEB84"
+                  cursor="pointer"
+                  onClick={() => navigate(paths.LOGIN_PAGE)}
+                  variant="link"
+                >
+                  Masuk
+                </Button>
+              </Flex>
+            ))}
+        </Flex>
       </Flex>
     </Box>
   );

@@ -1,7 +1,14 @@
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where
+} from "firebase/firestore";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, firestore } from "src/firebase/clientApp";
-import { doc, getDoc } from "firebase/firestore";
 
 type UserContextType = {
   uid: string | null;
@@ -71,10 +78,28 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
           const innovationSnap = await getDoc(
             doc(firestore, "innovations", authUser.uid)
           );
-            setInnovationVerified(
-                innovationSnap.exists() &&
-                (innovationSnap.data() as any).status === "Terverifikasi"
-            );
+          setInnovationVerified(
+            innovationSnap.exists() &&
+              (innovationSnap.data() as any).status === "Terverifikasi"
+          );
+
+          let q;
+          q = query(
+            collection(firestore, "innovations"),
+            where("inovatorId", "==", authUser.uid)
+          );
+          await getDocs(q).then((snapshot) => {
+            if (snapshot.empty) {
+              setInnovationVerified(false);
+            } else {
+              snapshot.forEach((doc) => {
+                const data = doc.data();
+                if (data.status === "Terverifikasi") {
+                  setInnovationVerified(true);
+                }
+              });
+            }
+          });
         }
       } catch (err: any) {
         console.error("Error loading user context:", err);

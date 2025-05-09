@@ -615,6 +615,7 @@ const InnovatorForm: React.FC = () => {
                       description: "Harap isi semua field wajib.",
                       status: "error",
                       duration: 3000,
+                      position: "top",
                       isClosable: true,
                     });
                   }

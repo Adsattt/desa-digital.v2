@@ -324,11 +324,11 @@ const AddInnovation: React.FC = () => {
       modelBisnis.push(otherBusinessModel);
     }
 
-    if (!selectedStatus || !name || !selectedCategory || !year || !description || !modelBisnis.length || !villages || !priceMin || !priceMax || benefit.length === 0 || selectedFiles.length === 0 || requirements.length === 0) {
-      alert("Mohon lengkapi semua kolom wajib sebelum mengajukan inovasi.");
+    if (!isFormValid) {
       setLoading(false);
       return;
     }
+
     if (selectedModels.length === 0) {
       setError("Pilih setidaknya satu model bisnis digital.");
       return;
@@ -632,15 +632,14 @@ const AddInnovation: React.FC = () => {
 
   const isFormValid = () => {
     return (
-      status !== "" &&
+      selectedStatus !== "" &&
       textInputsValue.name.trim() !== "" &&
       category.trim() !== "" &&
       textInputsValue.year.trim() !== "" &&
       textInputsValue.description.trim() !== "" &&
       selectedModels.length > 0 && // array harus ada isinya
       textInputsValue.villages.trim() !== "" &&
-      textInputsValue.priceMin.trim() !== "" &&
-      textInputsValue.priceMax.trim() !== "" &&
+      selectedFiles.length > 0 && // cek foto inovasi
       benefit.length > 0 && // cek manfaat inovasi
       requirements.length > 0 // cek persiapan infrastruktur
     );
@@ -933,7 +932,7 @@ const AddInnovation: React.FC = () => {
               </Flex>
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
-                Kisaran harga <span style={{ color: "red" }}>*</span>
+                Kisaran harga
               </Text>
               <Flex direction="column" alignItems="flex-start">
                 <Text
@@ -966,7 +965,6 @@ const AddInnovation: React.FC = () => {
                       value={textInputsValue.priceMin}
                       onChange={onTextChange}
                       disabled={!isEditable}
-                      required
                     />
                   </InputGroup>
                   <MinusIcon mx="2" color="#9CA3AF" mt="3" />
@@ -1134,9 +1132,14 @@ const AddInnovation: React.FC = () => {
                   // Validasi input terakhir sebelum menambahkan manfaat baru
                   const lastBenefit = benefit[benefit.length - 1];
                   if (!lastBenefit?.benefit || !lastBenefit?.description) {
-                    alert(
-                      "Silakan isi manfaat dan deskripsi sebelum menambahkan manfaat baru."
-                    );
+                    toast({
+                      title: "Manfaat dan Deskripsi",
+                      description: "Silakan isi sebelum menambahkan yang baru.",
+                      status: "error",
+                      position: "top",
+                      duration: 3000,
+                      isClosable: true,
+                    });
                     return;
                   }
                   // Tambahkan manfaat baru
@@ -1273,7 +1276,14 @@ const AddInnovation: React.FC = () => {
                       // Validasi infrastruktur terakhir sebelum menambahkan yang baru
                       const lastRequirement = requirements[requirements.length - 1];
                       if (!lastRequirement) {
-                        alert("Silakan isi persiapan infrastruktur sebelum menambahkan yang baru.");
+                        toast({
+                          title: "Persiapan infrasturuktur",
+                          description: "Silakan isi sebelum menambahkan yang baru.",
+                          status: "error",
+                          position: "top",
+                          duration: 3000,
+                          isClosable: true,
+                        });
                         return;
                       }
                       // Tambahkan infrastruktur baru
@@ -1311,6 +1321,7 @@ const AddInnovation: React.FC = () => {
                       description: "Harap isi semua field wajib.",
                       status: "error",
                       duration: 3000,
+                      position: "top",
                       isClosable: true,
                     });
                   }

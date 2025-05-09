@@ -110,7 +110,7 @@ const SebaranKlasifikasiDashboardDesa: React.FC = () => {
                 <Text fontSize="sm" fontWeight="bold" color="gray.800">
                     Sebaran Klasifikasi Geografis Desa
                 </Text>
-                <Button
+                {/* <Button
                     size="sm"
                     bg="white"
                     boxShadow="md"
@@ -125,7 +125,7 @@ const SebaranKlasifikasiDashboardDesa: React.FC = () => {
                     onClick={handleDownloadExcel}
                 >
                     <DownloadIcon boxSize={3} color="black" />
-                </Button>
+                </Button> */}
             </Flex>
 
             <Box
