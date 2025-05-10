@@ -1,8 +1,8 @@
-import { Button, Flex, Spinner, Text } from "@chakra-ui/react";
-import React, { useState } from "react";
 import { DeleteIcon } from "@chakra-ui/icons";
+import { Button, Flex, Text } from "@chakra-ui/react";
 import Video from "Assets/icons/video-camera.svg";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import React, { useState } from "react";
 import { storage } from "../../firebase/clientApp";
 
 
@@ -75,18 +75,29 @@ type VidUploadProps = {
                     >
                         {/* Menampilkan nama file */}
                         <Text
-                            margin={1}
-                            fontSize="sm"
-                            color="gray.800"
-                            maxWidth="95%" /* Batasi lebar agar tidak melebihi Flex */
-                            whiteSpace="nowrap" /* Pastikan teks tidak membungkus */
-                            textOverflow="ellipsis" /* Tambahkan ellipsis untuk teks terpotong */
-                            overflow="hidden"
+                          margin={1}
+                          fontSize="sm"
+                          color="gray.800"
+                          maxWidth="95%" /* Batasi lebar agar tidak melebihi Flex */
+                          whiteSpace="nowrap" /* Pastikan teks tidak membungkus */
+                          textOverflow="ellipsis" 
+                          overflow="hidden"
+                          as='a'
+                          cursor="pointer"
+                          onClick={() => {
+                          window.open(selectedVid, "_blank");
+                          }}
+                          title="Klik untuk mengunduh video"
+                          _hover={{ 
+                            textDecoration: "underline", 
+                            color: "blue.500", 
+                          }} 
                         >
-                            {decodeURIComponent(selectedVid.split("/").pop() || "Video")}
+                          {decodeURIComponent(selectedVid.split("/").pop() || "Video")}
                         </Text>
 
                     </Flex>
+
                     <Button
                         bg="red.500"
                         _hover={{ bg: "red.600" }}
@@ -132,5 +143,3 @@ type VidUploadProps = {
     );
 };
 export default VidUpload;
-
-// <Icon as={AddIcon} color="gray.300" fontSize="16px" />
