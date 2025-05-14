@@ -129,6 +129,30 @@ const PerkembanganInovasiDesa: React.FC = () => {
     XLSX.writeFile(workbook, "perkembangan_inovasi_desa.xlsx");
   };
 
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}) => {
+  if (active && payload && payload.length > 0) {
+    const data = payload[0].payload;
+
+    return (
+      <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
+        <p style={{ margin: 0, fontWeight: "bold" }}>{label}</p>
+        <p style={{ margin: 0 }}>Jumlah Inovasi: {data.value}</p> {/* Ubah ini */}
+      </div>
+    );
+  }
+
+  return null;
+};
+
+
   return (
     <Box>
       <Flex justify="space-between" align="center" mt="24px" mx="15px">
@@ -218,7 +242,7 @@ const PerkembanganInovasiDesa: React.FC = () => {
               }}
               tick={{ fontSize: 10 }}
             />
-            <Tooltip />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
             <Bar dataKey="value" fill="#1E5631" radius={[0, 0, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

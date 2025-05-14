@@ -46,6 +46,8 @@ const DashboardAdmin: React.FC = () => {
                 description="Admin"
                 text=""
                 customTitle="Selamat Datang"
+                minHeight={100}
+                gapSize={2}
             />
             <InformasiUmum/>
             <DesaDigitalUnggulan/>

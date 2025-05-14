@@ -117,7 +117,7 @@ const Top5Innovations: React.FC = () => {
       return (
         <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
           <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
-          <p style={{ margin: 0 }}>Total Inovasi: {data.valueAsli}</p> {/* Menampilkan Total Inovasi */}
+          <p style={{ margin: 0 }}>Total Desa Menerapkan: {data.valueAsli}</p> {/* Menampilkan Total Inovasi */}
         </div>
       );
     }

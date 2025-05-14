@@ -74,6 +74,8 @@ const DashboardPerangkatDesa: React.FC = () => {
         customTitle="Selamat Datang"
         description={loading ? "Memuat..." : namaDesa}
         text=""
+        minHeight={115}
+        gapSize={2}
       />
       <Rekomendasi />
       <TwoCard />

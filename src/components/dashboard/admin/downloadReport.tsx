@@ -1,19 +1,44 @@
 import React, { useEffect, useState } from "react";
-import { IconButton } from "@chakra-ui/react";
+import { IconButton, Menu, MenuButton, MenuItem, MenuList, Button } from "@chakra-ui/react";
 import { DownloadIcon } from "@chakra-ui/icons";
 import * as XLSX from "xlsx";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+
+// Type Definitions
+interface Village {
+  namaDesa: string;
+  lokasi?: {
+    kecamatan?: { label: string };
+    kabupatenKota?: { label: string };
+    provinsi?: { label: string };
+  };
+  createdAt?: { toDate: () => Date };
+}
+
+interface Innovator {
+  namaInovator: string;
+  kategori: string;
+  jumlahInovasi: number;
+}
+
+interface Innovation {
+  namaInovasi: string;
+  kategori: string;
+  jumlahDesaKlaim: number;
+}
 
 const DownloadReport: React.FC = () => {
   const [totalVillage, setTotalVillage] = useState(0);
   const [totalInnovators, setTotalInnovators] = useState(0);
   const [totalInnovation, setTotalInnovation] = useState(0);
-  const [innovatorsData, setInnovatorsData] = useState<any[]>([]);
-  const [innovationsData, setInnovationsData] = useState<any[]>([]);
-  const [villagesData, setVillagesData] = useState<any[]>([]);
+  const [innovatorsData, setInnovatorsData] = useState<Innovator[]>([]);
+  const [innovationsData, setInnovationsData] = useState<Innovation[]>([]);
+  const [villagesData, setVillagesData] = useState<Village[]>([]);
 
-  const formatDate = (timestamp: any) => {
-    if (timestamp?.toDate) {
+  const formatDate = (timestamp?: { toDate: () => Date }): string => {
+    if (timestamp) {
       const date = timestamp.toDate();
       return new Intl.DateTimeFormat("en-US", {
         weekday: "long",
@@ -33,20 +58,20 @@ const DownloadReport: React.FC = () => {
         // Fetch Villages
         const villageSnapshot = await getDocs(collection(db, "villages"));
         const villageData = villageSnapshot.docs
-          .map(doc => doc.data())
+          .map(doc => doc.data() as Village)
           .filter(data => data.namaDesa && data.namaDesa.trim() !== "");
         setVillagesData(villageData);
         setTotalVillage(villageData.length);
 
         // Fetch Innovators
         const innovatorSnapshot = await getDocs(collection(db, "innovators"));
-        const innovatorData = innovatorSnapshot.docs.map(doc => doc.data());
+        const innovatorData = innovatorSnapshot.docs.map(doc => doc.data() as Innovator);
         setInnovatorsData(innovatorData);
         setTotalInnovators(innovatorData.length);
 
         // Fetch Innovations
         const innovationSnapshot = await getDocs(collection(db, "innovations"));
-        const innovationData = innovationSnapshot.docs.map(doc => doc.data());
+        const innovationData = innovationSnapshot.docs.map(doc => doc.data() as Innovation);
         setInnovationsData(innovationData);
         setTotalInnovation(innovationData.length);
       } catch (error) {
@@ -57,58 +82,17 @@ const DownloadReport: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleDownload = () => {
-    const kecamatanSet = new Set(
-      villagesData.map(d => d.lokasi?.kecamatan?.label).filter(Boolean)
-    );
-    const kabupatenSet = new Set(
-      villagesData.map(d => d.lokasi?.kabupatenKota?.label).filter(Boolean)
-    );
-    const provinsiSet = new Set(
-      villagesData.map(d => d.lokasi?.provinsi?.label).filter(Boolean)
-    );
-
-    const topInnovator = [...innovatorsData].sort(
-      (a, b) => (b.jumlahInovasi || 0) - (a.jumlahInovasi || 0)
-    )[0];
-
-    const topInnovation = [...innovationsData].sort(
-      (a, b) => (b.jumlahDesaKlaim || 0) - (a.jumlahDesaKlaim || 0)
-    )[0];
-
-    const topVillage = [...villagesData]
-      .filter(v => v.jumlahInovasi != null)
-      .sort((a, b) => (b.jumlahInovasi || 0) - (a.jumlahInovasi || 0))[0];
-
-    const topVillageName = topVillage?.namaDesa || "-";
-    const topVillageCount = topVillage?.jumlahInovasi || 0;
+  const handleDownloadExcel = () => {
+    const workbook = XLSX.utils.book_new();
 
     // Sheet 1: Informasi Umum
     const generalInfo = [
-      { Kategori: "Inovator", Jumlah: totalInnovators, Ket: "" },
-      { Kategori: "Inovasi", Jumlah: totalInnovation, Ket: "" },
-      { Kategori: "Desa Digital", Jumlah: totalVillage, Ket: "" },
-      { Kategori: "Kecamatan", Jumlah: kecamatanSet.size, Ket: "" },
-      { Kategori: "Kabupaten", Jumlah: kabupatenSet.size, Ket: "" },
-      { Kategori: "Provinsi", Jumlah: provinsiSet.size, Ket: "" },
-      {
-        Kategori: "Inovator yang Paling Banyak Inovasi",
-        Jumlah: topInnovator?.jumlahInovasi || "",
-        Ket: topInnovator?.namaInovator || "-",
-      },
-      {
-        Kategori: "Inovasi yang Paling Banyak Diklaim",
-        Jumlah: topInnovation?.jumlahDesaKlaim || "",
-        Ket: topInnovation?.namaInovasi || "-",
-      },
-      {
-        Kategori: "Desa yang Paling Banyak Menerapkan Inovasi",
-        Jumlah: topVillageCount,
-        Ket: topVillageName,
-      },
+      { Kategori: "Inovator", Jumlah: totalInnovators },
+      { Kategori: "Inovasi", Jumlah: totalInnovation },
+      { Kategori: "Desa Digital", Jumlah: totalVillage },
     ];
-
     const generalWorksheet = XLSX.utils.json_to_sheet(generalInfo);
+    XLSX.utils.book_append_sheet(workbook, generalWorksheet, "Informasi Umum");
 
     // Sheet 2: Data Desa
     const villageWorksheet = XLSX.utils.json_to_sheet(
@@ -117,20 +101,10 @@ const DownloadReport: React.FC = () => {
         "Kecamatan": village.lokasi?.kecamatan?.label || " ",
         "Kabupaten/Kota": village.lokasi?.kabupatenKota?.label || " ",
         "Provinsi": village.lokasi?.provinsi?.label || " ",
-        "Klasifikasi Geografis": village.geografisDesa || " ",
-        "Potensi Desa": Array.isArray(village.potensiDesa)
-          ? village.potensiDesa
-              .map((p: string) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())
-              .join(", ")
-          : " ",
-        "Kondisi Jalan Desa": village.infrastrukturDesa || " ",
-        "Kesiapan Digital": village.kesiapanDigital || " ",
-        "Kesiapan Teknologi": village.kesiapanTeknologi || " ",
-        "Whatsapp": village.whatsapp || " ",
-        "Status Desa": village.status || " ",
         "Tanggal Input Data": formatDate(village.createdAt),
       }))
     );
+    XLSX.utils.book_append_sheet(workbook, villageWorksheet, "Data Desa");
 
     // Sheet 3: Data Inovator
     const innovatorWorksheet = XLSX.utils.json_to_sheet(
@@ -138,51 +112,108 @@ const DownloadReport: React.FC = () => {
         "Nama Inovator": innovator.namaInovator || " ",
         "Kategori": innovator.kategori || " ",
         "Jumlah Inovasi": innovator.jumlahInovasi || " ",
-        "Jumlah Desa Dampingan": innovator.jumlahDesaDampingan || " ",
-        "Model Bisnis": innovator.modelBisnis || " ",
-        "Website": innovator.website || " ",
-        "Instagram": innovator.instagram || " ",
-        "WhatsApp": innovator.whatsapp || " ",
-        "Status": innovator.status || " ",
-        "Tanggal Input Data": formatDate(innovator.createdAt),
       }))
     );
+    XLSX.utils.book_append_sheet(workbook, innovatorWorksheet, "Data Inovator");
 
     // Sheet 4: Data Inovasi
     const innovationWorksheet = XLSX.utils.json_to_sheet(
       innovationsData.map(innovation => ({
         "Nama Inovasi": innovation.namaInovasi || " ",
-        "Nama Inovator": innovation.namaInnovator || " ",
         "Kategori": innovation.kategori || " ",
-        "Tahun Dibuat": innovation.tahunDibuat || " ",
         "Jumlah Desa Klaim": innovation.jumlahDesaKlaim || " ",
-        "Input Desa Menerapkan": Array.isArray(innovation.inputDesaMenerapkan)
-          ? innovation.inputDesaMenerapkan.join(", ")
-          : " ",
-        "Target Pengguna": innovation.targetPengguna || " ",
-        "Tanggal Input Data": formatDate(innovation.createdAt),
       }))
     );
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, generalWorksheet, "Informasi Umum");
-    XLSX.utils.book_append_sheet(workbook, villageWorksheet, "Data Desa");
-    XLSX.utils.book_append_sheet(workbook, innovatorWorksheet, "Data Inovator");
     XLSX.utils.book_append_sheet(workbook, innovationWorksheet, "Data Inovasi");
-    XLSX.writeFile(workbook, "Report Dashboard Admin.xlsx");
+
+    XLSX.writeFile(workbook, "Report_Dashboard_Admin.xlsx");
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+
+    // **Informasi Umum**
+    doc.setFontSize(14);
+    doc.text("Informasi Umum", 10, 10);
+    autoTable(doc, {
+      startY: 15,
+      head: [["Kategori", "Jumlah"]],
+      body: [
+        ["Inovator", totalInnovators.toString()],
+        ["Inovasi", totalInnovation.toString()],
+        ["Desa Digital", totalVillage.toString()],
+      ],
+      styles: { fontSize: 12 },
+    });
+
+    // **Data Desa**
+    doc.addPage();
+    doc.text("Data Desa", 10, 10);
+    autoTable(doc, {
+      startY: 15,
+      head: [["Nama Desa", "Kecamatan", "Kabupaten/Kota", "Provinsi", "Tanggal Input Data"]],
+      body: villagesData.map(village => [
+        village.namaDesa || " ",
+        village.lokasi?.kecamatan?.label || " ",
+        village.lokasi?.kabupatenKota?.label || " ",
+        village.lokasi?.provinsi?.label || " ",
+        formatDate(village.createdAt),
+      ]),
+      styles: { fontSize: 10 },
+    });
+
+    // Data Inovator
+    doc.addPage();
+    doc.text("Data Inovator", 10, 10);
+    autoTable(doc, {
+      startY: 15,
+      head: [["Nama Inovator", "Kategori", "Jumlah Inovasi"]],
+      body: innovatorsData.map(innovator => [
+        innovator?.namaInovator || " ",
+        innovator?.kategori || " ",
+        innovator?.jumlahInovasi?.toString() || "0",
+      ]),
+      styles: { fontSize: 10 },
+    });
+
+
+    // Data Inovasi
+    doc.addPage();
+    doc.text("Data Inovasi", 10, 10);
+    autoTable(doc, {
+      startY: 15,
+      head: [["Nama Inovasi", "Kategori", "Jumlah Desa Klaim"]],
+      body: innovationsData.map(innovation => [
+        innovation?.namaInovasi || " ",
+        innovation?.kategori || " ",
+        innovation?.jumlahDesaKlaim?.toString() || "0",
+      ]),
+      styles: { fontSize: 10 },
+    });
+
+
+    // Save PDF
+    doc.save("Report_Dashboard_Admin.pdf");
   };
 
   return (
-    <IconButton
-      aria-label="Download Report"
-      icon={<DownloadIcon boxSize={5} color="white" />}
-      variant="ghost"
-      height="40px"
-      padding={1}
-      onClick={handleDownload}
-      _hover={{ bg: "whiteAlpha.300" }}
-      _active={{ bg: "whiteAlpha.400" }}
-    />
+    <Menu placement="bottom-end">
+      <MenuButton
+        as={IconButton}
+        aria-label="Download Report"
+        icon={<DownloadIcon boxSize={5} color="white" />}
+        variant="ghost"
+        height="40px"
+        padding={1}
+        _hover={{ bg: "whiteAlpha.300" }}
+        _active={{ bg: "whiteAlpha.400" }}
+      />
+      <MenuList>
+        <MenuItem onClick={handleDownloadExcel}>Download as Excel</MenuItem>
+        <MenuItem onClick={handleDownloadPDF}>Download as PDF</MenuItem>
+      </MenuList>
+    </Menu>
+
   );
 };
 

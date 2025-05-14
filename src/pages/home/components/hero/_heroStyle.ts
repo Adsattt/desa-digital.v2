@@ -10,24 +10,24 @@ interface BackgroundProps {
   isVillage?:boolean
 }
 
-export const Background = styled.div<BackgroundProps>`
+export const Background = styled.div<BackgroundProps & { minHeight?: number }>`
   padding: 16px;
    background-image: ${({ isAdmin, isInnovator, isVillage }) =>
     `url(${isAdmin ? AdminBackground : isInnovator ? InnovatorBackground : isVillage ? VillageBackground: HeroBackground})`};
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
-  min-height: 145px;
+  min-height: ${({ minHeight }) => minHeight || 145}px;
   border-radius: 0px 0px 16px 16px;
   display: flex;
   align-items: center;
   position: relative;
 `;
 
-export const Container = styled.div`
+export const Container = styled.div<{ gapSize?: number }>`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: ${({ gapSize }) => gapSize || 8}px;
 `;
 
 export const Title = styled.p`

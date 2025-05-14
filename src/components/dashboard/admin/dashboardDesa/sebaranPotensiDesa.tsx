@@ -243,7 +243,7 @@ const SebaranPotensiDesa: React.FC = () => {
                             <Tr>
                                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                                 <Th p={1} fontSize="8px" textAlign="center">Kategori Potensi</Th>
-                                <Th p={1} fontSize="8px" textAlign="center">Jumlah</Th>
+                                <Th p={1} fontSize="8px" textAlign="center">Total Desa</Th>
                             </Tr>
                         </Thead>
                         <Tbody>

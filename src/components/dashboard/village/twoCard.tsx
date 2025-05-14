@@ -151,7 +151,12 @@ const TwoCard: React.FC = () => {
   );
 
   return (
-    <Flex direction={{ base: "column", md: "row" }} gap={2}>
+    <Flex
+      direction="row"
+      flexWrap="nowrap"
+      gap={2}
+      overflowX="auto"
+    >
       <CardItem
         icon={<Image src={InnovationActive} alt="Innovation Icon" w={5} h={5} />}
         mainText={formatStyledText(totalInovasi.desa, totalInovasi.total)}

@@ -49,7 +49,7 @@ const ScoreCardDashboardInovator: React.FC = () => {
       iconBg: "#C6D8D0",
     },
     {
-      label: "Desa Dampingan",
+      label: "Desa Digital",
       value: totalDesaDampingan,
       iconType: "image",
       icon: DesaIcon,
@@ -60,7 +60,7 @@ const ScoreCardDashboardInovator: React.FC = () => {
   return (
     <Stack>
       <Box p={4}>
-        <Grid templateColumns="1fr" gap={4}>
+        <Grid templateColumns="repeat(2, 1fr)" gap={4}>
           {stats.map((stat, index) => (
             <Box
               key={index}
