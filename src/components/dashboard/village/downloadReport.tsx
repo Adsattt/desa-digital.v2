@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { IconButton } from "@chakra-ui/react";
 import { DownloadIcon } from "@chakra-ui/icons";
-import * as XLSX from "xlsx";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export type InovatorReportData = {
   no: number;
@@ -21,7 +22,7 @@ type DownloadReportProps = {
 };
 
 const DownloadReport: React.FC<DownloadReportProps> = ({
-  fileName = "Report Dashboard Desa.xlsx",
+  fileName = "Report Dashboard Desa.pdf",
 }) => {
   const [inovatorData, setInovatorData] = useState<InovatorReportData[]>([]);
 
@@ -72,11 +73,9 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
         name: doc.data().namaInovator as string,
       }));
 
-      // Hitung jumlah inovasi per inovator hanya di desa ini
       const inovatorStats: Record<string, { jumlahInovasi: number }> = {};
       const inovatorData: InovatorReportData[] = [];
 
-      // Proses inovasi dan hitung kontribusi per inovator
       desaInovasi.forEach((doc) => {
         const data = doc.data();
         const inputDesaMenerapkan = data.inputDesaMenerapkan || [];
@@ -95,11 +94,8 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
           const inovatorDoc = inovators.find((inovator) => inovator.id === inovatorId);
           const namaInovator = inovatorDoc ? inovatorDoc.name : "Tidak Ada Nama Inovator";
 
-          // Ambil nama inovasi, kategori, dan tahun dari createdAt
-          const namaInovasi = data.namaInovasi || "Tidak Ada Nama Inovasi";  
-          const kategori = data.kategori || "Tidak Ada Kategori";  
-
-          // Ekstrak tahun dari createdAt
+          const namaInovasi = data.namaInovasi || "Tidak Ada Nama Inovasi";
+          const kategori = data.kategori || "Tidak Ada Kategori";
           const tahun = data.createdAt ? new Date(data.createdAt.toDate()).getFullYear().toString() : "Tidak Ada Tahun";
 
           inovatorData.push({
@@ -110,41 +106,52 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
             jumlahInovasi: inovatorStats[inovatorId].jumlahInovasi,
             namaDesa,
             jumlahDesaDampingan,
-            tahun, // Menambahkan kolom tahun
+            tahun,
           });
         }
       });
 
-      // Urutkan berdasarkan jumlah inovasi yang diterapkan
       inovatorData.sort((a, b) => b.jumlahInovasi - a.jumlahInovasi);
-
-      setInovatorData(inovatorData);  // Simpan data inovator ke state
+      setInovatorData(inovatorData);
     } catch (error) {
-      console.error("❌ Error fetching innovator data:", error);
+      console.error("Error fetching innovator data:", error);
     }
   };
 
   useEffect(() => {
-    fetchData();  // Ambil data saat komponen pertama kali dimuat
+    fetchData();
   }, []);
 
-  // Fungsi untuk download report ke Excel
-  const handleDownload = () => {
-    const excelData = inovatorData.map((item) => ({
-      No: item.no,
-      "Nama Inovator": item.namaInovator,
-      "Nama Inovasi": item.namaInovasi,
-      "Kategori Inovasi": item.kategori,
-      "Tahun": item.tahun, 
-      "Jumlah Desa Dampingan Inovator": item.jumlahDesaDampingan,
-      "Desa Dampingan Lainnya": item.namaDesa,
-    }));
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    // Set Helvetica as the default font (similar to Arial)
+    doc.setFont("helvetica");
 
-    XLSX.writeFile(workbook, fileName);
+    autoTable(doc, {
+      head: [["No", "Nama Inovator", "Nama Inovasi", "Kategori Inovasi", "Tahun", "Jumlah Desa Dampingan", "Desa Dampingan Lainnya"]],
+      body: inovatorData.map((item) => [
+        item.no,
+        item.namaInovator,
+        item.namaInovasi,
+        item.kategori,
+        item.tahun,
+        item.jumlahDesaDampingan,
+        item.namaDesa,
+      ]),
+      styles: {
+        fontSize: 10,
+        font: "helvetica"
+      },
+      headStyles: {
+        fillColor: [0, 128, 0], 
+        textColor: [255, 255, 255], 
+        fontStyle: 'bold',
+        font: "helvetica" 
+      }
+    });
+
+    doc.save(fileName);
   };
 
   return (
@@ -154,7 +161,7 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
       variant="ghost"
       height="40px"
       padding={1}
-      onClick={handleDownload}
+      onClick={handleDownloadPDF}
       _hover={{ bg: "whiteAlpha.300" }}
       _active={{ bg: "whiteAlpha.400" }}
     />

@@ -26,6 +26,7 @@ import DesaDigitalUnggulan from "Components/dashboard/admin/desaDigitalUnggulan"
 import InovatorUnggulan from "Components/dashboard/admin/inovatorUnggulan";
 import InovasiUnggulan from "Components/dashboard/admin/inovasiUnggulan";
 import DownloadReport from "Components/dashboard/admin/downloadReport";
+import Leaderboard from "Components/dashboard/admin/merger";
 
 const DashboardAdmin: React.FC = () => {
     const navigate = useNavigate();
@@ -50,9 +51,10 @@ const DashboardAdmin: React.FC = () => {
                 gapSize={2}
             />
             <InformasiUmum/>
-            <DesaDigitalUnggulan/>
+            <Leaderboard/>
+            {/* <DesaDigitalUnggulan/>
             <InovatorUnggulan/>
-            <InovasiUnggulan/>
+            <InovasiUnggulan/> */}
             <Box pb={10} />
         </Box>
     );
