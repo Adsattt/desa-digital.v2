@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import first from "@public/icons/first.svg";
 import seccond from "@public/icons/seccond.svg";
 import third from "@public/icons/third.svg";
-import banner from "@public/images/banner-unggulan.svg";
+import banner from "@public/images/best-banner.svg";
 
 type BestBannerProps = {
   namaDesa?: string;
