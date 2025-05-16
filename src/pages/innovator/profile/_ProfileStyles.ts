@@ -149,6 +149,7 @@ export const Background = styled.img`
   max-width: 360px;
   height: 150px;
   margin-top: 56px;
+  object-fit: cover; /* Menjamin gambar menempel */
 `;
 
 export const Logo = styled.img`

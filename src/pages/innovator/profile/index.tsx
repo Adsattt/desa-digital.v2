@@ -42,6 +42,8 @@ import { Icon, NavbarButton } from "../../village/profile/_profileStyle";
 import StatusCard from "Components/card/status/StatusCard";
 import RejectionModal from "Components/confirmModal/RejectionModal";
 import ActionDrawer from "Components/drawer/ActionDrawer";
+import defaultHeader from "@public/images/default-header.svg";
+
 
 const ProfileInnovator: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -205,7 +207,7 @@ const ProfileInnovator: React.FC = () => {
         onBack={() => navigate(-1)}
       />
       <Flex position="relative">
-        <Background src={innovatorData.header} alt="header" />
+        <Background src={innovatorData.header || defaultHeader} alt="header" />
         <Logo src={innovatorData.logo} alt="logo" mx={16} my={-40} />
       </Flex>
       <ContentContainer>

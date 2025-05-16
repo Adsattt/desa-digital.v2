@@ -33,6 +33,8 @@ import { TbPlant2 } from "react-icons/tb";
 import { generatePath, useNavigate, useParams } from "react-router-dom";
 import { auth, firestore } from "../../../firebase/clientApp";
 import InnovationPreview from "../components/hero/innovations";
+import defaultHeader from "@public/images/default-header.svg";
+
 import {
   Background,
   ContentContainer,
@@ -211,7 +213,7 @@ const DetailInnovator: React.FC = () => {
     <Container page>
       <TopBar title="Profil Inovator" onBack={() => navigate(-1)} />
       <Flex position="relative">
-        <Background src={innovatorData.header} alt="header" />
+        <Background src={innovatorData.header || defaultHeader} alt="header" />
         <Logo src={innovatorData.logo} alt="logo" mx={16} my={-40} />
         <Box
           position="absolute"
