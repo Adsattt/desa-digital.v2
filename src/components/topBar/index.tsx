@@ -8,6 +8,8 @@ import UserMenu from "./RightContent/UserMenu";
 import { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import faq from "Assets/icons/faq.svg";
+import { useUser } from "src/contexts/UserContext";
+import { toast } from "react-toastify";
 import { SlidersHorizontal } from "lucide-react";
 
 type TopBarProps = {
@@ -23,6 +25,7 @@ function TopBar(props: TopBarProps) {
   const { id } = useParams<{ id: string }>();
   const [user] = useAuthState(auth);
   const [village, setVillage] = useState(false);
+  const { role, isVillageVerified } = useUser()
 
   const allowedPaths = [paths.LANDING_PAGE, paths.ADMIN_PAGE];
   const isUserMenuVisible = allowedPaths.includes(location.pathname);
@@ -37,6 +40,25 @@ function TopBar(props: TopBarProps) {
     paths.ADMIN_DASHBOARD_INOVATOR,
     paths.ADMIN_DASHBOARD,
   ].includes(location.pathname);
+
+  const handleVillageonClick = () => {
+        if (role === "village" && isVillageVerified) {
+          navigate(`/village/klaimInovasi/${id}`);
+        } else {
+          toast.warning(
+            "Akun anda belum terdaftar atau terverifikasi sebagai desa",
+            {
+              position: "top-center",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+            }
+          );
+        }
+      };
 
   useEffect(() => {
     const fecthVillage = async () => {
@@ -100,7 +122,7 @@ function TopBar(props: TopBarProps) {
             variant="inverted"
             height="32px"
             _hover={{ bg: "gray.200" }}
-            onClick={() => navigate(`/village/klaimInovasi/${id}`)}
+            onClick={handleVillageonClick}
           >
             Klaim Inovasi
           </Button>
