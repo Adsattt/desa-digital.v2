@@ -18,6 +18,7 @@ export const paths = {
   ADMIN_DASHBOARD_DESA: "/admin/dashboard-desa",
   ADMIN_DASHBOARD_INOVASI: "/admin/dashboard-inovasi",
   ADMIN_DASHBOARD_INOVATOR: "/admin/dashboard-inovator",
+  REPORT_ADMIN: "/admin/report",
 
   // ! village
   VILLAGE_PAGE: "/village",
@@ -29,6 +30,7 @@ export const paths = {
   DETAIL_KLAIM_PAGE: "/village/detailKlaim/:id",
   VILLAGE_DASHBOARD: "/village/dashboard",
   VILLAGE_RECOMENDATION: "/village/dashboard/rekomendasi",
+  REPORT_VILLAGE: "/village/report",
 
   // ! innovator
   INNOVATOR_PAGE: "/innovator",
@@ -37,6 +39,7 @@ export const paths = {
   INNOVATOR_FORM: "/innovator/form",
   PRODUK_INOVASI_PAGE: "/innovator/detail/ProdukInovasi",
   PENGAJUAN_INOVASI_PAGE: "/innovator/profile/pengajuanInovasi",
+  REPORT_INNOVATOR: "/innovator/report",
 
   // ! innovation
   INNOVATION_PAGE: "/innovation",
