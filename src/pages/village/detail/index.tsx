@@ -64,6 +64,7 @@ import {
 } from "./_detailStyle";
 import RejectionModal from "Components/confirmModal/RejectionModal";
 import ActionDrawer from "Components/drawer/ActionDrawer.tsx";
+import defaultHeader from "@public/images/default-header.svg";
 
 
 export default function DetailVillage() {
@@ -188,10 +189,10 @@ export default function DetailVillage() {
   }, [id]); // Tambahkan id sebagai dependensi
 
   return (
-    <Box>
+    <Box paddingBottom={4}>
       <TopBar title="Detail Desa" onBack={() => navigate(-1)} />
       <div style={{ position: "relative", width: "100%" }}>
-        <Background src={village?.header} alt="background" />
+        <Background src={village?.header || defaultHeader} alt="background" />
         <Logo mx={16} my={-40} src={village?.logo} alt="logo" />
       </div>
       <div>
@@ -400,14 +401,19 @@ export default function DetailVillage() {
           <div>
             <SubText>Galeri Desa</SubText>
             <CardContainer>
-              <Horizontal>
-                {village?.images &&
-                  (Object.values(village.images) as string[]).map(
+              {village?.images && Object.values(village.images).length > 0 ? (
+                <Horizontal>
+                  {(Object.values(village.images) as string[]).map(
                     (image: string, index: number) => (
                       <EnlargedImage key={index} src={image} />
                     )
                   )}
-              </Horizontal>
+                </Horizontal>
+              ) : (
+                <Text color="gray.400" fontSize={12}>
+                  Tidak ada gambar
+                </Text>
+              )}
             </CardContainer>
           </div>
           <div>
@@ -458,9 +464,9 @@ export default function DetailVillage() {
             position="fixed"
             bottom="0"
             left="50%"
-            transform="translateX(-50%)" 
+            transform="translateX(-50%)"
             width="100%"
-            maxWidth="360px" 
+            maxWidth="360px"
             bg="white"
             p="3.5"
             boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
@@ -483,10 +489,7 @@ export default function DetailVillage() {
             ) : (
               // Logika untuk Non-Admin
               <Flex>
-                <Button
-                  width="100%"
-                  onClick={onOpen}
-                >
+                <Button width="100%" onClick={onOpen}>
                   Kontak Desa
                 </Button>
               </Flex>
@@ -503,19 +506,19 @@ export default function DetailVillage() {
         </ContentContainer>
       </div>
       <ActionDrawer
-            isOpen={isOpen}
-            onClose={onClose}
-            isAdmin={admin}
-            loading={loading}
-            onVerify={handleVerify}
-            setOpenModal={setOpenModal}
-            role="Desa"
-            contactData={{
-              whatsapp: village?.whatsapp || "", 
-              instagram: village?.instagram || "",
-              website: village?.website || ""
-            }}
-          />
+        isOpen={isOpen}
+        onClose={onClose}
+        isAdmin={admin}
+        loading={loading}
+        onVerify={handleVerify}
+        setOpenModal={setOpenModal}
+        role="Desa"
+        contactData={{
+          whatsapp: village?.whatsapp || "",
+          instagram: village?.instagram || "",
+          website: village?.website || "",
+        }}
+      />
     </Box>
   );
 }
