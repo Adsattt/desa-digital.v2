@@ -12,6 +12,8 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
+import { toast } from "react-toastify";
+import { useUser } from "src/contexts/UserContext";
 import Check from "Assets/icons/check-circle.svg";
 import StatusCard from "Components/card/status/StatusCard.tsx";
 import RejectionModal from "Components/confirmModal/RejectionModal.tsx";
@@ -56,6 +58,7 @@ import {
 
 function DetailInnovation() {
   const navigate = useNavigate();
+  const { role, isVillageVerified } = useUser()
   const [isExpanded, setIsExpanded] = useState(false);
   const { id } = useParams();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -216,6 +219,25 @@ function DetailInnovation() {
     onClose();
     setOpenModal(false);
   };
+
+  const handleVillageonClick = () => {
+      if (role === "village" && isVillageVerified) {
+        navigate(paths.KLAIM_INOVASI_PAGE);
+      } else {
+        toast.warning(
+          "Akun anda belum terdaftar atau terverifikasi sebagai desa",
+          {
+            position: "top-center",
+            autoClose: 3000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          }
+        );
+      }
+    };
 
   const year = new Date(data.tahunDibuat).getFullYear();
 

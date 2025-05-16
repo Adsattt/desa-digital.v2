@@ -24,7 +24,7 @@ import {
 } from "./_klaimStyles";
 
 import { useDisclosure } from "@chakra-ui/react";
-import { doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, increment, serverTimestamp, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes, uploadString } from "firebase/storage";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -47,6 +47,7 @@ const KlaimInovasi: React.FC = () => {
   const modalBody2 =
     "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan klaim inovasi. Silahkan cek pada halaman pengajuan klaim"; // Konten Modal
   const toast = useToast();
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleCheckboxChange = (checkbox: string) => {
     if (selectedCheckboxes.includes(checkbox)) {
@@ -162,90 +163,102 @@ const KlaimInovasi: React.FC = () => {
   const onSubmitForm = async (event: React.FormEvent<HTMLElement>) => {
     event.preventDefault();
     setLoading(true);
-    if (!user?.uid) {
-      setError("User not found");
+    if (!user?.uid || !id) {
+      setError("User atau ID inovasi tidak ditemukan");
       setLoading(false);
       return;
     }
-    if (!id) {
-      throw new Error("Innovation ID is not defined");
-      setLoading(false);
-      return;
-    }
-    if (selectedCheckboxes.length === 0) {
-      setError("Minimal pilih 1 jenis bukti klaim (Foto, Video, atau Dokumen)");
-      setLoading(false);
-      return;
-    }  
+  
     try {
       const userId = user.uid;
-      const docRef = doc(firestore, "claimInnovations", userId);
-      const docSnap = await getDoc(docRef);
-      const existingData = docSnap.data();
-
-      const desaRef = doc(firestore, "villages", userId);
-      const desaSnap = await getDoc(desaRef);
+  
+      const desaSnap = await getDoc(doc(firestore, "villages", userId));
       const dataDesa = desaSnap.data();
-
-      const inovRef = doc(firestore, "innovations", id);
-      const inovSnap = await getDoc(inovRef);
+  
+      const inovSnap = await getDoc(doc(firestore, "innovations", id));
       const dataInov = inovSnap.data();
-
-      const inovatorRef = doc(firestore, "innovators", dataInov?.innovatorId);
-
-      await setDoc(docRef, {
+  
+      const klaimRef = await addDoc(collection(firestore, "claimInnovations"), {
+        userId,
+        desaId: userId,
+        inovasiId: id,
         namaDesa: dataDesa?.namaDesa,
         namaInovasi: dataInov?.namaInovasi,
-        inovasiId: id,
         inovatorId: dataInov?.innovatorId,
-        createdAt: serverTimestamp(),
-        catatanAdmin: "",
         status: "Menunggu",
+        catatanAdmin: "",
+        checkboxes: selectedCheckboxes,
+        createdAt: serverTimestamp(),
       });
-      console.log("Document written with ID: ", docRef.id);
-       if (selectedFiles.length > 0) {
-         const storageRef = ref(storage, `claimInnovations/${userId}/images`);
-         const imageUrls: string[] = [];
-
-         for (let i = 0; i < selectedFiles.length; i++) {
-           const file = selectedFiles[i];
-           const imageRef = ref(storageRef, `${Date.now()}_${i}`);
-           const response = await fetch(file);
-           const blob = await response.blob();
-           await uploadBytes(imageRef, blob);
-           const downloadURL = await getDownloadURL(imageRef);
-           imageUrls.push(downloadURL);
-         }
-
-         await updateDoc(docRef, {
-           images: imageUrls,
-         });
-         console.log("Images uploaded", imageUrls);
-       }
-
-       await updateDoc(inovatorRef, {
-        jumlahDesaDampingan: increment(1),
-        desaDampingan:[{
-          namaDesa: dataDesa?.namaDesa,
-          desaId: userId,
-        }]
-      });
-      await updateDoc(desaRef,{
+  
+      const klaimId = klaimRef.id;
+  
+      const uploadFile = async (
+        file: string,
+        path: string
+      ): Promise<string> => {
+        const blob = await (await fetch(file)).blob();
+        const storageRef = ref(storage, `claimInnovations/${klaimId}/${path}`);
+        await uploadBytes(storageRef, blob);
+        return getDownloadURL(storageRef);
+      };
+  
+      if (selectedFiles.length > 0) {
+        const urls = await Promise.all(
+          selectedFiles.map((f, i) =>
+            uploadFile(f, `images/image_${Date.now()}_${i}`)
+          )
+        );
+        await updateDoc(klaimRef, { images: urls });
+      }
+  
+      if (selectedDoc.length > 0) {
+        const urls = await Promise.all(
+          selectedDoc.map((d, i) =>
+            uploadFile(d, `documents/doc_${Date.now()}_${i}`)
+          )
+        );
+        await updateDoc(klaimRef, { documents: urls });
+      }
+  
+      if (selectedVid) {
+        const videoURL = await uploadFile(
+          selectedVid,
+          `video/video_${Date.now()}`
+        );
+        await updateDoc(klaimRef, { video: videoURL });
+      }
+  
+      // Update metadata pada desa, inovator, dan inovasi
+      await updateDoc(doc(firestore, "villages", userId), {
         jumlahInovasi: increment(1),
-        inovasiDiterapkan:[{
-          namaInovasi: dataInov?.namaInovasi,
+        inovasiDiterapkan: arrayUnion({
           inovasiId: id,
-        }]
-      })
-      await updateDoc(inovRef,{
+          namaInovasi: dataInov?.namaInovasi,
+        }),
+      });
+  
+      await updateDoc(doc(firestore, "innovators", dataInov?.innovatorId), {
+        jumlahDesaDampingan: increment(1),
+        desaDampingan: arrayUnion({
+          desaId: userId,
+          namaDesa: dataDesa?.namaDesa,
+        }),
+      });
+  
+      await updateDoc(doc(firestore, "innovations", id), {
         jumlahDesaKlaim: increment(1),
-      })
-       setLoading(false);
-       
-    } catch (error) {
+      });
+  
+      setLoading(false);
+      setIsSubmitted(true);
+      setIsModal2Open(true);
+    } catch (err) {
+      console.error(err);
       setError("Failed to submit claim");
+      setLoading(false);
     }
-  };
+  };  
 
   const [isModal1Open, setIsModal1Open] = useState(false);
   const [isModal2Open, setIsModal2Open] = useState(false);
@@ -377,7 +390,11 @@ const KlaimInovasi: React.FC = () => {
         </Container>
         <div>
           <NavbarButton>
-            <Button size="m" fullWidth onClick={handleAjukanKlaim}>
+            <Button 
+              size="m" 
+              fullWidth 
+              onClick={handleAjukanKlaim}
+              disabled={isSubmitted || loading}>
               Ajukan Klaim
             </Button>
           </NavbarButton>
