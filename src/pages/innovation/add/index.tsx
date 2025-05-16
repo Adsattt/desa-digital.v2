@@ -511,6 +511,7 @@ const AddInnovation: React.FC = () => {
         title: "Gagal menambahkan inovasi",
         status: "error",
         duration: 3000,
+        position: "top",
         isClosable: true,
       });
     }
@@ -1314,8 +1315,6 @@ const AddInnovation: React.FC = () => {
                 width="100%"
                 onClick={() => {
                   if (isFormValid()) {
-                    setIsModal1Open(true);
-                  } else {
                     toast({
                       title: "Form belum lengkap!",
                       description: "Harap isi semua field wajib.",
@@ -1323,7 +1322,9 @@ const AddInnovation: React.FC = () => {
                       duration: 3000,
                       position: "top",
                       isClosable: true,
-                    });
+                      });
+                  } else {
+                    setIsModal1Open(true);
                   }
                 }}
               >

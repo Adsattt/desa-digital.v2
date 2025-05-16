@@ -915,6 +915,7 @@ const AddVillage: React.FC = () => {
                       status: "error",
                       duration: 3000,
                       isClosable: true,
+                      position: "top",
                     });
                   }
                 }}
