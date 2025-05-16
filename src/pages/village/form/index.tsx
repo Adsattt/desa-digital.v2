@@ -870,7 +870,7 @@ const AddVillage: React.FC = () => {
                 disabled={!isEditable}
                 onChange={onTextChange}
               />
-
+              
               <FormSection
                 title="Link Instagram"
                 name="instagram"
@@ -879,6 +879,7 @@ const AddVillage: React.FC = () => {
                 value={textInputValue.instagram}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired={false}
               />
               <FormSection
                 title="Link Website"
@@ -888,6 +889,7 @@ const AddVillage: React.FC = () => {
                 value={textInputValue.website}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired={false}
               />
             </Stack>
           </Flex>
