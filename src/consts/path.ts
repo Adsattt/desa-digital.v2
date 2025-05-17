@@ -19,6 +19,7 @@ export const paths = {
   ADMIN_DASHBOARD_INOVASI: "/admin/dashboard-inovasi",
   ADMIN_DASHBOARD_INOVATOR: "/admin/dashboard-inovator",
   REPORT_ADMIN: "/admin/report",
+  PREVIEW_REPORT_ADMIN: "/admin/report/preview",
 
   // ! village
   VILLAGE_PAGE: "/village",

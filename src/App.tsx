@@ -22,6 +22,7 @@ import DashboardAdminDesa from "./pages/admin/dashboard/dashboardDesa";
 import DashboardAdminInovasi from "./pages/admin/dashboard/dashboardInovasi";
 import DashboardAdminInovator from "./pages/admin/dashboard/dashboardInovator";
 import ReportAdmin from "./pages/admin/report";
+import PreviewReportAdmin from "./pages/admin/report/preview";
 import VerificationPage from "./pages/admin/verification/VerificationPage";
 import BantuanFAQ from "./pages/bantuanFAQ";
 import EmailReset from "./pages/emailreset/EmailReset";
@@ -223,6 +224,14 @@ const routes = [
     element: (
       <AdminGuard>
         <ReportAdmin />
+      </AdminGuard>
+    ),
+  },
+  {
+    path: paths.PREVIEW_REPORT_ADMIN,
+    element: (
+      <AdminGuard>
+        <PreviewReportAdmin />
       </AdminGuard>
     ),
   },

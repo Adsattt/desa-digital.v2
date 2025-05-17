@@ -1,9 +1,9 @@
 import TopBar from "Components/topBar";
 import { useNavigate } from "react-router-dom";
-import Container from "Components/container";
 import ReactSelect from "react-select";
 import { NavbarButton } from "./_reportStyle";
 import { MinusIcon } from "@chakra-ui/icons";
+import { paths } from "Consts/path";
 import {
   Box,
   Button,
@@ -41,10 +41,10 @@ const categories = [
 ];
 
 const status = [
-    "Semua",
-    "Terverifikasi",
-    "Menunggu",
-    "Ditolak",
+  "Semua",
+  "Terverifikasi",
+  "Menunggu",
+  "Ditolak",
 ]
 
 const ReportAdmin: React.FC = () => {
@@ -62,7 +62,7 @@ const [selectedStatus, setSelectedStatus] = useState<{
 
   const [role, setRole] = useState<Option | null>(null);
   const roleOptions: Option[] = [
-    { value: "desa", label: "Desa" },
+    { value: "village", label: "Desa" },
     { value: "innovator", label: "Innovator" },
   ];
 
@@ -237,11 +237,15 @@ const [selectedStatus, setSelectedStatus] = useState<{
                         placeholder="Pilih Role"
                         options={roleOptions}
                         value={role}
+                        styles={customStyles}
+                        isClearable
+                        isSearchable
+                        isDisabled={!isEditable}
                         onChange={(selected) => setRole(selected)}
                     />
 
                 {/* Form tambahan hanya muncul setelah role dipilih */}
-                {role?.value === "desa" && (
+                {role?.value === "village" && (
                     <>
                     <LocationSelector
                         label="Provinsi"
@@ -399,8 +403,9 @@ const [selectedStatus, setSelectedStatus] = useState<{
                     width="100%"
                     height="44px"
                     isLoading={loading} 
+                    onClick={() => {navigate(paths.PREVIEW_REPORT_ADMIN)}}
                     >
-                    Download Report
+                    Preview Report
                 </Button>
             </NavbarButton>
         )}
