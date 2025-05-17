@@ -71,28 +71,6 @@ const categoryOptions = [
   { value: "UMKM", label: "UMKM" },
 ];
 
-{/*
-const targetUsersOptions = [
-  { value: "Agen keuangan/perbankan", label: "Agen keuangan/perbankan" },
-  { value: "Agen pemerintah", label: "Agen pemerintah" },
-  { value: "Agro-preneur", label: "Agro-preneur" },
-  { value: "Lansia/Pensiunan desa", label: "Lansia/Pensiunan desa" },
-  { value: "Nelayan", label: "Nelayan" },
-  { value: "Pemasok", label: "Pemasok" },
-  { value: "Pemuda", label: "Pemuda" },
-  { value: "Penyedia layanan", label: "Penyedia layanan" },
-  { value: "Perangkat desa", label: "Perangkat desa" },
-  { value: "Petani", label: "Petani" },
-  { value: "Peternak", label: "Peternak" },
-  { value: "Pedagang", label: "Pedagang" },
-  { value: "Pekerja/Buruh", label: "Pekerja/Buruh" },
-  { value: "Produsen", label: "Produsen" },
-  { value: "Tokoh masyarakat setempat", label: "Tokoh masyarakat setempat" },
-  { value: "Wanita pedesaan", label: "Wanita pedesaan" },
-  { value: "Lainnya", label: "Lainnya" },
-];
-*/}
-
 const predefinedModels = [
   "Gratis",
   "Layanan Berbayar",
@@ -133,9 +111,6 @@ const AddInnovation: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<OptionType | null>(
     null
   );
-  const [selectedTargetUser, setSelectedTargetUser] =
-    useState<OptionType | null>(null);
-  //const [customTargetUser, setCustomTargetUser] = useState<string>("");
   const [benefit, setBenefit] = useState([{ benefit: "", description: "" }]);
   const [alertStatus, setAlertStatus] = useState<"info" | "warning" | "error">(
     "warning"
@@ -188,15 +163,6 @@ const AddInnovation: React.FC = () => {
       }
     }
   };
-
-  {/*
-  const handleTargetUserChange = (selectedOption: OptionType | null) => {
-    setSelectedTargetUser(selectedOption);
-    if (selectedOption && selectedOption.value === "Lainnya") {
-      setCustomTargetUser(""); // Reset input custom jika dipilih "Lainnya"
-    }
-  };
-  */}
 
   const onTextChange = ({
     target: { name, value },
@@ -360,16 +326,6 @@ const AddInnovation: React.FC = () => {
 
     const innovatorData = innovatorDocSnap.data();
 
-    {/*}
-    let finalTargetUser = selectedTargetUser?.value || "";
-    if (
-      selectedTargetUser?.value === "Lainnya" &&
-      customTargetUser.trim() !== ""
-    ) {
-      finalTargetUser = customTargetUser.trim();
-    }
-    */}
-
     const finalRequirements = [...requirements];
     if (
       newRequirement.trim() !== "" &&
@@ -472,14 +428,6 @@ const AddInnovation: React.FC = () => {
             innovatorId: user.uid,
             namaInnovator: innovatorData.namaInovator,
             innovatorImgURL: innovatorData?.logo || null,
-            // desaMenerapkan: [
-            //   {
-            //     desaId: null,
-            //     namaDesa: null,
-            //     logo: null,
-            //     tanggalKlaim: null,
-            //   },
-            // ],
           }
         );
 
@@ -569,10 +517,6 @@ const AddInnovation: React.FC = () => {
           value: data.kategori || "",
           label: data.kategori || "",
         });
-        setSelectedTargetUser({
-          value: data.targetPengguna || "",
-          label: data.targetPengguna || "",
-        });
         const otherModel = data.modelBisnis?.find(
           (model: string) => !predefinedModels.includes(model)
         );
@@ -646,7 +590,6 @@ const AddInnovation: React.FC = () => {
     );
   };
   
-
   // Bagi daftar model bisnis menjadi dua kolom
   const [firstColumn, secondColumn] = splitModels(predefinedModels, 2);
 
