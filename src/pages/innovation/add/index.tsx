@@ -476,7 +476,7 @@ const AddInnovation: React.FC = () => {
       const innovationsQuery = query(
         collection(firestore, "innovations"),
         where("innovatorId", "==", user.uid),
-        where("status", "in", ["Menunggu", "Ditolak", "Terverifikasi"])
+        where("status", "in", ["Menunggu", "Ditolak"])
       );
 
       const querySnapshot = await getDocs(innovationsQuery);
@@ -570,6 +570,7 @@ const AddInnovation: React.FC = () => {
     };
     fetchInnovationData();
   }, [innovationId]);
+
   const splitModels = (models: string[], num: number) => {
     const midpoint = Math.ceil(models.length / num);
     return [models.slice(0, midpoint), models.slice(midpoint)];
