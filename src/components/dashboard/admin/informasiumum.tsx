@@ -158,7 +158,7 @@ const InformasiUmum: React.FC = () => {
               category: "desa"
             },
             {
-              label: "Innovator",
+              label: "Inovator",
               icon: <FaUsers size={25} color="#347357"/>,
               iconBg: "#C6D8D0",
               value: totalInnovators,
@@ -218,7 +218,7 @@ const InformasiUmum: React.FC = () => {
 
               <Flex align="center" color={stat.isIncrease ? "green.500" : "red.500"} mt={1}>
                 <Icon as={stat.isIncrease ? ArrowUpRight : ArrowDownRight} boxSize={3} mr={1} />
-                <Text fontSize="6px">
+                <Text fontSize="7px">
                   {Math.abs(stat.change)} {stat.isIncrease ? "bertambah" : "berkurang"} dari bulan lalu
                 </Text>
               </Flex>
@@ -228,7 +228,7 @@ const InformasiUmum: React.FC = () => {
                 onClick={() => navigateToDashboard(stat.category)}
                 variant="solid"
                 bg="#347357"
-                fontSize="7"
+                fontSize="8"
                 fontWeight="regular"
                 justifyContent="center"
                 color="#FFFFFF"

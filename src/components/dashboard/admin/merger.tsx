@@ -70,6 +70,19 @@ const Leaderboard: React.FC = () => {
     const [data, setData] = useState<LeaderboardItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
+    const getCategoryText = () => {
+        switch (selectedCategory) {
+            case 'desa':
+                return 'Top 5 Desa Digital';
+            case 'inovator':
+                return 'Top 5 Inovator';
+            case 'inovasi':
+                return 'Top 5 Inovasi';
+            default:
+                return 'Top 5';
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             const db = getFirestore();
@@ -145,30 +158,79 @@ const Leaderboard: React.FC = () => {
     return (
         <>
             {/* 🔹 Header */}
-            <Flex justify="center" gap="10px" mb={4} mt={2}>
-                <ChakraButton
-                    onClick={() => setSelectedCategory('inovasi')}
-                    variant={selectedCategory === 'inovasi' ? 'solid' : 'outline'}
-                    fontSize="10"
-                >
-                    Top 5 Inovasi
-                </ChakraButton>
+            <Flex justify="space-between" align="center" mb={3} mt={1}>
+                <Text fontSize="md" fontWeight="bold" ml={4}>
+                    {getCategoryText()}
+                </Text>
+            </Flex>
+            <Flex gap={2}>
                 <ChakraButton
                     onClick={() => setSelectedCategory('desa')}
-                    variant={selectedCategory === 'desa' ? 'solid' : 'outline'}
-                    fontSize="10"
+                    variant={selectedCategory === 'desa' ? 'outline' : 'solid'}
+                    fontSize="10" 
+                    ml={4}
+                    height={8}
+                    boxShadow={selectedCategory === 'desa' ? 'none' : 'md'}
+                    bg={selectedCategory === 'desa' ? 'transparent' : '#347357'}
+                    borderColor={selectedCategory === 'desa' ? '#347357' : 'transparent'}
+                    color={selectedCategory === 'desa' ? '#347357' : 'white'}
+                    _hover={{
+                        bg: selectedCategory === 'desa' ? 'transparent' : '#C5D9D1', // Hover background
+                        borderColor: selectedCategory === 'desa' ? '#347357' : '#347357', // Hover border color menjadi #347357
+                        color: selectedCategory === 'desa' ? '#347357' : '#347357', // Warna teks berubah menjadi hijau saat hover
+                    }}
+                    _active={{
+                        bg: '#347357', // Background when clicked (active)
+                        boxShadow: 'none', // No shadow when button is clicked
+                    }}
                 >
-                    Top 5 Desa
+                    Top 5 Desa Digital
                 </ChakraButton>
                 <ChakraButton
                     onClick={() => setSelectedCategory('inovator')}
-                    variant={selectedCategory === 'inovator' ? 'solid' : 'outline'}
-                    fontSize="10"
+                    variant={selectedCategory === 'inovator' ? 'outline' : 'solid'}
+                    fontSize="10" 
+                    height={8}
+                    boxShadow={selectedCategory === 'inovator' ? 'none' : 'md'}
+                    bg={selectedCategory === 'inovator' ? 'transparent' : '#347357'}
+                    borderColor={selectedCategory === 'inovator' ? '#347357' : 'transparent'}
+                    color={selectedCategory === 'inovator' ? '#347357' : 'white'}
+                    _hover={{
+                        bg: selectedCategory === 'inovator' ? 'transparent' : '#C5D9D1', // Hover background
+                        borderColor: selectedCategory === 'inovator' ? '#347357' : '#347357', // Hover border color
+                        color: selectedCategory === 'inovator' ? '#347357' : '#347357', // Warna teks berubah menjadi hijau saat hover
+                    }}
+                    _active={{
+                        bg: '#347357', // Background when clicked (active)
+                        boxShadow: 'none', // No shadow when button is clicked
+                    }}
                 >
                     Top 5 Inovator
                 </ChakraButton>
+                <ChakraButton
+                    onClick={() => setSelectedCategory('inovasi')}
+                    variant={selectedCategory === 'inovasi' ? 'outline' : 'solid'}
+                    fontSize="10" 
+                    mr={4}
+                    height={8}
+                    boxShadow={selectedCategory === 'inovasi' ? 'none' : 'md'}
+                    bg={selectedCategory === 'inovasi' ? 'transparent' : '#347357'}
+                    borderColor={selectedCategory === 'inovasi' ? '#347357' : 'transparent'}
+                    color={selectedCategory === 'inovasi' ? '#347357' : 'white'}
+                    _hover={{
+                        bg: selectedCategory === 'inovasi' ? 'transparent' : '#C5D9D1', // Hover background
+                        borderColor: selectedCategory === 'inovasi' ? '#347357' : '#347357', // Hover border color
+                        color: selectedCategory === 'inovasi' ? '#347357' : '#347357', // Warna teks berubah menjadi hijau saat hover
+                        boxShadow: 'md', // Hover shadow effect
+                    }}
+                    _active={{
+                        bg: '#347357', // Background when clicked (active)
+                        boxShadow: 'none', // No shadow when button is clicked
+                    }}
+                >
+                    Top 5 Inovasi
+                </ChakraButton>
             </Flex>
-
 
             {/* 🔹 Chart Container */}
             <Box
@@ -200,13 +262,6 @@ const Leaderboard: React.FC = () => {
                         </BarChart>
                     </ResponsiveContainer>
                 )}
-            </Box>
-
-            {/* 🔹 Footer Link */}
-            <Box mt={3} textAlign="center">
-                <ChakraLink href={getDashboardPath()} fontSize="sm" color="gray.500" textDecoration="underline">
-                    Lihat Data
-                </ChakraLink>
             </Box>
         </>
     );
