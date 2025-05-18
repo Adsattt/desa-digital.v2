@@ -644,7 +644,8 @@ const AddVillage: React.FC = () => {
       <Box p="48px 16px 20px 16px">
         <form 
           onSubmit={onSubmitForm}
-          onKeyDown={handleKeyDown}>
+          onKeyDown={handleKeyDown}
+          id="VillageForm">
           <Flex direction="column" marginTop="24px">
             <Stack spacing="12px" width="100%">
               <Alert
@@ -900,10 +901,11 @@ const AddVillage: React.FC = () => {
         </Text>
       )}
       {status !== "Menunggu" && (
-        <>
+      <>
         <NavbarButton>
           <Button
             type="submit"
+            form="VillageForm"
             fontSize={14}
             width="100%"
             isLoading={loading}
@@ -937,7 +939,7 @@ const AddVillage: React.FC = () => {
             modalBody2={modalBody2} // Mengirimkan teks konten modal
           />
         </NavbarButton>
-        </>
+      </>
       )}
     </>
   );

@@ -375,7 +375,7 @@ const EditInnovation: React.FC = () => {
     <>
       <TopBar title="Edit Inovasi" onBack={() => navigate(-1)} />
       <Box p="48px 16px 20px 16px">
-        <form onSubmit={onUpdateInnovation}>
+        <form onSubmit={onUpdateInnovation} id="UpdateInnovation">
           <Flex direction="column" marginTop="24px">
             <Stack spacing={3} width="100%">
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -949,11 +949,12 @@ const EditInnovation: React.FC = () => {
         </Text>
       )}
       <NavbarButton>
-        <Button type="submit" mt="20px" width="100%" isLoading={loading}>
+        <Button type="submit" form="UpdateInnovation" mt="20px" width="100%" isLoading={loading}>
           Update Inovasi
         </Button>
         <Button
           type="button"
+          form="UpdateInnovation"
           mt="4"
           width="100%"
           bg="red.500"

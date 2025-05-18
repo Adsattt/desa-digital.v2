@@ -516,53 +516,53 @@ const toEditVillage = () => {
           </div>
         </ContentContainer>
       </div>
-        {admin ? (
-          village?.status === "Terverifikasi" ||
-          village?.status === "Ditolak" ? (
-            <StatusCard
-              status={village?.status}
-              message={village?.catatanAdmin}
-            />
-          ) : (
-            <NavbarButton>
-              <Button width="100%" fontSize="14px" onClick={onOpen}>
-                Verifikasi Permohonan Akun
-              </Button>
-            </NavbarButton>
-          )
+      {admin ? (
+        village?.status === "Terverifikasi" ||
+        village?.status === "Ditolak" ? (
+          <StatusCard
+            status={village?.status}
+            message={village?.catatanAdmin}
+          />
         ) : (
           <NavbarButton>
-            <Button 
-              width="100%" 
-              onClick={() => {
-                if (owner) {
-                  toEditVillage();
-                 } else {
-                   onOpen();
-                 }
-              }}>
-              
-              {owner ? "Edit Profile" : " "}
+            <Button width="100%" fontSize="14px" onClick={onOpen}>
+              Verifikasi Permohonan Akun
             </Button>
           </NavbarButton>
-        )}
-        <RejectionModal
-          isOpen={openModal}
-          onClose={() => setOpenModal(false)}
-          onConfirm={handleReject}
-          loading={loading}
-          setMessage={setModalInput}
-          message={modalInput}
-        />
-        <ActionDrawer
-          isOpen={isOpen}
-          onClose={onClose}
-          onVerify={handleVerify}
-          isAdmin={admin}
-          role="Desa"
-          loading={loading}
-          setOpenModal={setOpenModal}
-        />
+        )
+      ) : (
+        <NavbarButton>
+          <Button 
+            width="100%" 
+            onClick={() => {
+              if (owner) {
+                toEditVillage();
+                } else {
+                  onOpen();
+                }
+            }}>
+            
+            {owner ? "Edit Profile" : " "}
+          </Button>
+        </NavbarButton>
+      )}
+      <RejectionModal
+        isOpen={openModal}
+        onClose={() => setOpenModal(false)}
+        onConfirm={handleReject}
+        loading={loading}
+        setMessage={setModalInput}
+        message={modalInput}
+      />
+      <ActionDrawer
+        isOpen={isOpen}
+        onClose={onClose}
+        onVerify={handleVerify}
+        isAdmin={admin}
+        role="Desa"
+        loading={loading}
+        setOpenModal={setOpenModal}
+      />
     </>
   );
 }

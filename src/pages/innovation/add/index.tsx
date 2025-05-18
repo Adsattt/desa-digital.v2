@@ -636,7 +636,7 @@ const AddInnovation: React.FC = () => {
     <>
       <TopBar title="Tambahkan Inovasi" onBack={() => navigate(-1)} />
       <Box p="48px 16px 20px 16px">
-        <form onSubmit={onSubmitForm}>
+        <form onSubmit={onSubmitForm} id="innovationForm">
           <Flex direction="column" marginTop="24px">
             <Stack spacing={3} width="100%">
               <Alert
@@ -1258,6 +1258,7 @@ const AddInnovation: React.FC = () => {
           <NavbarButton>
             <Button
               type="submit"
+              form="innovationForm"
               isLoading={loading}
               width="100%"
               onClick={() => {

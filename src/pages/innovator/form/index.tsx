@@ -432,7 +432,7 @@ const InnovatorForm: React.FC = () => {
         title={owner ? "Edit Profil Inovator" : "Register Inovator"} 
         onBack={() => navigate(-1)} />
       <Box p="48px 16px 20px 16px">
-        <form onSubmit={onSubmitForm}>
+        <form onSubmit={onSubmitForm} id="InnovatorForm">
           <Flex direction="column" marginTop="24px">
             <Alert
               status={alertStatus}
@@ -566,6 +566,7 @@ const InnovatorForm: React.FC = () => {
           <NavbarButton>
             <Button
               type="submit"
+              form="InnovatorForm"
               width="100%"
               isLoading={loading}
               onClick={() => {
