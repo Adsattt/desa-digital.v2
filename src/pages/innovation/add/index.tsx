@@ -140,9 +140,7 @@ const AddInnovation: React.FC = () => {
   const [alertStatus, setAlertStatus] = useState<"info" | "warning" | "error">(
     "warning"
   );
-  const [alertMessage, setAlertMessage] = useState(
-    "Profil masih kosong. Silahkan isi data di bawah terlebih dahulu."
-  );
+  const [alertMessage, setAlertMessage] = useState <string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState("Masih diproduksi");
   const [status, setStatus] = useState("");
   const [isEditable, setIsEditable] = useState(true);
@@ -596,6 +594,7 @@ const AddInnovation: React.FC = () => {
         setRequirements(data.infrastruktur || []);
         setSelectedFiles(data.images || []);
 
+        if (data){
         if (data.status === "Menunggu") {
           setIsEditable(false); // Jika status "pending", form tidak bisa diedit
           setStatus("Menunggu");
@@ -620,7 +619,7 @@ const AddInnovation: React.FC = () => {
           await updateDoc(innovatorDocRef, {
             jumlahInovasi: increment(1),
           });
-        }
+        }}
       }
     };
     fetchInnovationData();
@@ -687,12 +686,13 @@ const AddInnovation: React.FC = () => {
   };
 
   return (
-    <Container page>
+    <Box paddingTop={12} paddingBottom={4}>
       <TopBar title="Tambahkan Inovasi" onBack={() => navigate(-1)} />
       <form onSubmit={onSubmitForm}>
         <Box p="0 16px">
           <Flex direction="column" marginTop="24px">
             <Stack spacing={3} width="100%">
+              {alertMessage && (
               <Alert
                 status={alertStatus}
                 fontSize={12}
@@ -701,6 +701,7 @@ const AddInnovation: React.FC = () => {
               >
                 {alertMessage}
               </Alert>
+              )}
               <Text fontWeight="400" fontSize="14px" mb="-2">
                 Status Inovasi <span style={{ color: "red" }}>*</span>
               </Text>
@@ -1124,6 +1125,7 @@ const AddInnovation: React.FC = () => {
 
               {/* Tombol tambah manfaat */}
               <Button
+                size="sm"
                 mt={-3}
                 variant="outline"
                 leftIcon={<AddIcon />}
@@ -1271,6 +1273,7 @@ const AddInnovation: React.FC = () => {
                     /5 kata
                   </Text>
                   <Button
+                  size="sm"
                     variant="outline"
                     onClick={() => {
                       // Validasi infrastruktur terakhir sebelum menambahkan yang baru
@@ -1345,7 +1348,7 @@ const AddInnovation: React.FC = () => {
           )}
         </Box>
       </form>
-    </Container>
+    </Box>
   );
 };
 
