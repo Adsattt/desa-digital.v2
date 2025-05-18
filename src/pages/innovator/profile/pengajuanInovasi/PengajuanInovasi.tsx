@@ -65,7 +65,7 @@ const PengajuanInovasi: React.FC = () => {
   return (
     <Container page>
       <TopBar title="Pengajuan Inovasi" onBack={() => navigate(-1)} />
-      <Stack padding="0 16px" gap={2}>
+      <Stack padding="0 16px" gap={4}>
         {/* Search Bar dan Filter */}
         <Flex
           padding="16px 0px"
