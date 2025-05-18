@@ -1,17 +1,18 @@
 import React from "react";
-import Skeleton from "react-loading-skeleton";
 import {
-  Container,
-  Title,
-  Category,
-  Description,
-  Background,
-  Content,
-  Icon,
-  CompanyContainer,
   Applied,
+  Background,
+  Category,
+  CompanyContainer,
+  Container,
+  Content,
+  Description,
+  Icon,
   InnovatorName,
+  Title,
 } from "./_cardInnovationStyle";
+
+import defaultLogo from "@public/images/default-header.svg";
 
 type CardInnovationProps = {
   images?: string[];
@@ -29,7 +30,7 @@ function CardInnovation(props: CardInnovationProps) {
 
   return (
     <Container onClick={onClick}>
-      <Background src={images ? images[0] : undefined} alt={namaInovasi} />
+      <Background src={images ? images[0] : defaultLogo} alt={namaInovasi} />
       <Content>
         <Title>{namaInovasi}</Title>
         <Category>{kategori}</Category>
@@ -38,7 +39,7 @@ function CardInnovation(props: CardInnovationProps) {
           {typeof innovatorLogo === "string" ? (
             <Icon src={innovatorLogo} alt={namaInovasi} />
           ) : (
-            <div>{innovatorLogo}</div>
+            <>{innovatorLogo}</>
           )}
           {typeof innovatorName === "string" ? (
             <InnovatorName>{innovatorName}</InnovatorName>
@@ -46,7 +47,7 @@ function CardInnovation(props: CardInnovationProps) {
             <div>{innovatorName}</div>
           )}
         </CompanyContainer>
-        <Applied>Sejak {tahunDibuat}</Applied>
+        <Applied>Sejak {tahunDibuat || "-"}</Applied>
       </Content>
     </Container>
   );
