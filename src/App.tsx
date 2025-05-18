@@ -38,6 +38,7 @@ import DashboardPerangkatDesa from "./pages/village/dashboard";
 import RekomendasiInovasi from "./pages/village/dashboard/rekomendasiDashboard";
 import AddVillage from "./pages/village/form";
 import KlaimInovasi from "./pages/village/klaimInovasi";
+import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
 import { Bounce, ToastContainer } from "react-toastify";
@@ -127,7 +128,7 @@ const routes = [
     element: <KlaimInovasi />,
   },
   {
-    path: paths.EDIT_KLAIM_INOVASI_PAGE,
+    path: paths.DETAIL_KLAIM_INOVASI_PAGE,
     element: <KlaimInovasi />,
   }, 
   {
