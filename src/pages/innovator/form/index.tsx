@@ -76,7 +76,6 @@ const InnovatorForm: React.FC = () => {
     website: "",
     whatsapp: "",
   });
-  const [modelBusiness, setModelBusiness] = useState("");
   const toast = useToast();
   const [isEditable, setIsEditable] = useState(true);
   const [status, setStatus] = useState("");
@@ -187,12 +186,6 @@ const InnovatorForm: React.FC = () => {
     setSelectedCategory(selectedOption);
   };
 
-  const onSelectModelBusiness = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setModelBusiness(event.target.value);
-  };
-
   const onSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
@@ -257,7 +250,6 @@ const InnovatorForm: React.FC = () => {
           namaInovator: name,
           deskripsi: description,
           kategori: selectedCategory?.label,
-          modelBisnis: modelBusiness,
           instagram: instagram,
           website: website,
           whatsapp: whatsapp,
@@ -277,7 +269,6 @@ const InnovatorForm: React.FC = () => {
           createdAt: serverTimestamp(),
           jumlahInovasi: 0,
           jumlahDesaDampingan: 0,
-          modelBisnis: modelBusiness,
           instagram,
           website,
           whatsapp,
@@ -362,7 +353,6 @@ const InnovatorForm: React.FC = () => {
             label: data.kategori,
             value: data.kategori.toLowerCase().replace(/\s+/g, "-"),
           });
-          setModelBusiness(data.modelBisnis);
           setSelectedLogo(data?.logo || "");
           setSelectedHeader(data?.header || "");
           setStatus(data.status);
