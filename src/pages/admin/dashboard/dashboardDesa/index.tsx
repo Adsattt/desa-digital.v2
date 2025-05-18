@@ -28,7 +28,7 @@ const DashboardAdminDesa: React.FC = () => {
     return (
         <Box>
             {/* Top Bar */}
-            <TopBar title="Dashboard Desa" onBack={() => navigate(-1)} />
+            <TopBar title="Data Desa" onBack={() => navigate(-1)} />
 
             <Stack gap="16px" paddingTop="55px" />
 
