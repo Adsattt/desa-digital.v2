@@ -6,30 +6,23 @@ import {
   Icon,
   Image,
   Grid,
-  Button
+  Button as ChakraButton
 } from "@chakra-ui/react";
 import {
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ArrowRight, 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-  query,
-  where
-} from "firebase/firestore";
+import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { firestore } from "../../../firebase/clientApp";
 import { FaUsers } from "react-icons/fa";
 import VillageActive from 'Assets/icons/village-active.svg';
 import InnovationActive from "Assets/icons/innovation3.svg";
-import { DownloadIcon } from "@chakra-ui/icons";
 import * as XLSX from "xlsx";
+import { paths } from 'Consts/path';  // Import paths from Consts/path
 
 const InformasiUmum: React.FC = () => {
   const navigate = useNavigate();
@@ -128,6 +121,22 @@ const InformasiUmum: React.FC = () => {
     XLSX.writeFile(workbook, "informasi_umum.xlsx");
   };
 
+  const navigateToDashboard = (category: string) => {
+    switch (category) {
+      case "desa":
+        navigate(paths.ADMIN_DASHBOARD_DESA); // Navigates to the correct path for Desa
+        break;
+      case "inovator":
+        navigate(paths.ADMIN_DASHBOARD_INOVATOR); // Navigates to the correct path for Innovator
+        break;
+      case "inovasi":
+        navigate(paths.ADMIN_DASHBOARD_INOVASI); // Navigates to the correct path for Inovasi
+        break;
+      default:
+        break;
+    }
+  };
+
   return (
     <Stack>
       <Box p={4}>
@@ -146,14 +155,16 @@ const InformasiUmum: React.FC = () => {
               value: totalVillage,
               change: changeVillage,
               isIncrease: isIncreaseVillage,
+              category: "desa"
             },
             {
               label: "Innovator",
-              icon: <FaUsers size={20} color="#347357" />,
+              icon: <FaUsers size={25} color="#347357"/>,
               iconBg: "#C6D8D0",
               value: totalInnovators,
               change: changeInnovator,
               isIncrease: isIncreaseInnovator,
+              category: "inovator"
             },
             {
               label: "Inovasi",
@@ -162,6 +173,7 @@ const InformasiUmum: React.FC = () => {
               value: totalInnovation,
               change: changeInnovation,
               isIncrease: isIncreaseInnovation,
+              category: "inovasi"
             },
           ].map((stat, index) => (
             <Box
@@ -174,12 +186,13 @@ const InformasiUmum: React.FC = () => {
               bg="white"
               minW={0}
               overflow="hidden"
-              minH="150px"
               display="flex"
               flexDirection="column"
               alignItems="center"
               justifyContent="center"
               textAlign="center"
+              minH="100px"
+              mb={0}
             >
               <Box
                 bg={stat.iconBg}
@@ -209,6 +222,38 @@ const InformasiUmum: React.FC = () => {
                   {Math.abs(stat.change)} {stat.isIncrease ? "bertambah" : "berkurang"} dari bulan lalu
                 </Text>
               </Flex>
+
+              {/* Letakkan tombol di bagian bawah box */}
+              <ChakraButton
+                onClick={() => navigateToDashboard(stat.category)}
+                variant="solid"
+                bg="#347357"
+                fontSize="7"
+                fontWeight="regular"
+                justifyContent="center"
+                color="#FFFFFF"
+                _hover={{ bg: "#C5D9D1", color: "#347357" }}
+                mt={3}
+                height="20px"
+                display="flex"
+                boxShadow="lg"
+              >
+                Lihat Data
+                <Box
+                  bg="#C5D9D1"
+                  borderRadius="full"
+                  height="10px"
+                  width="10px"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  ml={1}
+                >
+                  <ArrowRight size={8} color="#347357" />  {/* Ikon panah kanan dengan ukuran lebih kecil */}
+                </Box>
+              </ChakraButton>
+
+
             </Box>
           ))}
         </Grid>
