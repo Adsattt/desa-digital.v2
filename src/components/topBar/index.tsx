@@ -77,6 +77,9 @@ function TopBar(props: TopBarProps) {
            color: "white",
            leftIcon: <FaCheck />,
            isDisabled: true,
+           hover: {
+            bg: "#5C8B6F",
+          },
          };
        case "Menunggu":
          return {
@@ -85,6 +88,9 @@ function TopBar(props: TopBarProps) {
            color: "white",
            leftIcon: undefined,
            isDisabled: true,
+            hover: {
+              bg: "#5C8B6F",
+            },
          };
        case "Ditolak":
          return {
@@ -93,6 +99,9 @@ function TopBar(props: TopBarProps) {
            color: "white",
            leftIcon: undefined,
            isDisabled: false,
+            hover: {
+              bg: "red.400",
+            },
          };
        case "":
        default:
