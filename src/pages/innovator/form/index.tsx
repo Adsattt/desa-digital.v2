@@ -580,6 +580,7 @@ const InnovatorForm: React.FC = () => {
                 value={textInputsValue.instagram}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired={false}
               />
               <FormSection
                 title="Website"
@@ -589,6 +590,7 @@ const InnovatorForm: React.FC = () => {
                 value={textInputsValue.website}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired={false}
               />
             </Stack>
           </Flex>

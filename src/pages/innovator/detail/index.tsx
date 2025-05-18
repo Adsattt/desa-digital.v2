@@ -213,7 +213,7 @@ const DetailInnovator: React.FC = () => {
     <Container page>
       <TopBar title="Profil Inovator" onBack={() => navigate(-1)} />
       <Flex position="relative">
-        <Background src={innovatorData.header || defaultHeader} alt="header" />
+        <Background src={innovatorData.header} alt="header" />
         <Logo src={innovatorData.logo} alt="logo" mx={16} my={-40} />
         <Box
           position="absolute"

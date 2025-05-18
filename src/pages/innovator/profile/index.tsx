@@ -44,7 +44,6 @@ import RejectionModal from "Components/confirmModal/RejectionModal";
 import ActionDrawer from "Components/drawer/ActionDrawer";
 import defaultHeader from "@public/images/default-header.svg";
 
-
 const ProfileInnovator: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
@@ -85,7 +84,7 @@ const ProfileInnovator: React.FC = () => {
 
   const toEditInovator = () => {
     navigate(paths.INNOVATOR_FORM);
-  }
+  };
 
   const handleReject = async () => {
     setLoading(true);
@@ -179,8 +178,6 @@ const ProfileInnovator: React.FC = () => {
     }
   }, [id]);
 
-
-
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -215,22 +212,22 @@ const ProfileInnovator: React.FC = () => {
           <Flex direction="column" align="flex-end" mb={owner ? 0 : 6}>
             {owner && (
               <Button
-              leftIcon={<Image src={Send} alt="send" />}
-              onClick={() => navigate(paths.PENGAJUAN_INOVASI_PAGE)}
-              fontSize="12px"
-              fontWeight="500"
-              height="29px"
-              width="136px"
-              padding="6px 8px"
-              borderRadius="4px"
-            >
-              Pengajuan Inovasi
-            </Button>
+                leftIcon={<Image src={Send} alt="send" />}
+                onClick={() => navigate(paths.PENGAJUAN_INOVASI_PAGE)}
+                fontSize="12px"
+                fontWeight="500"
+                height="29px"
+                width="136px"
+                padding="6px 8px"
+                borderRadius="4px"
+              >
+                Pengajuan Inovasi
+              </Button>
             )}
           </Flex>
           <Title>{innovatorData.namaInovator}</Title>
           <Label>{innovatorData.kategori}</Label>
-          <Flex direction="row" gap={3} mt={0} alignItems="center">
+          <Flex direction="row" gap={3} mt={1} alignItems="center">
             <Icon as={FaWandMagicSparkles} color="#4B5563" />
             <Text fontSize="12px" fontWeight="400" color="#4B5563">
               {innovatorData.jumlahInovasi} Inovasi
@@ -272,7 +269,7 @@ const ProfileInnovator: React.FC = () => {
                     <Box color="#4B5563" fontSize="12px" minWidth="110px">
                       Link Instagram
                     </Box>
-                    <Description>{innovatorData.instagram}</Description>
+                    <Description>{innovatorData.instagram || "-"}</Description>
                   </Flex>
                   <Flex
                     width="100%"
@@ -284,7 +281,7 @@ const ProfileInnovator: React.FC = () => {
                     <Box color="#4B5563" fontSize="12px" minWidth="110px">
                       Link Website
                     </Box>
-                    <Description>{innovatorData.website}</Description>
+                    <Description>{innovatorData.website || "-"}</Description>
                   </Flex>
                 </>
               )}
@@ -345,95 +342,101 @@ const ProfileInnovator: React.FC = () => {
           <InnovationPreview innovations={innovations} innovatorId={id} />
         </Flex>
         <Flex direction="column">
-          <Text fontSize="16px" fontWeight="700" mb={3}>
+          <Text fontSize="16px" fontWeight="700" mb={2}>
             Desa Dampingan
           </Text>
-          {villages.map((village) => (
-            <Box
-              key={village.id}
-              borderWidth="1px"
-              borderRadius="lg"
-              overflow="hidden"
-              p={2}
-              mb={4}
-              cursor="pointer"
-              backgroundColor="white"
-              borderColor="gray.200"
-              onClick={() =>
-                navigate(
-                  generatePath(paths.DETAIL_VILLAGE_PAGE, { id: village.id })
-                )
-              }
-            >
-              <Flex alignItems="center" mb={3}>
-                <Image
-                  src={village.logo}
-                  alt={`${village.namaDesa} Logo`}
-                  boxSize="40px"
-                  borderRadius="full"
-                  mr={4}
-                />
-                <Text fontSize="12px" fontWeight="600">
-                  {village.namaDesa}
+          {villages.length === 0 ? (
+            <Text color="gray.400" fontSize={12}> Belum memiliki desa dampingan </Text>
+          ) : (
+            villages.map((village) => (
+              <Box
+                key={village.id}
+                borderWidth="1px"
+                borderRadius="lg"
+                overflow="hidden"
+                p={2}
+                mb={4}
+                cursor="pointer"
+                backgroundColor="white"
+                borderColor="gray.200"
+                onClick={() =>
+                  navigate(
+                    generatePath(paths.DETAIL_VILLAGE_PAGE, { id: village.id })
+                  )
+                }
+              >
+                <Flex alignItems="center" mb={3}>
+                  <Image
+                    src={village.logo}
+                    alt={`${village.namaDesa} Logo`}
+                    boxSize="40px"
+                    borderRadius="full"
+                    mr={4}
+                  />
+                  <Text fontSize="12px" fontWeight="600">
+                    {village.namaDesa}
+                  </Text>
+                  <ChevronRightIcon color="gray.500" ml="auto" />
+                </Flex>
+                {/* Menambahkan Border Pembatas Di Atas "Inovasi Diterapkan" */}
+                <Box borderTop="1px" borderColor="gray.300" pt={3} mt={3}></Box>
+                <Text fontSize="12px" fontWeight="400" mb={2} color="#9CA3AF">
+                  Inovasi diterapkan
                 </Text>
-                <ChevronRightIcon color="gray.500" ml="auto" />
-              </Flex>
-              {/* Menambahkan Border Pembatas Di Atas "Inovasi Diterapkan" */}
-              <Box borderTop="1px" borderColor="gray.300" pt={3} mt={3}></Box>
-              <Text fontSize="12px" fontWeight="400" mb={2} color="#9CA3AF">
-                Inovasi diterapkan
-              </Text>
-              <Flex direction="row" gap={2} flexWrap="wrap">
-                {Array.isArray(village.inovasiDiterapkan) &&
-                  village.inovasiDiterapkan.map((inovasi, index) => (
-                    <Box
-                      key={index}
-                      px={0}
-                      py={0}
-                      backgroundColor="gray.100"
-                      borderRadius="full"
-                      fontSize="12px"
-                      display="inline-flex"
-                    >
-                      {inovasi}
-                    </Box>
-                  ))}
-              </Flex>
-            </Box>
-          ))}
+                <Flex direction="row" gap={2} flexWrap="wrap">
+                  {Array.isArray(village.inovasiDiterapkan) &&
+                    village.inovasiDiterapkan.map((inovasi, index) => (
+                      <Box
+                        key={index}
+                        px={0}
+                        py={0}
+                        backgroundColor="gray.100"
+                        borderRadius="full"
+                        fontSize="12px"
+                        display="inline-flex"
+                      >
+                        {inovasi}
+                      </Box>
+                    ))}
+                </Flex>
+              </Box>
+            ))
+          )}
         </Flex>
       </ContentContainer>
-      {admin ? (
-        innovatorData.status === "Terverifikasi" ||
-        innovatorData.status === "Ditolak" ? (
-          <StatusCard
-            status={innovatorData.status}
-            message={innovatorData.catatanAdmin}
-          />
+      <div>
+        {admin ? (
+          innovatorData.status === "Terverifikasi" ||
+          innovatorData.status === "Ditolak" ? (
+            <StatusCard
+              status={innovatorData.status}
+              message={innovatorData.catatanAdmin}
+            />
+          ) : (
+            <NavbarButton>
+              <Button width="100%" fontSize="14px" onClick={onOpen}>
+                Verifikasi Permohonan Akun
+              </Button>
+            </NavbarButton>
+          )
         ) : (
           <NavbarButton>
-            <Button width="100%" fontSize="14px" onClick={onOpen}>
-              Verifikasi Permohonan Akun
+            <Button
+              width="100%"
+              onClick={() => {
+                if (owner) {
+                  toEditInovator(); // Arahkan ke halaman edit inovator jika owner
+                } else {
+                  onOpen(); // Buka modal jika bukan owner
+                }
+              }}
+            >
+              {owner ? "Edit" : "Kontak"}
             </Button>
           </NavbarButton>
-        )
-      ) : (
-        <NavbarButton>
-          <Button
-            width="100%"
-            onClick={() => {
-              if (owner) {
-                toEditInovator(); // Arahkan ke halaman edit inovator jika owner
-              } else {
-                onOpen(); // Buka modal jika bukan owner
-              }
-            }}
-          >
-            {owner ? "Edit" : "Kontak"}
-          </Button>
-        </NavbarButton>
+        )}
+      </div>
 
-      )}
       <RejectionModal
         isOpen={openModal}
         onClose={() => setOpenModal(false)}
@@ -451,9 +454,9 @@ const ProfileInnovator: React.FC = () => {
         loading={loading}
         setOpenModal={setOpenModal}
         contactData={{
-          whatsapp: innovatorData.whatsapp || "", 
+          whatsapp: innovatorData.whatsapp || "",
           instagram: innovatorData.instagram || "",
-          website: innovatorData?.website || ""
+          website: innovatorData?.website || "",
         }}
       />
     </>
