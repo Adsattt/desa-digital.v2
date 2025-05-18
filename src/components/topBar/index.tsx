@@ -68,10 +68,6 @@ function TopBar(props: TopBarProps) {
     }
   }, [user, id]);
 
-  console.log("id", id);
-
-  console.log("claimStatus", claimStatus);
-
    const { label, bg, color, leftIcon, isDisabled, hover } = (() => {
      switch (claimStatus) {
        case "Terverifikasi":
