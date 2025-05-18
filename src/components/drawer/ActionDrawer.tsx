@@ -122,13 +122,13 @@ const ActionDrawer: React.FC<ActionDrawerProps> = ({
               </ButtonKontak>
 
                 {/* Tombol ig */}
-              <ButtonKontak as="a" href={contactData?.instagram || "#"} target="_blank">
+              <ButtonKontak as="a" href={contactData?.instagram || "https://www.instagram.com/"} target="_blank">
                 <Icon src={Instagram} alt="IG" />
                 Instagram
               </ButtonKontak>
 
                 {/* Tombol web */}
-              <ButtonKontak as="a" href={contactData?.website || "#"} target="_blank">
+              <ButtonKontak as="a" href={contactData?.website || "https://www.google.com/"} target="_blank">
                 <Icon src={Web} alt="Web" />
                 Website
               </ButtonKontak>
