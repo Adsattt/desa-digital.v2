@@ -4,7 +4,7 @@ import {
   Collapse,
   Flex,
   Text,
-  useDisclosure
+  useDisclosure,
 } from "@chakra-ui/react";
 import TopBar from "Components/topBar";
 import React, { useEffect, useRef, useState } from "react";
@@ -44,9 +44,9 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useUser } from "src/contexts/UserContext";
+import RecommendationDrawer from "Components/drawer/RecommendationDrawer";
 
 const KlaimInovasi: React.FC = () => {
-  // const navigate = useNavigate();
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   const { id } = useParams<{ id: string }>();
@@ -62,12 +62,18 @@ const KlaimInovasi: React.FC = () => {
   const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
-  const modalBody1 = "Apakah Anda yakin ingin mengajukan klaim?"; 
+  const modalBody1 = "Apakah Anda yakin ingin mengajukan klaim?";
   const modalBody2 =
     "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan klaim inovasi. Silahkan cek pada halaman pengajuan klaim";
   const [openModal, setOpenModal] = useState(false);
   const [modalInput, setModalInput] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [disabled, setDisabled] = useState(false);
+  const {
+    isOpen: isRecOpen,
+    onOpen: onRecOpen,
+    onClose: onRecClose,
+  } = useDisclosure();
 
   const location = useLocation();
   const inovasiId = location.state?.id;
@@ -197,8 +203,9 @@ const KlaimInovasi: React.FC = () => {
   };
 
   const submitClaim = async () => {
+    console.log("Submitting claim...");
     setLoading(true);
-    if (!user?.uid || !id) {
+    if (!user?.uid) {
       setError("User atau ID inovasi tidak ditemukan");
       setLoading(false);
       return;
@@ -290,12 +297,13 @@ const KlaimInovasi: React.FC = () => {
         draggable: true,
         progress: undefined,
       });
+      // onRecOpen();
     } catch (error) {
       setError("Failed to submit claim");
     } finally {
       setLoading(false);
       // setIsModal2Open(true);
-      navigate(`/village/pengajuan/${user?.uid}`);
+      // navigate(`/village/pengajuan/${user?.uid}`);
     }
   };
 
@@ -307,6 +315,7 @@ const KlaimInovasi: React.FC = () => {
   };
 
   const handleModal1Yes = async () => {
+    console.log("Modal 1 Yes clicked");
     await submitClaim();
   };
 
@@ -347,7 +356,7 @@ const KlaimInovasi: React.FC = () => {
     }
   }, [id]);
 
-  console.log("Claim Data:", JSON.stringify(claimData, null, 2));
+  // console.log("Claim Data:", JSON.stringify(claimData, null, 2));
 
   const handleVerify = async () => {
     setLoading(true);
@@ -522,6 +531,11 @@ const KlaimInovasi: React.FC = () => {
               />
             </Field>
           </Collapse>
+          {/* <RecommendationDrawer
+            innovationId={inovasiId}
+            isOpen={isRecOpen}
+            onClose={() => onRecClose()}
+          /> */}
         </Container>
         <div>
           {isAdmin ? (
