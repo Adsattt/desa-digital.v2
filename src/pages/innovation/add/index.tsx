@@ -17,6 +17,7 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
+import { NavbarButton } from "../../village/profile/_profileStyle";
 import Container from "Components/container";
 import TopBar from "Components/topBar";
 import {
@@ -632,10 +633,10 @@ const AddInnovation: React.FC = () => {
   };
 
   return (
-    <Container page>
+    <>
       <TopBar title="Tambahkan Inovasi" onBack={() => navigate(-1)} />
-      <form onSubmit={onSubmitForm}>
-        <Box p="0 16px">
+      <Box p="48px 16px 20px 16px">
+        <form onSubmit={onSubmitForm}>
           <Flex direction="column" marginTop="24px">
             <Stack spacing={3} width="100%">
               <Alert
@@ -1245,52 +1246,53 @@ const AddInnovation: React.FC = () => {
               </Flex>
             </Stack>
           </Flex>
-          {error && (
-            <Text color="red.500" fontSize="12px" mt="4px" textAlign="center">
-              {error}
-            </Text>
-          )}
-          {status !== "Menunggu" && (
-            <div>
-              <Button
-                type="submit"
-                isLoading={loading}
-                mt="20px"
-                width="100%"
-                onClick={() => {
-                  if (isFormValid()) {
-                    toast({
-                      title: "Form belum lengkap!",
-                      description: "Harap isi semua field wajib.",
-                      status: "error",
-                      duration: 3000,
-                      position: "top",
-                      isClosable: true,
-                      });
-                  } else {
-                    setIsModal1Open(true);
-                  }
-                }}
-              >
-                {status === "Ditolak" ? "Ajukan Ulang" : "Ajukan Inovasi"}
-              </Button>
-              <ConfModal
-                isOpen={isModal1Open}
-                onClose={closeModal}
-                modalTitle=""
-                modalBody1={modalBody1} // Mengirimkan teks konten modal
-                onYes={handleModal1Yes}
-              />
-              <SecConfModal
-                isOpen={isModal2Open}
-                onClose={closeModal}
-                modalBody2={modalBody2} // Mengirimkan teks konten modal
-              />
-          </div>
-          )}
-        </Box>
-      </form>
-    </Container>
+        </form>
+      </Box>
+      {error && (
+        <Text color="red.500" fontSize="12px" mt="4px" textAlign="center">
+          {error}
+        </Text>
+      )}
+      {status !== "Menunggu" && (
+        <>
+          <NavbarButton>
+            <Button
+              type="submit"
+              isLoading={loading}
+              width="100%"
+              onClick={() => {
+                if (isFormValid()) {
+                  toast({
+                    title: "Form belum lengkap!",
+                    description: "Harap isi semua field wajib.",
+                    status: "error",
+                    duration: 3000,
+                    position: "top",
+                    isClosable: true,
+                    });
+                } else {
+                  setIsModal1Open(true);
+                }
+              }}
+            >
+              {status === "Ditolak" ? "Ajukan Ulang" : "Ajukan Inovasi"}
+            </Button>
+          </NavbarButton>
+          <ConfModal
+            isOpen={isModal1Open}
+            onClose={closeModal}
+            modalTitle=""
+            modalBody1={modalBody1} // Mengirimkan teks konten modal
+            onYes={handleModal1Yes}
+          />
+          <SecConfModal
+            isOpen={isModal2Open}
+            onClose={closeModal}
+            modalBody2={modalBody2} // Mengirimkan teks konten modal
+          />
+        </>
+      )}
+    </>
   );
 };
 

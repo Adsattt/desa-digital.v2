@@ -427,7 +427,7 @@ const ProfileInnovator: React.FC = () => {
               }
             }}
           >
-            {owner ? "Edit" : "Kontak"}
+            {owner ? "Edit Profile" : "Kontak"}
           </Button>
         </NavbarButton>
 

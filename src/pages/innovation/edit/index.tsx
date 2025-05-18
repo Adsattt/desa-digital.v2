@@ -23,6 +23,7 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
+import { NavbarButton } from "../../village/profile/_profileStyle";
 import Container from "Components/container";
 import TopBar from "Components/topBar";
 import {
@@ -371,9 +372,9 @@ const EditInnovation: React.FC = () => {
   }
 
   return (
-    <Container page>
+    <>
       <TopBar title="Edit Inovasi" onBack={() => navigate(-1)} />
-      <Box p="0 16px">
+      <Box p="48px 16px 20px 16px">
         <form onSubmit={onUpdateInnovation}>
           <Flex direction="column" marginTop="24px">
             <Stack spacing={3} width="100%">
@@ -940,27 +941,29 @@ const EditInnovation: React.FC = () => {
               </Flex>
             </Stack>
           </Flex>
-          {error && (
-            <Text color="red.500" fontSize="12px" mt="4px">
-              {error}
-            </Text>
-          )}
-          <Button type="submit" mt="20px" width="100%" isLoading={loading}>
-            Update Inovasi
-          </Button>
-          <Button
-            type="button"
-            mt="4"
-            width="100%"
-            bg="red.500"
-            color="white"
-            _hover={{ bg: "red.600" }}
-            onClick={handleDeleteClick}
-          >
-            Delete Inovasi
-          </Button>
         </form>
       </Box>
+      {error && (
+        <Text color="red.500" fontSize="12px" mt="4px">
+          {error}
+        </Text>
+      )}
+      <NavbarButton>
+        <Button type="submit" mt="20px" width="100%" isLoading={loading}>
+          Update Inovasi
+        </Button>
+        <Button
+          type="button"
+          mt="4"
+          width="100%"
+          bg="red.500"
+          color="white"
+          _hover={{ bg: "red.600" }}
+          onClick={handleDeleteClick}
+        >
+          Delete Inovasi
+        </Button>
+      </NavbarButton>
       <AlertDialog
         isOpen={isOpen}
         leastDestructiveRef={cancelRef}
@@ -1015,7 +1018,7 @@ const EditInnovation: React.FC = () => {
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-    </Container>
+    </>
   );
 };
 

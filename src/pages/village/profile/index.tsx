@@ -199,7 +199,7 @@ const toEditVillage = () => {
    }, [id]);
 
   return (
-    <Box>
+    <>
       <TopBar title="Profil Desa" onBack={() => navigate(-1)} />
       <div style={{ position: "relative", width: "100%" }}>
         <Background src={village?.header} alt="background" />
@@ -516,7 +516,6 @@ const toEditVillage = () => {
           </div>
         </ContentContainer>
       </div>
-      <Box>
         {admin ? (
           village?.status === "Terverifikasi" ||
           village?.status === "Ditolak" ? (
@@ -564,7 +563,6 @@ const toEditVillage = () => {
           loading={loading}
           setOpenModal={setOpenModal}
         />
-      </Box>
-    </Box>
+    </>
   );
 }
