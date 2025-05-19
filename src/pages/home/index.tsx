@@ -95,7 +95,7 @@ function Home() {
             justifyContent="center"
             position="fixed"
             zIndex="999"
-            bottom="68px"
+            bottom="75px"
             marginLeft="267px"
             marginRight="33px"
             marginBottom="1"

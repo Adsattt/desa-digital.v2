@@ -108,7 +108,7 @@ const Register: React.FC = () => {
       createUserDocument(userCred.user);
       navigate(paths.LOGIN_PAGE);
     }
-  }, [userCred, navigate]);
+  }, [userCred]);
 
   return (
 <Box>

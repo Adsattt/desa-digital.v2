@@ -54,6 +54,30 @@ const CustomLabel: React.FC<CustomLabelProps> = ({ x, y, width, value }) => {
     );
 };
 
+// 🔹 Custom Tooltip for "Total Desa"
+const CustomTooltip = ({
+    active,
+    payload,
+    label,
+}: {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+}) => {
+    if (active && payload && payload.length > 0) {
+        const data = payload[0].payload;
+
+        return (
+            <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
+                <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
+                <p style={{ margin: 0 }}>Total Desa: {data.valueAsli}</p> {/* Menampilkan Total Desa */}
+            </div>
+        );
+    }
+
+    return null;
+};
+
 const SebaranPotensiDesa: React.FC = () => {
     const [barData, setBarData] = useState<ChartData[]>([]);
     const [allPotensiData, setAllPotensiData] = useState<Record<string, number>>({});
@@ -147,7 +171,7 @@ const SebaranPotensiDesa: React.FC = () => {
                 <Text fontSize="sm" fontWeight="bold" color="gray.800">
                     Sebaran Potensi Desa
                 </Text>
-                <Button
+                {/* <Button
                     size="sm"
                     bg="white"
                     boxShadow="md"
@@ -162,7 +186,7 @@ const SebaranPotensiDesa: React.FC = () => {
                     onClick={handleDownload}
                 >
                     <DownloadIcon boxSize={3} color="black" />
-                </Button>
+                </Button> */}
             </Flex>
 
             {/* 🔹 Chart */}
@@ -181,7 +205,7 @@ const SebaranPotensiDesa: React.FC = () => {
                 <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={barData} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
                         <XAxis dataKey="name" axisLine={false} tickLine={false} hide />
-                        <Tooltip cursor={{ fill: "transparent" }} />
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
                         <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#1E5631">
                             <LabelList
                                 dataKey="name"
@@ -215,7 +239,7 @@ const SebaranPotensiDesa: React.FC = () => {
             >
                 <TableContainer maxWidth="100%" width="auto" borderRadius="md">
                     <Table variant="simple" size="sm">
-                        <Thead bg="#F0FFF4">
+                        <Thead bg="#C6D8D0">
                             <Tr>
                                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                                 <Th p={1} fontSize="8px" textAlign="center">Kategori Potensi</Th>

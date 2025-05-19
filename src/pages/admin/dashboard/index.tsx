@@ -25,6 +25,7 @@ import InformasiUmum from "Components/dashboard/admin/informasiumum";
 import DesaDigitalUnggulan from "Components/dashboard/admin/desaDigitalUnggulan";
 import InovatorUnggulan from "Components/dashboard/admin/inovatorUnggulan";
 import InovasiUnggulan from "Components/dashboard/admin/inovasiUnggulan";
+import DownloadReport from "Components/dashboard/admin/downloadReport";
 
 const DashboardAdmin: React.FC = () => {
     const navigate = useNavigate();
@@ -32,9 +33,11 @@ const DashboardAdmin: React.FC = () => {
 
     return (
         <Box>
-            {/* Top Bar */}
             <TopBar
-                title="Dashboard" onBack={() => navigate(-1)} />
+                title="Dashboard" 
+                onBack={() => navigate(-1)} 
+                rightElement={<DownloadReport />}
+            />
             <Stack
                 gap="16px"
                 paddingTop="55px">

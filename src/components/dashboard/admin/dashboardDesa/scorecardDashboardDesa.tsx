@@ -65,25 +65,25 @@ const ScoreCardDashboardDesa: React.FC = () => {
       label: "Provinsi",
       value: totalProvince,
       icon: ProvinceIcon,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
     {
       label: "Kabupaten",
       value: totalKabupaten,
       icon: RegencyIcon,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
     {
       label: "Kecamatan",
       value: totalKecamatan,
       icon: SubdistrictIcon,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
     {
       label: "Desa Digital",
       value: totalVillage,
       icon: VillageIcon,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
   ];
 

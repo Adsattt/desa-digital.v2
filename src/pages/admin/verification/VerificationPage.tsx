@@ -91,7 +91,7 @@ const VerificationPage: React.FC = () => {
     "Verifikasi Desa": paths.VILLAGE_PROFILE_PAGE,
     "Verifikasi Inovator": paths.INNOVATOR_PROFILE_PAGE,
     "Verifikasi Tambah Inovasi": paths.DETAIL_INNOVATION_PAGE,
-    "Verifikasi Klaim Inovasi": paths.DETAIL_INNOVATION_PAGE,
+    "Verifikasi Klaim Inovasi": paths.DETAIL_KLAIM_INOVASI_PAGE,
   };
 
   const handleCardClick = (id: string) => {
@@ -143,6 +143,12 @@ const VerificationPage: React.FC = () => {
       }
 
       const docSnap = await getDocs(q);
+
+      const data = docSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      console.log("Fetched data:", data);
 
       // Check if we have more items
       setHasMore(docSnap.docs.length === itemsPerPage);

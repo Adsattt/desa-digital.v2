@@ -15,6 +15,8 @@ import {
 } from "./_innovationStyle";
 import { getDocuments, getDocumentById } from "../../firebase/inovationTable";
 import { DocumentData } from "firebase/firestore";
+import defaultLogo from "@public/images/default-logo.svg";
+import { Image } from "@chakra-ui/react";
 
 function Detail() {
   const navigate = useNavigate();
@@ -76,7 +78,7 @@ function Detail() {
               <Skeleton circle width={50} height={50} />
             ) : (
               innovators[item.innovatorId]?.logo || (
-                <img src="path/to/placeholder-image.png" alt="Placeholder" />
+                <Image src={defaultLogo} alt="logo" width='40px' height='40px' objectFit='cover' />
               )
             )
           }
@@ -84,7 +86,7 @@ function Detail() {
             loadingInnovators ? (
               <Skeleton width={100} />
             ) : (
-              innovators[item.innovatorId]?.namaInovator || "Unknown Innovator"
+              innovators[item.innovatorId]?.namaInovator || item.namaInnovator
             )
           }
           onClick={() =>

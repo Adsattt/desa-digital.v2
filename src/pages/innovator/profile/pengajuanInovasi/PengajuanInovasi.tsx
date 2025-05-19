@@ -1,4 +1,4 @@
-import { ChevronDownIcon, SearchIcon } from '@chakra-ui/icons';
+import { ChevronDownIcon, SearchIcon } from "@chakra-ui/icons";
 import {
   Box,
   Button,
@@ -14,17 +14,26 @@ import {
   SkeletonCircle,
   Stack,
   Text,
-} from '@chakra-ui/react';
-import TopBar from 'Components/topBar';
+  Image,
+} from "@chakra-ui/react";
+import TopBar from "Components/topBar";
 import Container from "Components/container";
 import CardNotification from "Components/card/notification/CardNotification";
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { auth, firestore } from "../../../../firebase/clientApp";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { collection, getDocs, orderBy, query, startAfter, limit } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  startAfter,
+  limit,
+} from "firebase/firestore";
 import { paths } from "Consts/path";
-
+import Right from "Assets/icons/arrow-right.svg";
+import Left from "Assets/icons/arrow-left.svg";
 
 const SkeletonCard = () => (
   <Box borderWidth="1px" borderRadius="lg" padding="4" mb={4} bg="white">
@@ -88,8 +97,12 @@ const PengajuanInovasi: React.FC = () => {
       setLastVisible(docs.docs[docs.docs.length - 1]);
       setHasMore(docs.docs.length === itemsPerPage);
 
-      const newData: Inovasi[] = docs.docs.map(doc => ({ id: doc.id, ...doc.data() } as Inovasi));
-      const filteredByUser = newData.filter(item => item.innovatorId === user?.uid);
+      const newData: Inovasi[] = docs.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Inovasi)
+      );
+      const filteredByUser = newData.filter(
+        (item) => item.innovatorId === user?.uid
+      );
 
       setData(filteredByUser);
       setFilteredData(filteredByUser);
@@ -113,26 +126,29 @@ const PengajuanInovasi: React.FC = () => {
       );
     }
     if (selectedFilter && selectedFilter !== "Semua") {
-      filtered = filtered.filter(item => item.status === selectedFilter);
+      filtered = filtered.filter((item) => item.status === selectedFilter);
     }
     setFilteredData(filtered);
   }, [searchTerm, selectedFilter, data]);
 
   const handleNextPage = async () => {
     if (hasMore) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
       await fetchData(true);
     }
   };
 
   const handlePrevPage = async () => {
     if (currentPage > 1) {
-      setCurrentPage(prev => prev - 1);
+      setCurrentPage((prev) => prev - 1);
       await fetchData(false);
     }
   };
 
-  const formatTimestamp = (timestamp: { seconds: number; nanoseconds: number }) => {
+  const formatTimestamp = (timestamp: {
+    seconds: number;
+    nanoseconds: number;
+  }) => {
     if (!timestamp?.seconds) return "Invalid Date";
     return new Date(timestamp.seconds * 1000).toLocaleDateString("id-ID", {
       year: "numeric",
@@ -151,7 +167,8 @@ const PengajuanInovasi: React.FC = () => {
               <SearchIcon color="gray.400" />
             </InputLeftElement>
             <Input
-              placeholder="Cari inovasi di sini"
+              placeholder="Cari pengajuan..."
+              fontSize="10pt"
               size="md"
               borderRadius="full"
               value={searchTerm}
@@ -176,63 +193,66 @@ const PengajuanInovasi: React.FC = () => {
               {selectedFilter || "Filter"}
             </MenuButton>
             <MenuList>
-              {['Semua', 'Menunggu', 'Terverifikasi', 'Ditolak'].map((status) => (
-                <MenuItem
-                  key={status}
-                  onClick={() => setSelectedFilter(status === "Semua" ? null : status)}
-                >
-                  {status}
-                </MenuItem>
-              ))}
+              {["Semua", "Menunggu", "Terverifikasi", "Ditolak"].map(
+                (status) => (
+                  <MenuItem
+                    fontSize={12}
+                    key={status}
+                    onClick={() =>
+                      setSelectedFilter(status === "Semua" ? null : status)
+                    }
+                  >
+                    {status}
+                  </MenuItem>
+                )
+              )}
             </MenuList>
           </Menu>
         </Flex>
 
-        {loading ? (
-          Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
-        ) : (
-          filteredData.map((item, idx) => (
-            <CardNotification
-              key={idx}
-              title={item.namaInovasi || "Tanpa Nama Inovasi"}
-              status={item.status || "Unknown"}
-              date={formatTimestamp(item.createdAt)}
-              description={item.deskripsi || "Tidak ada deskripsi"}
-              onClick={() => navigate(paths.DETAIL_INNOVATION_PAGE.replace(":id", item.id))}
-            />
-          ))
-        )}
+        {loading
+          ? Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
+          : filteredData.map((item, idx) => (
+              <CardNotification
+                key={idx}
+                title={item.namaInovasi || "Tanpa Nama Inovasi"}
+                status={item.status || "Unknown"}
+                date={formatTimestamp(item.createdAt)}
+                description={item.deskripsi || "Tidak ada deskripsi"}
+                onClick={() =>
+                  navigate(paths.DETAIL_INNOVATION_PAGE.replace(":id", item.id))
+                }
+              />
+            ))}
 
         {/* Pagination Buttons */}
-        <Flex justifyContent="space-between"
-          mt={4}
-          mb={4}
-          alignItems="center"
-        >
+        <Flex gap={4} mt={4} mb={4} alignItems="center" alignSelf="center">
           <Button
+            rightIcon={<Image src={Left} alt="back" />}
+            iconSpacing={0}
             onClick={handlePrevPage}
             isDisabled={currentPage === 1}
             colorScheme="teal"
             size="sm"
             variant="outline"
             borderRadius="md"
-            width="120px"
-          >
-            Sebelumnya
-          </Button>
-          <Text textAlign="center" fontWeight="medium">
+            width="16px"
+          ></Button>
+          <Text textAlign="center" fontSize="10pt">
             Halaman {currentPage}
           </Text>
           <Button
+            rightIcon={<Image src={Right} alt="next" />}
+            iconSpacing={0}
             onClick={handleNextPage}
             isDisabled={!hasMore}
             colorScheme="teal"
             size="sm"
             variant="outline"
             borderRadius="md"
-            width="120px"
+            
           >
-            Selanjutnya
+
           </Button>
         </Flex>
       </Stack>

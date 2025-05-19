@@ -24,7 +24,7 @@ import DashboardAdminInovator from "./pages/admin/dashboard/dashboardInovator";
 import VerificationPage from "./pages/admin/verification/VerificationPage";
 import BantuanFAQ from "./pages/bantuanFAQ";
 import EmailReset from "./pages/emailreset/EmailReset";
-import AddInnovation from "./pages/innovation/add";
+import AddInnovation from "./pages/innovation/add/index";
 import DesaYangMenerapkan from "./pages/innovation/desaYangMenerapkan";
 import EditInnovation from "./pages/innovation/edit";
 import InnovationListPage from "./pages/innovator/detail/ProdukInovasi/InnovationListPage";
@@ -128,9 +128,9 @@ const routes = [
     element: <KlaimInovasi />,
   },
   {
-    path: paths.DETAIL_KLAIM_PAGE,
-    element: <DetailKlaim />,
-  },
+    path: paths.DETAIL_KLAIM_INOVASI_PAGE,
+    element: <KlaimInovasi />,
+  }, 
   {
     path: paths.NEW_PASSWORD_PAGE,
     element: <NewPassword />,

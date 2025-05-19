@@ -33,7 +33,7 @@ const CustomTooltip = ({
         return (
             <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
                 <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
-                <p style={{ margin: 0 }}>Total : {data.valueAsli}</p>
+                <p style={{ margin: 0 }}>Total Inovasi: {data.valueAsli}</p>
             </div>
         );
     }
@@ -162,7 +162,10 @@ const Top5InovatorVillage: React.FC = () => {
 
     // State untuk data inovator
     const [inovatorData, setInovatorData] = useState<
-        { no: number; namaInovator: string; jumlahInovasi: number; jumlahDesaDampingan: number }[]
+        {
+            namaDesaDampingan: any;
+            namaInovasi: any; no: number; namaInovator: string; jumlahInovasi: number; jumlahDesaDampingan: number 
+}[]
     >([]);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -231,7 +234,9 @@ const Top5InovatorVillage: React.FC = () => {
 
                         return {
                             namaInovator: data.namaInovator ? limitWords(data.namaInovator) : "Tidak Ada Nama",
+                            namaInovasi: data.Inovasi,
                             jumlahInovasi: stats.jumlahInovasi,
+                            namaDesaDampingan: data.DesaDampingan,
                             jumlahDesaDampingan: data.jumlahDesaDampingan || 0,
                         };
                     })
@@ -280,7 +285,7 @@ const Top5InovatorVillage: React.FC = () => {
                 <Text fontSize="m" fontWeight="bold" color="gray.800">
                     Top 5 Inovator Terbaik
                 </Text>
-                <Button
+                {/* <Button
                     size="sm"
                     bg="white"
                     boxShadow="md"
@@ -295,7 +300,7 @@ const Top5InovatorVillage: React.FC = () => {
                     cursor="pointer"
                     onClick={handleDownload}
                 ><DownloadIcon boxSize={3} color="black" />
-                </Button>
+                </Button> */}
             </Flex>
 
             <Box
@@ -346,7 +351,7 @@ const Top5InovatorVillage: React.FC = () => {
                 <TableContainer maxWidth="100%" width="auto" borderRadius="md">
                     <Table variant="simple" size="sm" > {/* Mengurangi ukuran tabel */}
                         {/* Header Tabel */}
-                        <Thead bg="#F0FFF4">
+                        <Thead bg="#C6D8D0">
                             <Tr>
                                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                                 <Th p={1} fontSize="8px" textAlign="center">Nama Inovator</Th>

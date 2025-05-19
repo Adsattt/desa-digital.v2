@@ -46,14 +46,14 @@ const ScoreCardDashboardInovator: React.FC = () => {
       value: totalInovators,
       iconType: "react-icon",
       icon: FaUsers,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
     {
       label: "Desa Dampingan",
       value: totalDesaDampingan,
       iconType: "image",
       icon: DesaIcon,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
   ];
 
@@ -90,7 +90,7 @@ const ScoreCardDashboardInovator: React.FC = () => {
                   mr={3}
                 >
                   {stat.iconType === "react-icon" ? (
-                    <stat.icon size={16} color="#2F855A" />
+                    <stat.icon size={16} color="#357357" />
                   ) : (
                     <Image src={stat.icon} w={4} h={4} alt={`${stat.label} icon`} />
                   )}

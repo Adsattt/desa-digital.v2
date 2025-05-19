@@ -36,3 +36,23 @@ To run the application on your local machine:
 
 ```bash
 npm run dev
+```
+
+## Firebase Emulator Setup
+
+Untuk development tanpa memengaruhi data produksi, kita akan menggunakan Firebase Emulator Suite (Auth, Firestore, Storage, Functions, dan UI).
+
+1. **Install Firebase CLI** (jika belum):
+
+    ```bash
+    npm install -g firebase-tools
+    ```
+
+2. **Buat folder untuk data emulator** di root project:
+
+    ```bash
+    mkdir emulator-data
+    ```
+3. **Jalankan emulator**
+    ```bash
+    npm run emulator
