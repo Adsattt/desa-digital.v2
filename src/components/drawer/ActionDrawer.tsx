@@ -26,7 +26,7 @@ interface ContactData {
 interface ActionDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  isAdmin?: boolean;
+  isAdmin?: boolean | null;
   loading?: boolean;
   onVerify?: () => void;
   setOpenModal?: (value: boolean) => void;
