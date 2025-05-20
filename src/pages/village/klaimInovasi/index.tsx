@@ -69,6 +69,7 @@ const KlaimInovasi: React.FC = () => {
   const [modalInput, setModalInput] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [disabled, setDisabled] = useState(false);
+  const [editable, setEditable] = useState(false);
   const {
     isOpen: isRecOpen,
     onOpen: onRecOpen,
@@ -145,6 +146,7 @@ const KlaimInovasi: React.FC = () => {
     }
 
     setIsModal1Open(true);
+    setDisabled(true);
   };
 
   const onSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,6 +202,7 @@ const KlaimInovasi: React.FC = () => {
   const onSubmitForm = async (event: React.FormEvent<HTMLElement>) => {
     event.preventDefault();
     submitClaim();
+    setEditable(false);
   };
 
   const submitClaim = async () => {
@@ -339,6 +342,7 @@ const KlaimInovasi: React.FC = () => {
             const claimData = claimSnap.data();
             console.log("Claim data:", JSON.stringify(claimData, null, 2));
             setClaimData(claimData);
+            setEditable(claimData.status === undefined || claimData.status === "");
             setSelectedCheckboxes(claimData.jenisDokumen || []);
             setSelectedFiles(claimData.images || []);
             setSelectedVid(claimData.video || "");
@@ -552,6 +556,7 @@ const KlaimInovasi: React.FC = () => {
                   isLoading={loading}
                   onClick={onOpen}
                   type="button"
+                  disabled={disabled}
                 >
                   Verifikasi Permohonan Klaim
                 </Button>
@@ -564,6 +569,7 @@ const KlaimInovasi: React.FC = () => {
                 isLoading={loading}
                 onClick={handleAjukanKlaim}
                 type="button"
+                disabled={disabled}
               >
                 Ajukan Klaim
               </Button>
