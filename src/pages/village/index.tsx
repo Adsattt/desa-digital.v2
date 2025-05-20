@@ -35,11 +35,11 @@ const Village: React.FC = () => {
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
 
-  //TODO nah ini selected province blm kepake. kayanya harus kepake
   const [provinces, setProvinces] = useState<Location[]>([]);
   const [regencies, setRegencies] = useState<Location[]>([]);
   const [selectedProvince, setSelectedProvince] = useState<string>("");
   const [selectedRegency, setSelectedRegency] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const villagesRef = collection(firestore, "villages");
   const [villages, setVillages] = useState<DocumentData[]>([]);
@@ -47,7 +47,7 @@ const Village: React.FC = () => {
   const handleFetchProvinces = async () => {
     try {
       const provincesData: Location[] = await getProvinces();
-      setProvinces(provincesData); // Simpan data apa adanya
+      setProvinces(provincesData);
     } catch (error) {
       console.error("Error fetching provinces:", error);
     }
@@ -61,27 +61,37 @@ const Village: React.FC = () => {
       console.error("Error fetching regencies:", error);
     }
   };
+
   useEffect(() => {
     handleFetchProvinces();
   }, []);
 
-  const handleProvinceChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const provinceId = event.target.value;
-    const provinceName = event.target.options[event.target.selectedIndex].text;
-    setSelectedProvince(provinceName);
-    handleFetchRegencies(provinceId);
-    setRegencies([]);
+  const handleProvinceChange = (selected: { label: string; value: string } | null) => {
+    if (selected) {
+      setSelectedProvince(selected.label);
+      setSelectedRegency("");
+      setRegencies([]);
+      handleFetchRegencies(selected.value);
+    } else {
+      setSelectedProvince("");
+      setSelectedRegency("");
+      setRegencies([]);
+    }
   };
+  
+  const handleRegencyChange = (selected: { label: string; value: string } | null) => {
+    if (selected) {
+      setSelectedRegency(selected.label);
+    } else {
+      setSelectedRegency("");
+    }
+  };  
 
-  const handleRegencyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const regencyName = event.target.options[event.target.selectedIndex].text;
-    setSelectedRegency(regencyName);
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
   };
 
   const { data: users, isFetched } = useQuery<any>("villages", getUsers);
-  // const villages = users?.filter((item: any) => item.role === "village");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -95,13 +105,22 @@ const Village: React.FC = () => {
           namaDesa: data.lokasi?.desaKelurahan?.label || "",
         };
       });
-      console.log("villagesData", villagesData);
       setVillages(villagesData);
     };
     fetchData();
-  }, [villagesRef]);
+  }, []);
 
-  //TODO: onchange dropdown juga perlu diperbaiki
+  const filteredVillages = villages.filter((item: any) => {
+    const matchProvince =
+      selectedProvince === "" || item.provinsi === selectedProvince;
+    const matchRegency =
+      selectedRegency === "" || item.kabupatenKota === selectedRegency;
+    const matchSearch =
+      searchTerm === "" ||
+      item.namaDesa.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchProvince && matchRegency && matchSearch;
+  });
+
   return (
     <Box>
       <Hero />
@@ -112,41 +131,43 @@ const Village: React.FC = () => {
               <Text>Pilih Provinsi</Text>
               <Dropdown
                 placeholder="Pilih Provinsi"
-                options={provinces} // Data provinsi yang sudah diformat
+                options={provinces}
                 onChange={handleProvinceChange}
-              ></Dropdown>
+              />
             </Column2>
             <Column2>
               <Text>Pilih Kab/Kota</Text>
               <Dropdown
                 placeholder="Pilih Kab/Kota"
-                options={regencies} // Data provinsi yang sudah diformat
+                options={regencies}
                 onChange={handleRegencyChange}
-              ></Dropdown>
+              />
             </Column2>
           </Column1>
           <Column1>
             <SearchBarVil
-            placeholder="Cari desa" />
+              placeholder="Cari nama desa..."
+              onChange={(keyword: string) => setSearchTerm(keyword)}
+            />
           </Column1>
         </CardContent>
         <Text>
-          {" "}
           Menampilkan semua desa untuk{" "}
-          <Texthighlight>"Semua Provinsi"</Texthighlight>{" "}
+          <Texthighlight>
+            "{selectedProvince || "Semua Provinsi"}"
+          </Texthighlight>
         </Text>
         <GridContainer>
           {isFetched &&
-            villages?.map((item: any, idx: number) => (
+            filteredVillages.map((item: any, idx: number) => (
               <CardVillage
                 key={idx}
                 provinsi={item.provinsi}
                 kabupatenKota={item.kabupatenKota}
                 namaDesa={item.namaDesa}
-                logo={item.logo || defaultLogo} // Logo default jika tidak ada
-                header={item.header || defaultHeader} // Header default jika tidak ada
+                logo={item.logo || defaultLogo}
+                header={item.header || defaultHeader}
                 id={item.userId}
-                // {...item}
                 onClick={() => {
                   const path = generatePath(paths.DETAIL_VILLAGE_PAGE, {
                     id: item.userId,

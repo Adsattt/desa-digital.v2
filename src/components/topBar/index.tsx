@@ -1,14 +1,16 @@
-// src/components/topBar.tsx
 import { ArrowBackIcon } from "@chakra-ui/icons";
-import { Box, Button, Flex, Text, IconButton } from "@chakra-ui/react";
+import { Box, Button, Flex, IconButton, Text } from "@chakra-ui/react";
+import faq from "Assets/icons/faq.svg";
 import { paths } from "Consts/path";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useLocation, useNavigate, useParams } from "react-router";
+import { toast } from "react-toastify";
+import { useUser } from "src/contexts/UserContext";
 import { auth, firestore } from "../../firebase/clientApp";
 import UserMenu from "./RightContent/UserMenu";
-import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import faq from "Assets/icons/faq.svg";
+import { FaCheck } from "react-icons/fa";
 
 type TopBarProps = {
   title: string | undefined;
@@ -24,6 +26,8 @@ function TopBar(props: TopBarProps) {
   const { id } = useParams<{ id: string }>();
   const [user] = useAuthState(auth);
   const [village, setVillage] = useState(false);
+  const { isVillageVerified } = useUser();
+  const [claimStatus, setClaimStatus] = useState("");
 
   const allowedPaths = [paths.LANDING_PAGE, paths.ADMIN_PAGE];
   const isUserMenuVisible = allowedPaths.includes(location.pathname);
@@ -43,6 +47,98 @@ function TopBar(props: TopBarProps) {
     fecthVillage();
   }, [user]);
 
+  useEffect(() => {
+    if (user && id) {
+      const q = query(
+        collection(firestore, "claimInnovations"),
+        where("desaId", "==", user.uid),
+        where("inovasiId", "==", id)
+      );
+      getDocs(q).then((querySnapshot) => {
+        if (querySnapshot.empty) {
+          setClaimStatus("");
+        } else {
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            setClaimStatus(data.status);
+          });
+        }
+      }
+      );
+    }
+  }, [user, id]);
+
+   const { label, bg, color, leftIcon, isDisabled, hover } = (() => {
+     switch (claimStatus) {
+       case "Terverifikasi":
+         return {
+           label: "Sudah Klaim",
+           bg: "#71A686",
+           color: "white",
+           leftIcon: <FaCheck />,
+           isDisabled: true,
+           hover: {
+            bg: "#5C8B6F",
+          },
+         };
+       case "Menunggu":
+         return {
+           label: "Proses Klaim",
+           bg: "#71A686",
+           color: "white",
+           leftIcon: undefined,
+           isDisabled: true,
+            hover: {
+              bg: "#5C8B6F",
+            },
+         };
+       case "Ditolak":
+         return {
+           label: "Ditolak",
+           bg: "red.500",
+           color: "white",
+           leftIcon: undefined,
+           isDisabled: false,
+            hover: {
+              bg: "red.400",
+            },
+         };
+       case "":
+       default:
+         return {
+           label: "Klaim Inovasi",
+           bg: "white",
+           color: "#347357",
+           hover: {
+             bg: "gray.200",
+           },
+           leftIcon: undefined,
+           isDisabled: false,
+         };
+     }
+   })();
+
+
+  const handleClick = () => {
+    if (isDisabled) return;
+    if (!isVillageVerified) {
+      toast.warning(
+        "Akun anda belum terdaftar atau terverifikaasi sebagai desa digital",
+        {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+    } else {
+      navigate("/village/klaimInovasi", { state: { id } });
+    }
+  };
+
   return (
     <Box
       padding="0 16px"
@@ -55,29 +151,35 @@ function TopBar(props: TopBarProps) {
       zIndex="999"
       alignContent="center"
     >
-      <Flex justify="space-between" align="center" height="100%">
-        <Flex align="center">
-          {!!onBack && (
-            <ArrowBackIcon
-              color="white"
-              fontSize="14pt"
-              cursor="pointer"
-              onClick={onBack}
-              mt="2px"
-              mr="8px"
-            />
-          )}
-          <Text
-            fontSize={title && title.split(" ").length > 3 ? "14px" : "16px"}
-            fontWeight="700"
+      <Flex
+        justify={
+          isClaimButtonVisible || isUserMenuVisible
+            ? "space-between"
+            : "flex-start"
+        }
+        align="center"
+      >
+        {!!onBack && (
+          <ArrowBackIcon
             color="white"
-            lineHeight="56px"
-          >
-            {title}
-          </Text>
-        </Flex>
+            fontSize="14pt"
+            cursor="pointer"
+            onClick={onBack}
+            mt="2px"
+          />
+        )}
+        <Text
+          fontSize={title && title.split(" ").length > 3 ? "14px" : "16px"}
+          fontWeight="700"
+          color="white"
+          ml={onBack ? "8px" : "0"}
+          lineHeight="56px"
+          flex={1}
+          textAlign="left"
+        >
+          {title}
+        </Text>
 
-        {/* Komponen kanan (Download, dll) */}
         <Flex align="center" gap={2}>
           {rightElement}
 
@@ -87,10 +189,14 @@ function TopBar(props: TopBarProps) {
               fontWeight="500"
               variant="inverted"
               height="32px"
-              _hover={{ bg: "gray.200" }}
-              onClick={() => navigate(`/village/klaimInovasi/${id}`)}
+              _hover={{ bg: hover?.bg }}
+              bg={bg}
+              color={color}
+              leftIcon={leftIcon}
+              // isDisabled={isDisabled}
+              onClick={handleClick}
             >
-              Klaim Inovasi
+              {label}
             </Button>
           )}
 

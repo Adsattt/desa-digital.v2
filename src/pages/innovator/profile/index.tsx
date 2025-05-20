@@ -42,6 +42,10 @@ import { Icon, NavbarButton } from "../../village/profile/_profileStyle";
 import StatusCard from "Components/card/status/StatusCard";
 import RejectionModal from "Components/confirmModal/RejectionModal";
 import ActionDrawer from "Components/drawer/ActionDrawer";
+import Loading from "Components/loading";
+import { useAdminStatus } from "Hooks/useAdminStatus";
+import defaulHeader from "@public/images/default-header.svg";
+import defaulLogo from "@public/images/default-logo.svg";
 
 const ProfileInnovator: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -52,12 +56,13 @@ const ProfileInnovator: React.FC = () => {
   const [innovations, setInnovations] = useState<DocumentData[]>([]);
   const [villages, setVillages] = useState<DocumentData[]>([]); // Add state for villages
   const [owner, setOwner] = useState(false);
-  const [admin, setAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [openModal, setOpenModal] = useState(false);
   const [modalInput, setModalInput] = useState("");
+
+  const { isAdmin, checking } = useAdminStatus();
 
   const handleVerify = async () => {
     setLoading(true);
@@ -66,6 +71,7 @@ const ProfileInnovator: React.FC = () => {
         const innovatorRef = doc(firestore, "innovators", id);
         await updateDoc(innovatorRef, {
           status: "Terverifikasi",
+          catatanAdmin: "",
         });
         setInnovatorData((prev) => ({ ...prev, status: "Terverifikasi" }));
       }
@@ -75,6 +81,10 @@ const ProfileInnovator: React.FC = () => {
     }
     setLoading(false);
     onClose();
+  };
+
+  const toEditInovator = () => {
+    navigate(paths.INNOVATOR_FORM);
   };
 
   const handleReject = async () => {
@@ -101,19 +111,6 @@ const ProfileInnovator: React.FC = () => {
     // onClose();
   };
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (userLogin?.uid) {
-        const userRef = doc(firestore, "users", userLogin.uid);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const user = userDoc.data();
-          setAdmin(user?.role === "admin");
-        }
-      }
-    };
-    fetchUser();
-  });
   // Fetch innovator data
   useEffect(() => {
     if (!id) {
@@ -169,14 +166,8 @@ const ProfileInnovator: React.FC = () => {
     }
   }, [id]);
 
-
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>{error}</div>;
+  if (loading || checking) {
+    return <Loading />;
   }
 
   if (!innovatorData) {
@@ -197,8 +188,8 @@ const ProfileInnovator: React.FC = () => {
         onBack={() => navigate(-1)}
       />
       <Flex position="relative">
-        <Background src={innovatorData.header} alt="header" />
-        <Logo src={innovatorData.logo} alt="logo" mx={16} my={-40} />
+        <Background src={innovatorData.header || defaulHeader} alt="header" />
+        <Logo src={innovatorData.logo || defaulLogo} alt="logo" mx={16} my={-40} />
       </Flex>
       <ContentContainer>
         <Stack gap={2}>
@@ -206,7 +197,7 @@ const ProfileInnovator: React.FC = () => {
             {owner && (
               <Button
               leftIcon={<Image src={Send} alt="send" />}
-              onClick={onOpen}
+              onClick={() => navigate(paths.PENGAJUAN_INOVASI_PAGE)}
               fontSize="12px"
               fontWeight="500"
               height="29px"
@@ -281,10 +272,10 @@ const ProfileInnovator: React.FC = () => {
             </Flex>
             <Flex direction="row" alignItems="center">
               <Text fontSize="12px" fontWeight="700" color="#4B5563" mr={2}>
-                Model bisnis digital:
+                Kategori Inovator
               </Text>
               <Text fontSize="12px" fontWeight="400" color="#4B5563" flex="1">
-                {innovatorData.modelBisnis}
+                {innovatorData.kategori}
               </Text>
             </Flex>
 
@@ -393,7 +384,7 @@ const ProfileInnovator: React.FC = () => {
           ))}
         </Flex>
       </ContentContainer>
-      {admin ? (
+      {isAdmin ? (
         innovatorData.status === "Terverifikasi" ||
         innovatorData.status === "Ditolak" ? (
           <StatusCard
@@ -409,8 +400,17 @@ const ProfileInnovator: React.FC = () => {
         )
       ) : (
         <NavbarButton>
-          <Button width="100%" onClick={onOpen}>
-            Kontak Inovator
+          <Button
+            width="100%"
+            onClick={() => {
+              if (owner) {
+                toEditInovator(); // Arahkan ke halaman edit inovator jika owner
+              } else {
+                onOpen(); // Buka modal jika bukan owner
+              }
+            }}
+          >
+            {owner ? "Edit" : "Kontak"}
           </Button>
         </NavbarButton>
       )}
@@ -426,10 +426,15 @@ const ProfileInnovator: React.FC = () => {
         isOpen={isOpen}
         onClose={onClose}
         onVerify={handleVerify}
-        isAdmin={admin}
+        isAdmin={isAdmin}
         role="Inovator"
         loading={loading}
         setOpenModal={setOpenModal}
+        contactData={{
+          whatsapp: innovatorData.whatsapp || "",
+          instagram: innovatorData.instagram || "",
+          website: innovatorData?.website || "",
+        }}
       />
     </>
   );

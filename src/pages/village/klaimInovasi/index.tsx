@@ -1,14 +1,21 @@
-import { Collapse } from "@chakra-ui/react";
-import Button from "Components/button";
+import {
+  Box,
+  Button,
+  Collapse,
+  Flex,
+  Text,
+  useDisclosure,
+} from "@chakra-ui/react";
 import TopBar from "Components/topBar";
 import React, { useEffect, useRef, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import ConfModal from "../../../components/confirmModal/confModal";
 import SecConfModal from "../../../components/confirmModal/secConfModal";
+import DocUpload from "../../../components/form/DocUpload";
 import ImageUpload from "../../../components/form/ImageUpload";
+import VidUpload from "../../../components/form/VideoUpload";
 import { auth, firestore, storage } from "../../../firebase/clientApp";
 
-import { Box, Flex } from "@chakra-ui/react";
 import {
   CheckboxGroup,
   Container,
@@ -20,16 +27,30 @@ import {
   Text2,
 } from "./_klaimStyles";
 
-import { useDisclosure } from "@chakra-ui/react";
-import { doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes, uploadString } from "firebase/storage";
-import { useNavigate, useParams } from "react-router-dom";
+import StatusCard from "Components/card/status/StatusCard";
+import RejectionModal from "Components/confirmModal/RejectionModal";
+import ActionDrawer from "Components/drawer/ActionDrawer";
+import Loading from "Components/loading";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  increment,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useUser } from "src/contexts/UserContext";
+import RecommendationDrawer from "Components/drawer/RecommendationDrawer";
 
 const KlaimInovasi: React.FC = () => {
-  // const navigate = useNavigate();
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   const { id } = useParams<{ id: string }>();
+  const [claimData, setClaimData] = useState<any>(null);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [selectedDoc, setSelectedDoc] = useState<string[]>([]);
   const [selectedVid, setSelectedVid] = useState<string>("");
@@ -37,12 +58,35 @@ const KlaimInovasi: React.FC = () => {
   const selectedFileRef = useRef<HTMLInputElement>(null);
   const selectedVidRef = useRef<HTMLInputElement>(null);
   const selectedDocRef = useRef<HTMLInputElement>(null);
-  const { isOpen, onToggle, onOpen, onClose } = useDisclosure();
   const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState("");
-  const modalBody1 = "Apakah Anda yakin ingin mengajukan klaim?"; // Konten Modal
+  const [isAdmin, setIsAdmin] = useState(false);
+  const modalBody1 = "Apakah Anda yakin ingin mengajukan klaim?";
   const modalBody2 =
-    "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan klaim inovasi. Silahkan cek pada halaman pengajuan klaim"; // Konten Modal
+    "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan klaim inovasi. Silahkan cek pada halaman pengajuan klaim";
+  const [openModal, setOpenModal] = useState(false);
+  const [modalInput, setModalInput] = useState("");
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [disabled, setDisabled] = useState(false);
+  const {
+    isOpen: isRecOpen,
+    onOpen: onRecOpen,
+    onClose: onRecClose,
+  } = useDisclosure();
+
+  const location = useLocation();
+  const inovasiId = location.state?.id;
+  // console.log("Inovasi ID:", inovasiId);
+
+  const { role } = useUser();
+  useEffect(() => {
+    if (role === "admin") {
+      setIsAdmin(true);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [role]);
 
   const handleCheckboxChange = (checkbox: string) => {
     if (selectedCheckboxes.includes(checkbox)) {
@@ -56,6 +100,52 @@ const KlaimInovasi: React.FC = () => {
     }
   };
 
+  const handleAjukanKlaim = () => {
+    if (selectedCheckboxes.length === 0) {
+      toast.error(
+        "Minimal pilih 1 jenis bukti klaim (Foto, Video, atau Dokumen)",
+        {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+      return;
+    }
+
+    let isValid = true;
+    if (selectedCheckboxes.includes("foto") && selectedFiles.length === 0) {
+      isValid = false;
+    }
+    if (selectedCheckboxes.includes("video") && selectedVid === "") {
+      isValid = false;
+    }
+    if (selectedCheckboxes.includes("dokumen") && selectedDoc.length === 0) {
+      isValid = false;
+    }
+
+    if (!isValid) {
+      toast.error(
+        "Mohon lengkapi semua bukti klaim yang dipilih (Foto, Video, atau Dokumen)",
+        {
+          position: "top-center",
+          autoClose: 2000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+      return;
+    }
+
+    setIsModal1Open(true);
+  };
 
   const onSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -109,84 +199,111 @@ const KlaimInovasi: React.FC = () => {
 
   const onSubmitForm = async (event: React.FormEvent<HTMLElement>) => {
     event.preventDefault();
+    submitClaim();
+  };
+
+  const submitClaim = async () => {
+    console.log("Submitting claim...");
     setLoading(true);
     if (!user?.uid) {
-      setError("User not found");
+      setError("User atau ID inovasi tidak ditemukan");
       setLoading(false);
       return;
     }
-    if (!id) {
-      throw new Error("Innovation ID is not defined");
+    if (selectedCheckboxes.length === 0) {
+      setError("Minimal pilih 1 jenis bukti klaim (Foto, Video, atau Dokumen)");
       setLoading(false);
       return;
     }
     try {
       const userId = user.uid;
-      const docRef = doc(firestore, "claimInnovations", userId);
-      const docSnap = await getDoc(docRef);
-      const existingData = docSnap.data();
-
       const desaRef = doc(firestore, "villages", userId);
       const desaSnap = await getDoc(desaRef);
       const dataDesa = desaSnap.data();
 
-      const inovRef = doc(firestore, "innovations", id);
+      const inovRef = doc(firestore, "innovations", inovasiId);
       const inovSnap = await getDoc(inovRef);
       const dataInov = inovSnap.data();
 
-      const inovatorRef = doc(firestore, "innovators", dataInov?.innovatorId);
-
-      await setDoc(docRef, {
+      const docRef = await addDoc(collection(firestore, "claimInnovations"), {
         namaDesa: dataDesa?.namaDesa,
+        desaId: userId,
         namaInovasi: dataInov?.namaInovasi,
-        inovasiId: id,
+        jenisDokumen: selectedCheckboxes,
+        inovasiId: inovasiId,
         inovatorId: dataInov?.innovatorId,
-        createdAt: serverTimestamp(),
-        catatanAdmin: "",
         status: "Menunggu",
+        catatanAdmin: "",
+        createdAt: serverTimestamp(),
       });
       console.log("Document written with ID: ", docRef.id);
-       if (selectedFiles.length > 0) {
-         const storageRef = ref(storage, `claimInnovations/${userId}/images`);
-         const imageUrls: string[] = [];
+      if (selectedFiles.length > 0) {
+        const storageRef = ref(storage, `claimInnovations/${userId}/images`);
+        const imageUrls: string[] = [];
 
-         for (let i = 0; i < selectedFiles.length; i++) {
-           const file = selectedFiles[i];
-           const imageRef = ref(storageRef, `${Date.now()}_${i}`);
-           const response = await fetch(file);
-           const blob = await response.blob();
-           await uploadBytes(imageRef, blob);
-           const downloadURL = await getDownloadURL(imageRef);
-           imageUrls.push(downloadURL);
-         }
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const file = selectedFiles[i];
+          const imageRef = ref(storageRef, `${Date.now()}_${i}`);
+          const response = await fetch(file);
+          const blob = await response.blob();
+          await uploadBytes(imageRef, blob);
+          const downloadURL = await getDownloadURL(imageRef);
+          imageUrls.push(downloadURL);
+        }
 
-         await updateDoc(docRef, {
-           images: imageUrls,
-         });
-         console.log("Images uploaded", imageUrls);
-       }
+        await updateDoc(docRef, {
+          images: imageUrls,
+        });
+        console.log("Images uploaded", imageUrls);
+      }
 
-       await updateDoc(inovatorRef, {
-        jumlahDesaDampingan: increment(1),
-        desaDampingan:[{
-          namaDesa: dataDesa?.namaDesa,
-          desaId: userId,
-        }]
+      if (selectedVid) {
+        const videoRef = ref(storage, `claimInnovations/${userId}/video.mp4`);
+        const response = await fetch(selectedVid);
+        const blob = await response.blob();
+        await uploadBytes(videoRef, blob);
+        const downloadURL = await getDownloadURL(videoRef);
+
+        await updateDoc(docRef, {
+          video: downloadURL,
+        });
+        console.log("Video uploaded", downloadURL);
+      }
+
+      if (selectedDoc.length > 0) {
+        const storageRef = ref(storage, `claimInnovations/${userId}/docs`);
+        const docUrls: string[] = [];
+        for (let i = 0; i < selectedDoc.length; i++) {
+          const file = selectedDoc[i];
+          const docRef = ref(storageRef, `${Date.now()}_${i}`);
+          const response = await fetch(file);
+          const blob = await response.blob();
+          await uploadBytes(docRef, blob);
+          const downloadURL = await getDownloadURL(docRef);
+          docUrls.push(downloadURL);
+        }
+        await updateDoc(docRef, {
+          dokumen: docUrls,
+        });
+        console.log("Documents uploaded", docUrls);
+      }
+      setIsModal1Open(false);
+      toast.success("Klaim inovasi berhasil diajukan", {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
       });
-      await updateDoc(desaRef,{
-        jumlahInovasi: increment(1),
-        inovasiDiterapkan:[{
-          namaInovasi: dataInov?.namaInovasi,
-          inovasiId: id,
-        }]
-      })
-      await updateDoc(inovRef,{
-        jumlahDesaKlaim: increment(1),
-      })
-       setLoading(false);
-       
+      // onRecOpen();
     } catch (error) {
       setError("Failed to submit claim");
+    } finally {
+      setLoading(false);
+      // setIsModal2Open(true);
+      // navigate(`/village/pengajuan/${user?.uid}`);
     }
   };
 
@@ -197,10 +314,9 @@ const KlaimInovasi: React.FC = () => {
     setIsModal2Open(false);
   };
 
-  const handleModal1Yes = () => {
-    setIsModal2Open(true);
-    setIsModal1Open(false); // Tutup modal pertama
-    // Di sini tidak membuka modal kedua
+  const handleModal1Yes = async () => {
+    console.log("Modal 1 Yes clicked");
+    await submitClaim();
   };
 
   useEffect(() => {
@@ -212,12 +328,111 @@ const KlaimInovasi: React.FC = () => {
     }
   }, [isModal1Open, isModal2Open]);
 
+  useEffect(() => {
+    if (id) {
+      const fetchClaim = async () => {
+        setFetchLoading(true);
+        try {
+          const claimRef = doc(firestore, "claimInnovations", id);
+          const claimSnap = await getDoc(claimRef);
+          if (claimSnap.exists()) {
+            const claimData = claimSnap.data();
+            console.log("Claim data:", JSON.stringify(claimData, null, 2));
+            setClaimData(claimData);
+            setSelectedCheckboxes(claimData.jenisDokumen || []);
+            setSelectedFiles(claimData.images || []);
+            setSelectedVid(claimData.video || "");
+            setSelectedDoc(claimData.dokumen || []);
+          } else {
+            console.log("Claim not found");
+          }
+        } catch (error) {
+          console.error("Error fetching claim:", error);
+        } finally {
+          setFetchLoading(false);
+        }
+      };
+      fetchClaim();
+    }
+  }, [id]);
+
+  // console.log("Claim Data:", JSON.stringify(claimData, null, 2));
+
+  const handleVerify = async () => {
+    setLoading(true);
+    try {
+      if (id) {
+        const claimRef = doc(firestore, "claimInnovations", id);
+        await updateDoc(claimRef, {
+          status: "Terverifikasi",
+        });
+
+        const inovasiRef = doc(firestore, "innovations", claimData.inovasiId);
+        await updateDoc(inovasiRef, {
+          desaId: [claimData.desaId],
+          jumlahKlaim: increment(1),
+        });
+
+        const inovatorRef = doc(firestore, "innovators", claimData.inovatorId);
+        await updateDoc(inovatorRef, {
+          jumlahDesaDampingan: increment(1),
+          desaId: [claimData.desaId],
+        });
+
+        const desaRef = doc(firestore, "villages", claimData.desaId);
+        await updateDoc(desaRef, {
+          inovasiDiTerapkan: increment(1),
+          inovasiId: [claimData.inovasiId],
+        });
+      }
+      console.log("Claim verified successfully");
+    } catch (error) {
+      setError("Failed to verify claim");
+    } finally {
+      setLoading(false);
+      onClose();
+      // navigate(`/village/pengajuan/${user?.uid}`);
+    }
+  };
+
+  const handleReject = async () => {
+    setLoading(true);
+    try {
+      if (id) {
+        const claimRef = doc(firestore, "claimInnovations", id);
+        await updateDoc(claimRef, {
+          status: "Ditolak",
+          catatanAdmin: modalInput,
+        });
+      }
+      console.log("Claim rejected successfully");
+    } catch (error) {
+      setError("Failed to reject claim");
+    } finally {
+      setLoading(false);
+      setOpenModal(false);
+      onClose();
+    }
+  };
+
+  if (fetchLoading) {
+    return <Loading />;
+  }
+
   return (
     <Box>
       <form onSubmit={onSubmitForm}>
-        <TopBar title="Klaim Inovasi" onBack={() => navigate(-1)} />
+        <TopBar
+          title={isAdmin ? "Verifikasi Klaim Inovasi" : "Klaim Inovasi"}
+          onBack={() => navigate(-1)}
+        />
         <Container>
           <Flex flexDirection="column" gap="2px">
+            {isAdmin && (
+              <Text fontWeight="700" mb={2} fontSize="16px">
+                Desa {claimData.namaDesa}
+              </Text>
+            )}
             <Label>
               Jenis Dokumen Bukti Klaim <span style={{ color: "red" }}>*</span>
             </Label>
@@ -281,7 +496,7 @@ const KlaimInovasi: React.FC = () => {
             </Field>
           </Collapse>
 
-          {/* <Collapse in={selectedCheckboxes.includes("video")} animateOpacity>
+          <Collapse in={selectedCheckboxes.includes("video")} animateOpacity>
             <Field>
               <Flex flexDirection="column" gap="2px">
                 <Text1>
@@ -297,9 +512,9 @@ const KlaimInovasi: React.FC = () => {
                 onSelectVid={onSelectVid}
               />
             </Field>
-          </Collapse> */}
+          </Collapse>
 
-          {/* <Collapse in={selectedCheckboxes.includes("dokumen")} animateOpacity>
+          <Collapse in={selectedCheckboxes.includes("dokumen")} animateOpacity>
             <Field>
               <Flex flexDirection="column" gap="2px">
                 <Text1>
@@ -312,28 +527,77 @@ const KlaimInovasi: React.FC = () => {
                 selectedDoc={selectedDoc}
                 setSelectedDoc={setSelectedDoc}
                 selectDocRef={selectedDocRef}
-                onSelectDoc={onSelectDoc}
+                onSelectDoc={onSelectDoc} // Ensure this matches the updated DocUploadProps
               />
             </Field>
-          </Collapse> */}
+          </Collapse>
+          {/* <RecommendationDrawer
+            innovationId={inovasiId}
+            isOpen={isRecOpen}
+            onClose={() => onRecClose()}
+          /> */}
         </Container>
         <div>
-          <NavbarButton>
-            <Button size="m" fullWidth onClick={() => setIsModal1Open(true)}>
-              Ajukan Klaim
-            </Button>
-          </NavbarButton>
+          {isAdmin ? (
+            claimData.status === "Terverifikasi" ||
+            claimData.status === "Ditolak" ? (
+              <StatusCard
+                status={claimData.status}
+                message={claimData.catatanAdmin}
+              />
+            ) : (
+              <NavbarButton>
+                <Button
+                  width="100%"
+                  isLoading={loading}
+                  onClick={onOpen}
+                  type="button"
+                >
+                  Verifikasi Permohonan Klaim
+                </Button>
+              </NavbarButton>
+            )
+          ) : (
+            <NavbarButton>
+              <Button
+                width="100%"
+                isLoading={loading}
+                onClick={handleAjukanKlaim}
+                type="button"
+              >
+                Ajukan Klaim
+              </Button>
+            </NavbarButton>
+          )}
           <ConfModal
             isOpen={isModal1Open}
             onClose={closeModal}
             modalTitle=""
-            modalBody1={modalBody1} // Mengirimkan teks konten modal
+            modalBody1={modalBody1}
             onYes={handleModal1Yes}
+            isLoading={loading}
           />
           <SecConfModal
             isOpen={isModal2Open}
             onClose={closeModal}
             modalBody2={modalBody2} // Mengirimkan teks konten modal
+          />
+          <RejectionModal
+            isOpen={openModal}
+            onClose={() => setOpenModal(false)}
+            onConfirm={handleReject}
+            message={modalInput}
+            setMessage={setModalInput}
+            loading={loading}
+          />
+          <ActionDrawer
+            isOpen={isOpen}
+            onClose={onClose}
+            setOpenModal={setOpenModal}
+            isAdmin={isAdmin}
+            loading={loading}
+            onVerify={handleVerify}
+            role="admin"
           />
         </div>
       </form>

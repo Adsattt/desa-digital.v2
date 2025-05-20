@@ -1,26 +1,59 @@
 import { Button, Flex, Icon, Image, Text } from "@chakra-ui/react";
-import React from "react";
+import React, { useState } from "react";
 import Folder from "Assets/icons/folder.svg";
 import { DeleteIcon } from "@chakra-ui/icons";
+import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import { storage } from "../../firebase/clientApp";
 
 type DocUploadProps = {
-    selectedDoc: string[];
+    selectedDoc: string[]; // Menyimpan URL file
     setSelectedDoc: (value: string[]) => void;
     selectDocRef: React.RefObject<HTMLInputElement>;
-    onSelectDoc: (event: React.ChangeEvent<HTMLInputElement>) => void;
-};
-
-const DocUpload: React.FC<DocUploadProps> = ({
+    onSelectDoc?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  };
+  
+  const DocUpload: React.FC<DocUploadProps> = ({
     selectedDoc,
     setSelectedDoc,
     selectDocRef,
-    onSelectDoc,
 }) => {
+    const [uploading, setUploading] = useState(false);
+
+    const handleSelectDoc = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        setUploading(true);
+
+        try {
+        const storageRef = ref(storage, `documents/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+
+        uploadTask.on(
+            "state_changed",
+            null,
+            (error) => {
+            console.error("Upload failed", error);
+            setUploading(false);
+            },
+            async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+            setSelectedDoc([...selectedDoc, downloadURL]);
+            setUploading(false);
+            }
+        );
+        } catch (error) {
+        console.error("Error uploading document:", error);
+        setUploading(false);
+        }
+    };
+
     const handleDeleteDoc = (index: number) => {
         const newDoc = [...selectedDoc];
         newDoc.splice(index, 1);
         setSelectedDoc(newDoc);
     };
+
     return (
         <Flex direction="column" justifyContent="space-between" gap={2} alignItems={'stretch'}>
             {selectedDoc.map((selectedDoc, index) => (
@@ -51,7 +84,7 @@ const DocUpload: React.FC<DocUploadProps> = ({
                             overflow="hidden"
 
                         >
-                            {selectedDoc}
+                            {decodeURIComponent(selectedDoc.split("/").pop() || "Dokumen")}
                         </Text>
 
                     </Flex>
@@ -94,7 +127,7 @@ const DocUpload: React.FC<DocUploadProps> = ({
                             hidden
                             accept=".pdf,.doc,.docx"
                             ref={selectDocRef}
-                            onChange={onSelectDoc}
+                            onChange={handleSelectDoc}
                         />
                     </Button>
                 )

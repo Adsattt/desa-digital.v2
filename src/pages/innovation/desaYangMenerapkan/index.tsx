@@ -1,120 +1,251 @@
-import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { ChevronDownIcon, SearchIcon } from '@chakra-ui/icons';
 import {
-    Box,
-    Flex,
-    Popover,
-    PopoverTrigger,
-    PopoverContent,
-    PopoverHeader,
-    PopoverBody,
-    PopoverFooter,
-    PopoverArrow,
-    PopoverCloseButton,
-    Button,
-    Checkbox,
-    VStack,
-    Stack,
+  Box,
+  Button,
+  Flex,
+  Input,
+  InputGroup,
+  InputLeftElement,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
+  Skeleton,
+  SkeletonCircle,
+  Stack,
+  Text,
 } from '@chakra-ui/react';
-import { ChevronDownIcon } from '@chakra-ui/icons';
 import TopBar from 'Components/topBar';
-import CardKlaim from 'Components/card/cardklaim';
+import Container from "Components/container";
+import CardNotification from "Components/card/notification/CardNotification";
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { auth, firestore } from "../../../firebase/clientApp";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { collection, getDocs, orderBy, query, startAfter, limit } from "firebase/firestore";
+import { paths } from "Consts/path";
 
-interface CardKlaimProps {
-    title: string;
-    description: string;
-    date: number;
-}
+const SkeletonCard = () => (
+  <Box borderWidth="1px" borderRadius="lg" padding="4" mb={4} bg="white">
+    <Flex alignItems="center" justifyContent="space-between">
+      <Box width="60%">
+        <Skeleton height="20px" width="80%" mb={2} />
+        <Skeleton height="15px" width="50%" mb={2} />
+        <Skeleton height="15px" width="100%" mb={2} />
+      </Box>
+      <SkeletonCircle size="10" />
+    </Flex>
+  </Box>
+);
 
 const DesaYangMenerapkan: React.FC = () => {
-    const navigate = useNavigate();
-    const { category } = useParams();
-    return (
-        <Box>
-            {/* Top Bar */}
-            <TopBar title="Pengajuan Klaim" onBack={() => navigate(-1)} />
-            <Stack padding="16px" gap="16px" paddingTop="55px">
+  const { id: innovationId } = useParams();
 
-                {/* Search Bar dan Filter */}
-                <Flex
-                    padding="16px 0px"
-                    justifyContent="flex-end"
-                    alignItems="center"
-                    gap={2}
-                    mt="px"
-                    mb="-20px"
+  const navigate = useNavigate();
+  const [user] = useAuthState(auth);
+  const [data, setData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Pencarian dan filter
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+
+  // Pagination Status
+  const [lastVisible, setLastVisible] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const itemsPerPage = 5;
+
+  const fetchData = async (isNextPage = false) => {
+      setLoading(true);
+  
+      type Inovasi = {
+        id: string;
+        namaDesa: string;
+        deskripsi?: string;
+        status: string;
+        innovationId: string;
+      };
+  
+      try {
+        let q;
+        if (isNextPage && lastVisible) {
+          q = query(
+            collection(firestore, "claimInnovations"),
+            orderBy("createdAt", "desc"),
+            startAfter(lastVisible),
+            limit(itemsPerPage)
+          );
+        } else {
+          q = query(
+            collection(firestore, "claimInnovations"),
+            orderBy("createdAt", "desc"),
+            limit(itemsPerPage)
+          );
+        }
+  
+        const docs = await getDocs(q);
+        setLastVisible(docs.docs[docs.docs.length - 1]);
+        setHasMore(docs.docs.length === itemsPerPage);
+  
+        const newData: Inovasi[] = docs.docs.map(doc => ({ id: doc.id, ...doc.data() } as Inovasi));
+        const filteredByInovasi = newData.filter(item => item.innovationId === innovationId);
+  
+        setData(filteredByInovasi);
+        setFilteredData(filteredByInovasi);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    useEffect(() => {
+      if (user) fetchData();
+    }, [user]);
+  
+    useEffect(() => {
+      let filtered = [...data];
+      if (searchTerm) {
+        const lower = searchTerm.toLowerCase();
+        filtered = filtered.filter((item) =>
+          (item.namaInovasi || "").toLowerCase().includes(lower)
+        );
+      }
+      if (selectedFilter && selectedFilter !== "Semua") {
+        filtered = filtered.filter(item => item.status === selectedFilter);
+      }
+      setFilteredData(filtered);
+    }, [searchTerm, selectedFilter, data]);
+  
+    const handleNextPage = async () => {
+      if (hasMore) {
+        setCurrentPage(prev => prev + 1);
+        await fetchData(true);
+      }
+    };
+  
+    const handlePrevPage = async () => {
+      if (currentPage > 1) {
+        setCurrentPage(prev => prev - 1);
+        await fetchData(false);
+      }
+    };
+  
+    const formatTimestamp = (timestamp: { seconds: number; nanoseconds: number }) => {
+      if (!timestamp?.seconds) return "Invalid Date";
+      return new Date(timestamp.seconds * 1000).toLocaleDateString("id-ID", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    };
+
+  return (
+    <Container page>
+      <TopBar title="Desa Yang Menerapkan Inovasi" onBack={() => navigate(-1)} />
+      <Stack padding="0 16px" gap={2}>
+        <Flex gap={2} mb={2} mt={8}>
+          <InputGroup flex={1}>
+            <InputLeftElement pointerEvents="none">
+              <SearchIcon color="gray.400" />
+            </InputLeftElement>
+            <Input
+              placeholder="Cari desa di sini"
+              size="md"
+              borderRadius="full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              bg="white"
+            />
+          </InputGroup>
+
+
+          <Menu>
+            <MenuButton
+              as={Button}
+              rightIcon={<ChevronDownIcon color="#347357" />}
+              borderRadius="8px"
+              backgroundColor="white"
+              border="1px solid"
+              borderColor="gray.200"
+              textColor={"gray.600"}
+              _hover={{ bg: "gray.50" }}
+              fontSize="12px"
+              fontWeight="normal"
+            >
+              {selectedFilter || "Filter"}
+            </MenuButton>
+            <MenuList>
+              {['Semua', 'Menunggu', 'Terverifikasi', 'Ditolak'].map((status) => (
+                <MenuItem
+                  key={status}
+                  onClick={() => setSelectedFilter(status === "Semua" ? null : status)}
                 >
+                  {status}
+                </MenuItem>
+              ))}
+            </MenuList>
+          </Menu>
+        </Flex>
 
-                    {/* Tombol Filter dengan Popover */}
-                    <Popover>
-                        <PopoverTrigger>
-                            <Button
-                                sx={{
-                                    _hover: { bg: "none", borderColor: "#347357" },
-                                }}
-                                display={'flex'}
-                                variant="outline"
-                                borderColor="gray.300"
-                                borderRadius="8px"
-                                padding="8px 16px"
-                                width="80px"
-                                height="35px"
-                                fontWeight="200"
-                                fontSize="12px"
-                                color="gray.600"
-                                rightIcon={<ChevronDownIcon color="green.600" boxSize={4} />}
-                            >
-                                Filter
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent
-                            sx={{
-                                display: "flex",
-                                width: "100%",
-                                right: "40px",
-                                borderRadius: "8px",
-                                boxShadow: "lg",
-                            }}
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} />)
+        ) : (
+          filteredData.map((item, idx) => (
+            <CardNotification
+              key={idx}
+              title={item.namaDesa || "Tanpa Nama Inovasi"}
+              status={item.status || "Unknown"}
+              date={formatTimestamp(item.createdAt)}
+              description={item.deskripsi || "Tidak ada deskripsi"}
+              onClick={() => {
+                if (innovationId) {
+                  navigate(paths.DETAIL_VILLAGE_PAGE.replace(":id", innovationId));
+                } else {
+                  console.error("Innovation ID is undefined");
+                }
+              }}
+            />
+          ))
+        )}
 
-                        >
-                            <PopoverArrow />
-                            <PopoverCloseButton />
-                            <PopoverHeader width="150px" fontSize="13px" fontWeight={600} fontFamily="Inter" fontStyle="normal" color="#1f2937">
-                                Filter Pilihan </PopoverHeader>
-                            <PopoverBody fontFamily="Inter" fontStyle="normal">
-                                <VStack align="start" spacing={1}>
-                                    <Checkbox size="sm" sx={{ "& span": { fontSize: "13px" } }}>Menunggu</Checkbox>
-                                    <Checkbox size="sm" sx={{ "& span": { fontSize: "13px" } }}>Ditolak</Checkbox>
-                                    <Checkbox size="sm" sx={{ "& span": { fontSize: "13px" } }}>Terverifikasi</Checkbox>
-                                </VStack>
-                            </PopoverBody>
-                        </PopoverContent>
-                    </Popover>
-                </Flex>
-                <CardKlaim
-                    title={'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
-                    description={'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
-                    date={111}
-                    klaimbadge={'menunggu'}
-                />
-
-                <CardKlaim
-                    title={'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
-                    description={'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
-                    date={111}
-                    klaimbadge={'terverifikasi'}
-                />
-
-                <CardKlaim
-                    title={'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
-                    description={'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
-                    date={111}
-                    klaimbadge={'ditolak'}
-                />
-                
-            </Stack>
-        </Box>
-    );
+        {/* Pagination Buttons */}
+        <Flex justifyContent="space-between"
+          mt={4}
+          mb={4}
+          alignItems="center"
+        >
+          <Button
+            onClick={handlePrevPage}
+            isDisabled={currentPage === 1}
+            colorScheme="teal"
+            size="sm"
+            variant="outline"
+            borderRadius="md"
+            width="120px"
+          >
+            Sebelumnya
+          </Button>
+          <Text textAlign="center" fontWeight="medium">
+            Halaman {currentPage}
+          </Text>
+          <Button
+            onClick={handleNextPage}
+            isDisabled={!hasMore}
+            colorScheme="teal"
+            size="sm"
+            variant="outline"
+            borderRadius="md"
+            width="120px"
+          >
+            Selanjutnya
+          </Button>
+        </Flex>
+      </Stack>
+    </Container>
+  );
 };
 
 export default DesaYangMenerapkan;

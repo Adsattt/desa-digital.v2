@@ -104,6 +104,10 @@ export default function ProfileVillage() {
     onClose();
   };
 
+const toEditVillage = () => {
+  navigate(paths.VILLAGE_FORM);
+};
+
   const handleReject = async () => {
     setLoading(true);
     try {
@@ -205,11 +209,12 @@ export default function ProfileVillage() {
         <ContentContainer>
           <Flex flexDirection="column" alignItems="flex-end" mb={owner ? 0 : 4}>
             {owner && (
-              <Button size="xs" onClick={() => navigate("/PengajuanKlaim")}>
+              <Button size="xs" onClick={() => navigate(`/village/pengajuan/${id}`)}>
                 <Icon src={Send} alt="send" />
                 Pengajuan Klaim
               </Button>
             )}
+            
           </Flex>
 
           <Title> {village?.namaDesa} </Title>
@@ -528,9 +533,18 @@ export default function ProfileVillage() {
           )
         ) : (
           <NavbarButton>
-            <Button width="100%" onClick={onOpen}>
-              Edit Profil
-            </Button>{" "}
+            <Button 
+              width="100%" 
+              onClick={() => {
+                if (owner) {
+                  toEditVillage();
+                 } else {
+                   onOpen();
+                 }
+              }}>
+              
+              {owner ? "Edit Profile" : " "}
+            </Button>
           </NavbarButton>
         )}
         <RejectionModal

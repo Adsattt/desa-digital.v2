@@ -38,6 +38,8 @@ import {
   getRegencies,
   getVillages,
 } from "../../../services/locationServices";
+import ConfModal from "../../../components/confirmModal/confModal";
+import SecConfModal from "../../../components/confirmModal/secConfModal";
 
 interface Option {
   value: string;
@@ -100,6 +102,50 @@ const AddVillage: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState(
     "Profil masih kosong. Silahkan isi data di bawah terlebih dahulu."
   );
+
+  const modalBody1 = "Apakah anda yakin ingin mendaftarkan profil?"; // Konten Modal
+  const modalBody2 = "Profil sudah didaftarkan. Admin sedang memverifikasi pengajuan daftar profil"; // Konten Modal
+
+  const [isModal1Open, setIsModal1Open] = useState(false);
+  const [isModal2Open, setIsModal2Open] = useState(false);
+  const closeModal = () => {
+    setIsModal1Open(false);
+    setIsModal2Open(false);
+  };
+
+  const handleModal1Yes = () => {
+    setIsModal2Open(true);
+    setIsModal1Open(false); // Tutup modal pertama
+    // Di sini tidak membuka modal kedua
+  };
+
+  const isFormValid = () => {
+    return (
+      textInputValue.name.trim() !== "" &&
+      selectedProvince !== null &&
+      selectedRegency !== null &&
+      selectedDistrict !== null &&
+      selectedVillage !== null &&
+      selectedPotensi !== null &&
+      selectedLogo !== "" &&
+      textInputValue.geografis.trim() !== "" &&
+      textInputValue.infrastruktur.trim() !== "" &&
+      textInputValue.kesiapan.trim() !== "" &&
+      textInputValue.teknologi.trim() !== "" &&
+      textInputValue.pelayanan.trim() !== "" &&
+      textInputValue.sosial.trim() !== "" &&
+      textInputValue.resource.trim() !== "" &&
+      textInputValue.whatsapp.trim() !== "" &&
+      textInputValue.instagram.trim() !== "" &&
+      textInputValue.website.trim() !== ""
+    );
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLFormElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+    }
+  }
 
    const fetchProvinces = async () => {
      try {
@@ -236,6 +282,7 @@ const AddVillage: React.FC = () => {
   const onTextChange = ({
     target: { name, value },
   }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
     if (
       textInputValue.name ||
       textInputValue.whatsapp ||
@@ -244,12 +291,10 @@ const AddVillage: React.FC = () => {
     ) {
       setTextInputValue((prev) => ({ ...prev, [name]: value }));
     } else if (textInputValue.description) {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
-      if (wordCount <= 50) {
+      if (wordCount <= 100) {
         setTextInputValue((prev) => ({ ...prev, [name]: value }));
       }
     } else {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
       if (wordCount <= 30) {
         setTextInputValue((prev) => ({ ...prev, [name]: value }));
       }
@@ -593,10 +638,12 @@ const AddVillage: React.FC = () => {
   }, [user]);
 
   return (
-    <Container page>
+    <Container page pb={24}>
       <TopBar title="Registrasi Profil Desa" onBack={() => navigate(-1)} />
       <Box p="0 16px">
-        <form onSubmit={onSubmitForm}>
+        <form 
+          onSubmit={onSubmitForm}
+          onKeyDown={handleKeyDown}>
           <Flex direction="column" marginTop="24px">
             <Stack spacing="12px" width="100%">
               <Alert
@@ -850,16 +897,44 @@ const AddVillage: React.FC = () => {
             </Text>
           )}
           {status !== "Menunggu" && (
-            <Button
-              type="submit"
-              fontSize={14}
-              mt="20px"
-              width="100%"
-              height="44px"
-              isLoading={loading}
-            >
-              {status === "Ditolak" ? "Kirim Ulang" : "Kirim"}
-            </Button>
+            <div>
+              <Button
+                type="submit"
+                fontSize={14}
+                mt="20px"
+                width="100%"
+                height="44px"
+                isLoading={loading}
+                onClick={() => {
+                  if (isFormValid()) {
+                    setIsModal1Open(true);
+                  } else {
+                    toast({
+                      title: "Form belum lengkap!",
+                      description: "Harap isi semua field wajib.",
+                      status: "error",
+                      duration: 3000,
+                      isClosable: true,
+                    });
+                  }
+                }}
+              >
+                {status === "Ditolak" ? "Kirim Ulang" : "Kirim"}
+              </Button>
+              <ConfModal
+                isOpen={isModal1Open}
+                onClose={closeModal}
+                modalTitle=""
+                modalBody1={modalBody1} // Mengirimkan teks konten modal
+                onYes={handleModal1Yes}
+              />
+              <SecConfModal
+                isOpen={isModal2Open}
+                onClose={closeModal}
+                modalBody2={modalBody2} // Mengirimkan teks konten modal
+              />
+            </div>
+            
           )}
         </form>
       </Box>

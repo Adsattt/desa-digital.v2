@@ -9,9 +9,11 @@ import React from "react";
 
 type SearchBarInnovProps = {
   placeholder?: string; // Tambahkan tipe placeholder sebagai props
+  value?: string; // Tambahkan tipe value sebagai props
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-const SearchBarinnov: React.FC<SearchBarInnovProps> = ({ placeholder }) => {
+const SearchBarinnov: React.FC<SearchBarInnovProps> = ({ placeholder, value, onChange }) => {
   return (
     <Flex justify="center" maxW="360px" width="100%">
         <InputGroup>
@@ -22,6 +24,8 @@ const SearchBarinnov: React.FC<SearchBarInnovProps> = ({ placeholder }) => {
           <Input
             type="text"
             placeholder={placeholder}
+            value={value}
+            onChange={onChange}
             fontSize="10pt"
             _placeholder={{ color: "#9CA3AF"  }}
             _hover={{
