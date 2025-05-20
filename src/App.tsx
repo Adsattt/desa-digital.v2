@@ -38,6 +38,7 @@ import DashboardPerangkatDesa from "./pages/village/dashboard";
 import RekomendasiInovasi from "./pages/village/dashboard/rekomendasiDashboard";
 import AddVillage from "./pages/village/form";
 import KlaimInovasi from "./pages/village/klaimInovasi";
+import KlaimInovasiManual from "./pages/village/klaimInovasi/manual";
 import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
@@ -129,8 +130,12 @@ const routes = [
   },
   {
     path: paths.DETAIL_KLAIM_INOVASI_PAGE,
-    element: <KlaimInovasi />,
+    element: <DetailKlaim />,
   }, 
+  {
+    path: paths. MANUAL_KLAIM_INOVASI,
+    element: <KlaimInovasiManual />,
+  },
   {
     path: paths.NEW_PASSWORD_PAGE,
     element: <NewPassword />,
