@@ -66,22 +66,19 @@ const Login: React.FC = () => {
             console.log("User  snap bukan admin: ", userDoc.data().role);
             navigate(paths.LANDING_PAGE);
           }
-        } else {
-          console.log("User not found in database");
-        }
+          toast.success("Berhasil Masuk", {
+            position: "top-center",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          });
+        } 
       }
     } catch (error) {
       console.log("Error getting user role:", error);
-    } finally {
-      toast.success("Berhasil Masuk", {
-        position: "top-center",
-        autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
     }
   };
 
