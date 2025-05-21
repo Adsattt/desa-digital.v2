@@ -41,6 +41,7 @@ import KlaimInovasi from "./pages/village/klaimInovasi";
 import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
+import SearchPage from "./pages/home/components/search/SearchPage";
 import { Bounce, ToastContainer } from "react-toastify";
 
 const queryClient = new QueryClient();

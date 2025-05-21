@@ -85,14 +85,6 @@ const ProfileInnovator: React.FC = () => {
     navigate(paths.INNOVATOR_FORM);
   }
 
-  const toPengajuanInovasi = () => {
-    navigate(paths.PENGAJUAN_INOVASI_PAGE);
-  };
-
-  const toEditInovator = () => {
-    navigate(paths.INNOVATOR_FORM);
-  }
-
   const handleReject = async () => {
     setLoading(true);
     try {

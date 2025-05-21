@@ -326,7 +326,22 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.infrastrukturDesa}
+                  <Box>
+                    <Text fontWeight="bold">Kondisi Jalan:</Text>
+                    <Text>{village?.kondisijalan || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Jaringan Internet:</Text>
+                    <Text>{village?.jaringan || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Ketersediaan Listrik:</Text>
+                    <Text>{village?.listrik || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Lain-lain:</Text>
+                    <Text>{village?.infrastrukturDesa || "Tidak tersedia"}</Text>
+                  </Box>
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem>
@@ -351,10 +366,21 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.kesiapanDigital}
+                  <Box>
+                    <Text fontWeight="bold">Perkembangan Teknologi Digital:</Text>
+                    <Text>{village?.teknologi || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Kemampuan Teknologi:</Text>
+                    <Text>{village?.kemampuan || "Tidak tersedia"}</Text>
+                  </Box>
+                  {/* <Box mt={2}>
+                    <Text fontWeight="bold">Deskripsi Kesiapan Digital:</Text>
+                    <Text>{village?.kesiapanDigital || "Tidak tersedia"}</Text>
+                  </Box> */}
                 </AccordionPanel>
               </AccordionItem>
-              <AccordionItem>
+              {/* <AccordionItem>
                 <h2>
                   <AccordionButton paddingLeft="4px" paddingRight="4px">
                     <Flex
@@ -376,7 +402,7 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.kesiapanTeknologi}
+                  {village?.kesiapanTeknologi || "Tidak tersedia"}
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem>
@@ -402,9 +428,9 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.pemantapanPelayanan}
+                  {village?.pemantapanPelayanan || "Tidak tersedia"}
                 </AccordionPanel>
-              </AccordionItem>
+              </AccordionItem> */}
               <AccordionItem>
                 <h2>
                   <AccordionButton paddingLeft="4px" paddingRight="4px">
@@ -427,7 +453,7 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.sosialBudaya}
+                  {village?.sosialBudaya || "Tidak tersedia"}
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem>
@@ -452,7 +478,7 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.sumberDaya}
+                  {village?.sumberDaya || "Tidak tersedia"}
                 </AccordionPanel>
               </AccordionItem>
             </Accordion>
