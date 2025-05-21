@@ -127,7 +127,7 @@ const SebaranKategoriInnovations: React.FC = () => {
           Sebaran Kategori Inovasi
         </Text>
         <Flex gap={2}>
-          <Button
+          {/* <Button
             size="sm"
             bg="white"
             boxShadow="md"
@@ -139,7 +139,7 @@ const SebaranKategoriInnovations: React.FC = () => {
             onClick={handleDownload}
           >
             <DownloadIcon boxSize={3} color="black" />
-          </Button>
+          </Button> */}
           <Button
             size='sm'
             bg="white"

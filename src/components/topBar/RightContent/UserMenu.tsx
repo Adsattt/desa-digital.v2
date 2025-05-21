@@ -25,6 +25,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { auth, firestore } from "../../../firebase/clientApp";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { toast } from "react-toastify";
 
 type UserMenuProps = {
   user?: User | null;
@@ -160,6 +161,16 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
       navigate("/");
     } catch (error) {
       console.error("Error during logout:", error);
+    } finally {
+      toast.success("Berhasil Logout", {
+        position: "top-center",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
     }
   };
 

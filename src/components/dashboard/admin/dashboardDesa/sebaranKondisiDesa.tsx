@@ -214,7 +214,7 @@ const SebaranKondisiDesa: React.FC = () => {
           Sebaran Kondisi Desa
         </Text>
         <Flex gap={2}>
-          <Button
+          {/* <Button
             size="sm"
             bg="white"
             boxShadow="md"
@@ -226,7 +226,7 @@ const SebaranKondisiDesa: React.FC = () => {
             onClick={handleDownloadExcel}
           >
             <DownloadIcon boxSize={3} color="black" />
-          </Button>
+          </Button> */}
           <Button
             size="sm"
             bg="white"
@@ -281,9 +281,9 @@ const SebaranKondisiDesa: React.FC = () => {
 
       {/* Table */}
       <Box bg="white" borderRadius="xl" pt={0} pb={3} mx="15px" boxShadow="md" mt={4}>
-        <TableContainer>
+        <TableContainer borderRadius="md">
           <Table variant="simple" size="sm">
-            <Thead bg="#F0FFF4">
+            <Thead bg="#C6D8D0">
               <Tr>
                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                 <Th p={1} fontSize="8px" textAlign="center">Desa</Th>

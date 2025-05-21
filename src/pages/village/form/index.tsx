@@ -7,6 +7,7 @@ import {
   Text,
   useToast,
 } from "@chakra-ui/react";
+import { NavbarButton } from "../../village/profile/_profileStyle";
 import Container from "Components/container";
 import LocationSelector from "Components/form/LocationSellector";
 import MultiSellect from "Components/form/MultiSellect";
@@ -638,12 +639,13 @@ const AddVillage: React.FC = () => {
   }, [user]);
 
   return (
-    <Container page pb={24}>
+    <>
       <TopBar title="Registrasi Profil Desa" onBack={() => navigate(-1)} />
-      <Box p="0 16px">
+      <Box p="48px 16px 20px 16px">
         <form 
           onSubmit={onSubmitForm}
-          onKeyDown={handleKeyDown}>
+          onKeyDown={handleKeyDown}
+          id="VillageForm">
           <Flex direction="column" marginTop="24px">
             <Stack spacing="12px" width="100%">
               <Alert
@@ -891,54 +893,55 @@ const AddVillage: React.FC = () => {
               />
             </Stack>
           </Flex>
-          {error && (
-            <Text color="red" fontSize="10pt" textAlign="center" mt={2}>
-              {error}
-            </Text>
-          )}
-          {status !== "Menunggu" && (
-            <div>
-              <Button
-                type="submit"
-                fontSize={14}
-                mt="20px"
-                width="100%"
-                height="44px"
-                isLoading={loading}
-                onClick={() => {
-                  if (isFormValid()) {
-                    setIsModal1Open(true);
-                  } else {
-                    toast({
-                      title: "Form belum lengkap!",
-                      description: "Harap isi semua field wajib.",
-                      status: "error",
-                      duration: 3000,
-                      isClosable: true,
-                    });
-                  }
-                }}
-              >
-                {status === "Ditolak" ? "Kirim Ulang" : "Kirim"}
-              </Button>
-              <ConfModal
-                isOpen={isModal1Open}
-                onClose={closeModal}
-                modalTitle=""
-                modalBody1={modalBody1} // Mengirimkan teks konten modal
-                onYes={handleModal1Yes}
-              />
-              <SecConfModal
-                isOpen={isModal2Open}
-                onClose={closeModal}
-                modalBody2={modalBody2} // Mengirimkan teks konten modal
-              />
-            </div>
-            
-          )}
         </form>
       </Box>
-    </Container>
+      {error && (
+        <Text color="red" fontSize="10pt" textAlign="center" mt={2}>
+          {error}
+        </Text>
+      )}
+      {status !== "Menunggu" && (
+      <>
+        <NavbarButton>
+          <Button
+            type="submit"
+            form="VillageForm"
+            fontSize={14}
+            width="100%"
+            isLoading={loading}
+            onClick={() => {
+              if (isFormValid()) {
+                setIsModal1Open(true);
+              } else {
+                toast({
+                  title: "Form belum lengkap!",
+                  description: "Harap isi semua field wajib.",
+                  status: "error",
+                  duration: 3000,
+                  isClosable: true,
+                  position: "top",
+                });
+              }
+            }}
+          >
+            {status === "Ditolak" ? "Kirim Ulang" : "Daftarkan Aku"}
+          </Button>
+          <ConfModal
+            isOpen={isModal1Open}
+            onClose={closeModal}
+            modalTitle=""
+            modalBody1={modalBody1} // Mengirimkan teks konten modal
+            onYes={handleModal1Yes}
+          />
+          <SecConfModal
+            isOpen={isModal2Open}
+            onClose={closeModal}
+            modalBody2={modalBody2} // Mengirimkan teks konten modal
+          />
+        </NavbarButton>
+      </>
+      )}
+    </>
   );
 };
 

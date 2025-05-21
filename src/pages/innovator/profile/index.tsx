@@ -42,6 +42,11 @@ import { Icon, NavbarButton } from "../../village/profile/_profileStyle";
 import StatusCard from "Components/card/status/StatusCard";
 import RejectionModal from "Components/confirmModal/RejectionModal";
 import ActionDrawer from "Components/drawer/ActionDrawer";
+import Loading from "Components/loading";
+import { useAdminStatus } from "Hooks/useAdminStatus";
+import defaulHeader from "@public/images/default-header.svg";
+import defaulLogo from "@public/images/default-logo.svg";
+import { DesaIcon } from 'Assets/icons/village-active.svg';
 
 const ProfileInnovator: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -52,12 +57,13 @@ const ProfileInnovator: React.FC = () => {
   const [innovations, setInnovations] = useState<DocumentData[]>([]);
   const [villages, setVillages] = useState<DocumentData[]>([]); // Add state for villages
   const [owner, setOwner] = useState(false);
-  const [admin, setAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [openModal, setOpenModal] = useState(false);
   const [modalInput, setModalInput] = useState("");
+
+  const { isAdmin, checking } = useAdminStatus();
 
   const handleVerify = async () => {
     setLoading(true);
@@ -66,6 +72,7 @@ const ProfileInnovator: React.FC = () => {
         const innovatorRef = doc(firestore, "innovators", id);
         await updateDoc(innovatorRef, {
           status: "Terverifikasi",
+          catatanAdmin: "",
         });
         setInnovatorData((prev) => ({ ...prev, status: "Terverifikasi" }));
       }
@@ -77,13 +84,9 @@ const ProfileInnovator: React.FC = () => {
     onClose();
   };
 
-  const toPengajuanInovasi = () => {
-    navigate(paths.PENGAJUAN_INOVASI_PAGE);
-  };
-
   const toEditInovator = () => {
     navigate(paths.INNOVATOR_FORM);
-  }
+  };
 
   const handleReject = async () => {
     setLoading(true);
@@ -109,19 +112,6 @@ const ProfileInnovator: React.FC = () => {
     // onClose();
   };
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (userLogin?.uid) {
-        const userRef = doc(firestore, "users", userLogin.uid);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const user = userDoc.data();
-          setAdmin(user?.role === "admin");
-        }
-      }
-    };
-    fetchUser();
-  });
   // Fetch innovator data
   useEffect(() => {
     if (!id) {
@@ -177,14 +167,8 @@ const ProfileInnovator: React.FC = () => {
     }
   }, [id]);
 
-
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>{error}</div>;
+  if (loading || checking) {
+    return <Loading />;
   }
 
   if (!innovatorData) {
@@ -204,204 +188,206 @@ const ProfileInnovator: React.FC = () => {
         title={owner ? "Profile Saya" : "Profil Inovator"}
         onBack={() => navigate(-1)}
       />
-      <Flex position="relative">
-        <Background src={innovatorData.header} alt="header" />
-        <Logo src={innovatorData.logo} alt="logo" mx={16} my={-40} />
-      </Flex>
-      <ContentContainer>
-        <Stack gap={2}>
-          <Flex direction="column" align="flex-end" mb={owner ? 0 : 6}>
-            {owner && (
-              <Button
-              leftIcon={<Image src={Send} alt="send" />}
-              onClick={() => navigate(paths.PENGAJUAN_INOVASI_PAGE)}
-              fontSize="12px"
-              fontWeight="500"
-              height="29px"
-              width="136px"
-              padding="6px 8px"
-              borderRadius="4px"
-            >
-              Pengajuan Inovasi
-            </Button>
-            )}
-          </Flex>
-          <Title>{innovatorData.namaInovator}</Title>
-          <Label>{innovatorData.kategori}</Label>
-          <Flex direction="row" gap={3} mt={0} alignItems="center">
-            <Icon as={FaWandMagicSparkles} color="#4B5563" />
-            <Text fontSize="12px" fontWeight="400" color="#4B5563">
-              {innovatorData.jumlahInovasi} Inovasi
-            </Text>
-            <Icon as={LuDot} color="#4B5563" />
-            <Icon as={TbPlant2} color="#4B5563" />
-            <Text fontSize="12px" fontWeight="400" color="#4B5563">
-              {innovatorData.jumlahDesaDampingan} Desa Dampingan
-            </Text>
-          </Flex>
-        </Stack>
-        <Flex>
-          <Stack direction="column">
-            <Text fontSize="16px" fontWeight="700">
-              Tentang
-            </Text>
-            <Flex flexDirection="column" alignItems="flex-start" gap="12px">
+      <div style={{ position: "relative", width: "100%" }}>
+        <Background src={innovatorData.header || defaulHeader} alt="header" />
+        <Logo src={innovatorData.logo || defaulLogo} alt="logo" mx={16} my={-40} />
+      </div>
+      <div>
+        <ContentContainer>
+          <Stack gap={2}>
+            <Flex direction="column" align="flex-end" mb={owner ? 0 : 6}>
               {owner && (
-                <>
-                  <Flex
-                    width="100%"
-                    flexDirection="row"
-                    alignItems="flex-start"
-                    gap="16px"
-                    paddingBottom="12px"
-                  >
-                    <Box color="#4B5563" fontSize="12px" minWidth="110px">
-                      Nomor WhatsApp
-                    </Box>
-                    <Description>{innovatorData.whatsapp}</Description>
-                  </Flex>
-                  <Flex
-                    width="100%"
-                    flexDirection="row"
-                    alignItems="flex-start"
-                    gap="16px"
-                    paddingBottom="12px"
-                  >
-                    <Box color="#4B5563" fontSize="12px" minWidth="110px">
-                      Link Instagram
-                    </Box>
-                    <Description>{innovatorData.instagram}</Description>
-                  </Flex>
-                  <Flex
-                    width="100%"
-                    flexDirection="row"
-                    alignItems="flex-start"
-                    gap="16px"
-                    paddingBottom="12px"
-                  >
-                    <Box color="#4B5563" fontSize="12px" minWidth="110px">
-                      Link Website
-                    </Box>
-                    <Description>{innovatorData.website}</Description>
-                  </Flex>
-                </>
+                <Button
+                leftIcon={<Image src={Send} alt="send" />}
+                onClick={() => navigate(paths.PENGAJUAN_INOVASI_PAGE)}
+                fontSize="12px"
+                fontWeight="500"
+                height="29px"
+                width="136px"
+                padding="6px 8px"
+                borderRadius="4px"
+              >
+                Pengajuan Inovasi
+              </Button>
               )}
             </Flex>
-            <Flex direction="row" alignItems="center">
-              <Text fontSize="12px" fontWeight="700" color="#4B5563" mr={2}>
-                Model bisnis digital:
+            <Title>{innovatorData.namaInovator}</Title>
+            <Label>{innovatorData.kategori}</Label>
+            <Flex direction="row" gap={3} mt={0} alignItems="center">
+              <Icon as={FaWandMagicSparkles} color="#4B5563" />
+              <Text fontSize="12px" fontWeight="400" color="#4B5563">
+                {innovatorData.jumlahInovasi} Inovasi
               </Text>
-              <Text fontSize="12px" fontWeight="400" color="#4B5563" flex="1">
-                {innovatorData.modelBisnis}
+              <Icon as={LuDot} color="#4B5563" />
+              <Icon as={TbPlant2} color="#4B5563" />
+              <Text fontSize="12px" fontWeight="400" color="#4B5563">
+                {innovatorData.jumlahDesaDampingan} Desa Dampingan
               </Text>
             </Flex>
-
-            <Box fontSize="12px" fontWeight="400" color="#4B5563">
-              {isExpanded ? (
-                // Tampilkan teks lengkap jika `isExpanded` true
-                <>
-                  {innovatorData.deskripsi}
-                  {innovatorData.deskripsi.split(" ").length > 20 && ( // Tampilkan "Lebih Sedikit" jika lebih dari 20 kata
-                    <Text
-                      as="span"
-                      fontSize="12px"
-                      fontWeight="700"
-                      color="#347357"
-                      cursor="pointer"
-                      textDecoration="underline"
-                      onClick={() => setIsExpanded(!isExpanded)} // Toggle state
-                    >
-                      Lebih Sedikit
-                    </Text>
-                  )}
-                </>
-              ) : (
-                // Tampilkan teks terpotong jika `isExpanded` false
-                <>
-                  {truncateText(innovatorData.deskripsi, 20)}
-                  {innovatorData.deskripsi.split(" ").length > 20 && ( // Tampilkan "Selengkapnya" jika lebih dari 20 kata
-                    <Text
-                      as="span"
-                      fontSize="12px"
-                      fontWeight="700"
-                      color="#347357"
-                      cursor="pointer"
-                      textDecoration="underline"
-                      onClick={() => setIsExpanded(!isExpanded)} // Toggle state
-                    >
-                      {" "}
-                      Selengkapnya
-                    </Text>
-                  )}
-                </>
-              )}
-            </Box>
           </Stack>
-        </Flex>
-        <Flex direction="column">
-          {/* Komponen Produk Inovasi */}
-          <InnovationPreview innovations={innovations} innovatorId={id} />
-        </Flex>
-        <Flex direction="column">
-          <Text fontSize="16px" fontWeight="700" mb={3}>
-            Desa Dampingan
-          </Text>
-          {villages.map((village) => (
-            <Box
-              key={village.id}
-              borderWidth="1px"
-              borderRadius="lg"
-              overflow="hidden"
-              p={2}
-              mb={4}
-              cursor="pointer"
-              backgroundColor="white"
-              borderColor="gray.200"
-              onClick={() =>
-                navigate(
-                  generatePath(paths.DETAIL_VILLAGE_PAGE, { id: village.id })
-                )
-              }
-            >
-              <Flex alignItems="center" mb={3}>
-                <Image
-                  src={village.logo}
-                  alt={`${village.namaDesa} Logo`}
-                  boxSize="40px"
-                  borderRadius="full"
-                  mr={4}
-                />
-                <Text fontSize="12px" fontWeight="600">
-                  {village.namaDesa}
-                </Text>
-                <ChevronRightIcon color="gray.500" ml="auto" />
-              </Flex>
-              {/* Menambahkan Border Pembatas Di Atas "Inovasi Diterapkan" */}
-              <Box borderTop="1px" borderColor="gray.300" pt={3} mt={3}></Box>
-              <Text fontSize="12px" fontWeight="400" mb={2} color="#9CA3AF">
-                Inovasi diterapkan
+          <Flex>
+            <Stack direction="column">
+              <Text fontSize="16px" fontWeight="700">
+                Tentang
               </Text>
-              <Flex direction="row" gap={2} flexWrap="wrap">
-                {Array.isArray(village.inovasiDiterapkan) &&
-                  village.inovasiDiterapkan.map((inovasi, index) => (
-                    <Box
-                      key={index}
-                      px={0}
-                      py={0}
-                      backgroundColor="gray.100"
-                      borderRadius="full"
-                      fontSize="12px"
-                      display="inline-flex"
+              <Flex flexDirection="column" alignItems="flex-start" gap="12px">
+                {owner && (
+                  <>
+                    <Flex
+                      width="100%"
+                      flexDirection="row"
+                      alignItems="flex-start"
+                      gap="16px"
+                      paddingBottom="12px"
                     >
-                      {inovasi}
-                    </Box>
-                  ))}
+                      <Box color="#4B5563" fontSize="12px" minWidth="110px">
+                        Nomor WhatsApp
+                      </Box>
+                      <Description>{innovatorData.whatsapp}</Description>
+                    </Flex>
+                    <Flex
+                      width="100%"
+                      flexDirection="row"
+                      alignItems="flex-start"
+                      gap="16px"
+                      paddingBottom="12px"
+                    >
+                      <Box color="#4B5563" fontSize="12px" minWidth="110px">
+                        Link Instagram
+                      </Box>
+                      <Description>{innovatorData.instagram}</Description>
+                    </Flex>
+                    <Flex
+                      width="100%"
+                      flexDirection="row"
+                      alignItems="flex-start"
+                      gap="16px"
+                      paddingBottom="12px"
+                    >
+                      <Box color="#4B5563" fontSize="12px" minWidth="110px">
+                        Link Website
+                      </Box>
+                      <Description>{innovatorData.website}</Description>
+                    </Flex>
+                  </>
+                )}
               </Flex>
-            </Box>
-          ))}
-        </Flex>
-      </ContentContainer>
-      {admin ? (
+              <Flex direction="row" alignItems="center">
+                <Text fontSize="12px" fontWeight="700" color="#4B5563" mr={2}>
+                  Kategori Inovator
+                </Text>
+                <Text fontSize="12px" fontWeight="400" color="#4B5563" flex="1">
+                  {innovatorData.kategori}
+                </Text>
+              </Flex>
+
+              <Box fontSize="12px" fontWeight="400" color="#4B5563">
+                {isExpanded ? (
+                  // Tampilkan teks lengkap jika `isExpanded` true
+                  <>
+                    {innovatorData.deskripsi}
+                    {innovatorData.deskripsi.split(" ").length > 20 && ( // Tampilkan "Lebih Sedikit" jika lebih dari 20 kata
+                      <Text
+                        as="span"
+                        fontSize="12px"
+                        fontWeight="700"
+                        color="#347357"
+                        cursor="pointer"
+                        textDecoration="underline"
+                        onClick={() => setIsExpanded(!isExpanded)} // Toggle state
+                      >
+                        Lebih Sedikit
+                      </Text>
+                    )}
+                  </>
+                ) : (
+                  // Tampilkan teks terpotong jika `isExpanded` false
+                  <>
+                    {truncateText(innovatorData.deskripsi, 20)}
+                    {innovatorData.deskripsi.split(" ").length > 20 && ( // Tampilkan "Selengkapnya" jika lebih dari 20 kata
+                      <Text
+                        as="span"
+                        fontSize="12px"
+                        fontWeight="700"
+                        color="#347357"
+                        cursor="pointer"
+                        textDecoration="underline"
+                        onClick={() => setIsExpanded(!isExpanded)} // Toggle state
+                      >
+                        {" "}
+                        Selengkapnya
+                      </Text>
+                    )}
+                  </>
+                )}
+              </Box>
+            </Stack>
+          </Flex>
+          <Flex direction="column">
+            {/* Komponen Produk Inovasi */}
+            <InnovationPreview innovations={innovations} innovatorId={id} />
+          </Flex>
+          <Flex direction="column">
+            <Text fontSize="16px" fontWeight="700" mb={3}>
+              Desa Dampingan
+            </Text>
+            {villages.map((village) => (
+              <Box
+                key={village.id}
+                borderWidth="1px"
+                borderRadius="lg"
+                overflow="hidden"
+                p={2}
+                mb={4}
+                cursor="pointer"
+                backgroundColor="white"
+                borderColor="gray.200"
+                onClick={() =>
+                  navigate(
+                    generatePath(paths.DETAIL_VILLAGE_PAGE, { id: village.id })
+                  )
+                }
+              >
+                <Flex alignItems="center" mb={3}>
+                  <Image
+                    src={village.logo}
+                    alt={`${village.namaDesa} Logo`}
+                    boxSize="40px"
+                    borderRadius="full"
+                    mr={4}
+                  />
+                  <Text fontSize="12px" fontWeight="600">
+                    {village.namaDesa}
+                  </Text>
+                  <ChevronRightIcon color="gray.500" ml="auto" />
+                </Flex>
+                {/* Menambahkan Border Pembatas Di Atas "Inovasi Diterapkan" */}
+                <Box borderTop="1px" borderColor="gray.300" pt={3} mt={3}></Box>
+                <Text fontSize="12px" fontWeight="400" mb={2} color="#9CA3AF">
+                  Inovasi diterapkan
+                </Text>
+                <Flex direction="row" gap={2} flexWrap="wrap">
+                  {Array.isArray(village.inovasiDiterapkan) &&
+                    village.inovasiDiterapkan.map((inovasi, index) => (
+                      <Box
+                        key={index}
+                        px={0}
+                        py={0}
+                        backgroundColor="gray.100"
+                        borderRadius="full"
+                        fontSize="12px"
+                        display="inline-flex"
+                      >
+                        {inovasi}
+                      </Box>
+                    ))}
+                </Flex>
+              </Box>
+            ))}
+          </Flex>
+        </ContentContainer>
+      </div>
+      {isAdmin ? (
         innovatorData.status === "Terverifikasi" ||
         innovatorData.status === "Ditolak" ? (
           <StatusCard
@@ -427,10 +413,9 @@ const ProfileInnovator: React.FC = () => {
               }
             }}
           >
-            {owner ? "Edit" : "Kontak"}
+            {owner ? "Edit Profile" : "Kontak"}
           </Button>
         </NavbarButton>
-
       )}
       <RejectionModal
         isOpen={openModal}
@@ -444,14 +429,14 @@ const ProfileInnovator: React.FC = () => {
         isOpen={isOpen}
         onClose={onClose}
         onVerify={handleVerify}
-        isAdmin={admin}
+        isAdmin={isAdmin}
         role="Inovator"
         loading={loading}
         setOpenModal={setOpenModal}
         contactData={{
-          whatsapp: innovatorData.whatsapp || "", 
+          whatsapp: innovatorData.whatsapp || "",
           instagram: innovatorData.instagram || "",
-          website: innovatorData?.website || ""
+          website: innovatorData?.website || "",
         }}
       />
     </>

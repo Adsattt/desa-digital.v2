@@ -4,14 +4,12 @@ import {
   InputGroup,
   InputRightElement,
   Text,
-  Box,
 } from "@chakra-ui/react";
+import TopBar from "Components/topBar";
 import { paths } from "Consts/path";
 import { doc, getDoc } from "firebase/firestore";
 import React, { useState } from "react";
-import {
-  useSignInWithEmailAndPassword
-} from "react-firebase-hooks/auth";
+import { useSignInWithEmailAndPassword } from "react-firebase-hooks/auth";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { FIREBASE_ERRORS } from "../../../src/firebase/errors";
@@ -25,7 +23,7 @@ import {
   Label,
   Title,
 } from "./_loginStyle";
-import TopBar from "Components/topBar";
+import { toast } from "react-toastify";
 const Login: React.FC = () => {
   const [loginForm, setLoginForm] = useState({
     email: "",
@@ -55,9 +53,10 @@ const Login: React.FC = () => {
     try {
       await signInWithEmailAndPassword(loginForm.email, loginForm.password);
 
-      if(auth.currentUser) {
+      if (auth.currentUser) {
         const userRef = doc(firestore, "users", auth.currentUser.uid);
         const userDoc = await getDoc(userRef);
+        console.log("user snap", userDoc.data());
         if (userDoc.exists()) {
           const userRole = userDoc.data()?.role;
           if (userRole === "admin") {
@@ -67,90 +66,96 @@ const Login: React.FC = () => {
             console.log("User  snap bukan admin: ", userDoc.data().role);
             navigate(paths.LANDING_PAGE);
           }
-        } else {
-          console.log("User not found in database");
-        }
+          toast.success("Berhasil Masuk", {
+            position: "top-center",
+            autoClose: 2000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            progress: undefined,
+          });
+        } 
       }
     } catch (error) {
       console.log("Error getting user role:", error);
-      
     }
   };
 
   return (
-    <Box>
-    <TopBar title="" onBack={() => navigate(-1)} />
-    <Background>
-      <Container>
-        <Title>Halo!</Title>
-        <Description>Silahkan masukkan akun</Description>
+    <>
+      <TopBar title="" onBack={() => navigate(-1)} />
+      <Background>
+        <Container>
+          <Title>Halo!</Title>
+          <Description>Silahkan masukkan akun</Description>
 
-        <form onSubmit={onSubmit}>
-          <Text fontSize="10pt" mt="12px">
-            Email
-          </Text>
-          <Input
-            name="email"
-            type="email"
-            onChange={onChange}
-            required
-            placeholder="Email"
-            mt="4px"
-            fontSize="10pt"
-          />
-          <Text fontSize="10pt" mt="12px">
-            Kata sandi
-          </Text>
-
-          <InputGroup mt="4px" alignItems="center">
+          <form onSubmit={onSubmit}>
+            <Text fontSize="10pt" mt="12px">
+              Email
+            </Text>
             <Input
-              name="password"
-              type={show ? "text" : "password"}
+              name="email"
+              type="email"
               onChange={onChange}
               required
-              placeholder="Kata sandi"
+              placeholder="Email"
+              mt="4px"
               fontSize="10pt"
             />
-            <InputRightElement onClick={onShowPassword} cursor="pointer">
-              {show ? <FaEyeSlash /> : <FaEye />}
-            </InputRightElement>
-          </InputGroup>
-          {(error || userError) && (
-            <Text textAlign="center" color="red" fontSize="10pt" mt={2}>
-              {error ||
-                FIREBASE_ERRORS[
-                  userError?.message as keyof typeof FIREBASE_ERRORS
-                ]}
+            <Text fontSize="10pt" mt="12px">
+              Kata sandi
             </Text>
-          )}
 
-          <Button
-            mt={4}
-            type="submit"
-            alignItems="center"
-            width="100%"
-            isLoading={loading}
-          >
-            Masuk
-          </Button>
-        </form>
+            <InputGroup mt="4px" alignItems="center">
+              <Input
+                name="password"
+                type={show ? "text" : "password"}
+                onChange={onChange}
+                required
+                placeholder="Kata sandi"
+                fontSize="10pt"
+              />
+              <InputRightElement onClick={onShowPassword} cursor="pointer">
+                {show ? <FaEyeSlash /> : <FaEye />}
+              </InputRightElement>
+            </InputGroup>
+            {(error || userError) && (
+              <Text textAlign="center" color="red" fontSize="10pt" mt={2}>
+                {error ||
+                  FIREBASE_ERRORS[
+                    userError?.message as keyof typeof FIREBASE_ERRORS
+                  ]}
+              </Text>
+            )}
 
-        <ActionContainer mt={20}>
-          <Label>Lupa kata sandi?</Label>
-          <Action onClick={() => navigate(paths.EMAIL_RESET_PASSWORD_PAGE)}>
-            Klik disini
-          </Action>
-        </ActionContainer>
+            <Button
+              mt={4}
+              type="submit"
+              alignItems="center"
+              width="100%"
+              isLoading={loading}
+            >
+              Masuk
+            </Button>
+          </form>
 
-        <ActionContainer mt={4}>
-          <Label>Belum memiliki akun?</Label>
-          <Action onClick={() => navigate(paths.REGISTER_PAGE)}>
-            Registrasi
-          </Action>
-        </ActionContainer>
-      </Container>
-    </Background>
-    </Box>
+          <ActionContainer mt={20}>
+            <Label>Lupa kata sandi?</Label>
+            <Action onClick={() => navigate(paths.EMAIL_RESET_PASSWORD_PAGE)}>
+              Klik disini
+            </Action>
+          </ActionContainer>
+
+          <ActionContainer mt={4}>
+            <Label>Belum memiliki akun?</Label>
+            <Action onClick={() => navigate(paths.REGISTER_PAGE)}>
+              Registrasi
+            </Action>
+          </ActionContainer>
+        </Container>
+      </Background>
+    </>
   );
 };
 
