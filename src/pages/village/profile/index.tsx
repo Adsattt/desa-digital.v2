@@ -199,7 +199,7 @@ const toEditVillage = () => {
    }, [id]);
 
   return (
-    <Box>
+    <>
       <TopBar title="Profil Desa" onBack={() => navigate(-1)} />
       <div style={{ position: "relative", width: "100%" }}>
         <Background src={village?.header} alt="background" />
@@ -209,7 +209,7 @@ const toEditVillage = () => {
         <ContentContainer>
           <Flex flexDirection="column" alignItems="flex-end" mb={owner ? 0 : 4}>
             {owner && (
-              <Button size="xs" onClick={() => navigate(paths.PENGAJUAN_KLAIM_PAGE)}>
+              <Button size="xs" onClick={() => navigate(`/village/pengajuan/${id}`)}>
                 <Icon src={Send} alt="send" />
                 Pengajuan Klaim
               </Button>
@@ -542,55 +542,53 @@ const toEditVillage = () => {
           </div>
         </ContentContainer>
       </div>
-      <Box>
-        {admin ? (
-          village?.status === "Terverifikasi" ||
-          village?.status === "Ditolak" ? (
-            <StatusCard
-              status={village?.status}
-              message={village?.catatanAdmin}
-            />
-          ) : (
-            <NavbarButton>
-              <Button width="100%" fontSize="14px" onClick={onOpen}>
-                Verifikasi Permohonan Akun
-              </Button>
-            </NavbarButton>
-          )
+      {admin ? (
+        village?.status === "Terverifikasi" ||
+        village?.status === "Ditolak" ? (
+          <StatusCard
+            status={village?.status}
+            message={village?.catatanAdmin}
+          />
         ) : (
           <NavbarButton>
-            <Button 
-              width="100%" 
-              onClick={() => {
-                if (owner) {
-                  toEditVillage();
-                 } else {
-                   onOpen();
-                 }
-              }}>
-              
-              {owner ? "Edit Profile" : " "}
+            <Button width="100%" fontSize="14px" onClick={onOpen}>
+              Verifikasi Permohonan Akun
             </Button>
           </NavbarButton>
-        )}
-        <RejectionModal
-          isOpen={openModal}
-          onClose={() => setOpenModal(false)}
-          onConfirm={handleReject}
-          loading={loading}
-          setMessage={setModalInput}
-          message={modalInput}
-        />
-        <ActionDrawer
-          isOpen={isOpen}
-          onClose={onClose}
-          onVerify={handleVerify}
-          isAdmin={admin}
-          role="Desa"
-          loading={loading}
-          setOpenModal={setOpenModal}
-        />
-      </Box>
-    </Box>
+        )
+      ) : (
+        <NavbarButton>
+          <Button 
+            width="100%" 
+            onClick={() => {
+              if (owner) {
+                toEditVillage();
+                } else {
+                  onOpen();
+                }
+            }}>
+            
+            {owner ? "Edit Profile" : " "}
+          </Button>
+        </NavbarButton>
+      )}
+      <RejectionModal
+        isOpen={openModal}
+        onClose={() => setOpenModal(false)}
+        onConfirm={handleReject}
+        loading={loading}
+        setMessage={setModalInput}
+        message={modalInput}
+      />
+      <ActionDrawer
+        isOpen={isOpen}
+        onClose={onClose}
+        onVerify={handleVerify}
+        isAdmin={admin}
+        role="Desa"
+        loading={loading}
+        setOpenModal={setOpenModal}
+      />
+    </>
   );
 }

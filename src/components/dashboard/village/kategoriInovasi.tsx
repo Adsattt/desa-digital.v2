@@ -50,7 +50,7 @@ const CustomTooltip = ({
       return (
         <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
           <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
-          <p style={{ margin: 0 }}>Total : {data.valueAsli}</p>
+          <p style={{ margin: 0 }}>Total Inovasi : {data.valueAsli}</p>
         </div>
       );
     }
@@ -184,7 +184,7 @@ const KategoriInovasiDesa: React.FC = () => {
                 <Text fontSize="sm" fontWeight="bold" color="gray.800">
                     Kategori Inovasi yang Diterapkan
                 </Text>
-                <Button
+                {/* <Button
                     size="sm"
                     bg="white"
                     boxShadow="md"
@@ -199,7 +199,7 @@ const KategoriInovasiDesa: React.FC = () => {
                     cursor="pointer"
                     onClick={handleDownload}
                 ><DownloadIcon boxSize={3} color="black" />
-                </Button>
+                </Button> */}
             </Flex>
 
             {/* 🔹 Chart */}
@@ -252,7 +252,7 @@ const KategoriInovasiDesa: React.FC = () => {
                 <TableContainer maxWidth="100%" width="auto" borderRadius="md">
                     <Table variant="simple" size="sm"> {/* Mengurangi ukuran tabel */}
                         {/* Header Tabel */}
-                        <Thead bg="#F0FFF4">
+                        <Thead bg="#C6D8D0">
                             <Tr>
                                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                                 <Th p={1} fontSize="8px" textAlign="center">Kategori Potensi</Th>

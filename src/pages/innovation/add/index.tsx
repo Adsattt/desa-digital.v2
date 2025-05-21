@@ -17,6 +17,7 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
+import { NavbarButton } from "../../village/profile/_profileStyle";
 import Container from "Components/container";
 import TopBar from "Components/topBar";
 import {
@@ -71,28 +72,6 @@ const categoryOptions = [
   { value: "UMKM", label: "UMKM" },
 ];
 
-{/*
-const targetUsersOptions = [
-  { value: "Agen keuangan/perbankan", label: "Agen keuangan/perbankan" },
-  { value: "Agen pemerintah", label: "Agen pemerintah" },
-  { value: "Agro-preneur", label: "Agro-preneur" },
-  { value: "Lansia/Pensiunan desa", label: "Lansia/Pensiunan desa" },
-  { value: "Nelayan", label: "Nelayan" },
-  { value: "Pemasok", label: "Pemasok" },
-  { value: "Pemuda", label: "Pemuda" },
-  { value: "Penyedia layanan", label: "Penyedia layanan" },
-  { value: "Perangkat desa", label: "Perangkat desa" },
-  { value: "Petani", label: "Petani" },
-  { value: "Peternak", label: "Peternak" },
-  { value: "Pedagang", label: "Pedagang" },
-  { value: "Pekerja/Buruh", label: "Pekerja/Buruh" },
-  { value: "Produsen", label: "Produsen" },
-  { value: "Tokoh masyarakat setempat", label: "Tokoh masyarakat setempat" },
-  { value: "Wanita pedesaan", label: "Wanita pedesaan" },
-  { value: "Lainnya", label: "Lainnya" },
-];
-*/}
-
 const predefinedModels = [
   "Gratis",
   "Layanan Berbayar",
@@ -133,9 +112,6 @@ const AddInnovation: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<OptionType | null>(
     null
   );
-  const [selectedTargetUser, setSelectedTargetUser] =
-    useState<OptionType | null>(null);
-  //const [customTargetUser, setCustomTargetUser] = useState<string>("");
   const [benefit, setBenefit] = useState([{ benefit: "", description: "" }]);
   const [alertStatus, setAlertStatus] = useState<"info" | "warning" | "error">(
     "warning"
@@ -188,15 +164,6 @@ const AddInnovation: React.FC = () => {
       }
     }
   };
-
-  {/*
-  const handleTargetUserChange = (selectedOption: OptionType | null) => {
-    setSelectedTargetUser(selectedOption);
-    if (selectedOption && selectedOption.value === "Lainnya") {
-      setCustomTargetUser(""); // Reset input custom jika dipilih "Lainnya"
-    }
-  };
-  */}
 
   const onTextChange = ({
     target: { name, value },
@@ -360,16 +327,6 @@ const AddInnovation: React.FC = () => {
 
     const innovatorData = innovatorDocSnap.data();
 
-    {/*}
-    let finalTargetUser = selectedTargetUser?.value || "";
-    if (
-      selectedTargetUser?.value === "Lainnya" &&
-      customTargetUser.trim() !== ""
-    ) {
-      finalTargetUser = customTargetUser.trim();
-    }
-    */}
-
     const finalRequirements = [...requirements];
     if (
       newRequirement.trim() !== "" &&
@@ -472,14 +429,6 @@ const AddInnovation: React.FC = () => {
             innovatorId: user.uid,
             namaInnovator: innovatorData.namaInovator,
             innovatorImgURL: innovatorData?.logo || null,
-            // desaMenerapkan: [
-            //   {
-            //     desaId: null,
-            //     namaDesa: null,
-            //     logo: null,
-            //     tanggalKlaim: null,
-            //   },
-            // ],
           }
         );
 
@@ -511,6 +460,7 @@ const AddInnovation: React.FC = () => {
         title: "Gagal menambahkan inovasi",
         status: "error",
         duration: 3000,
+        position: "top",
         isClosable: true,
       });
     }
@@ -527,7 +477,7 @@ const AddInnovation: React.FC = () => {
       const innovationsQuery = query(
         collection(firestore, "innovations"),
         where("innovatorId", "==", user.uid),
-        where("status", "in", ["Menunggu", "Ditolak", "Terverifikasi"])
+        where("status", "in", ["Menunggu", "Ditolak"])
       );
 
       const querySnapshot = await getDocs(innovationsQuery);
@@ -567,10 +517,6 @@ const AddInnovation: React.FC = () => {
         setSelectedCategory({
           value: data.kategori || "",
           label: data.kategori || "",
-        });
-        setSelectedTargetUser({
-          value: data.targetPengguna || "",
-          label: data.targetPengguna || "",
         });
         const otherModel = data.modelBisnis?.find(
           (model: string) => !predefinedModels.includes(model)
@@ -625,6 +571,7 @@ const AddInnovation: React.FC = () => {
     };
     fetchInnovationData();
   }, [innovationId]);
+
   const splitModels = (models: string[], num: number) => {
     const midpoint = Math.ceil(models.length / num);
     return [models.slice(0, midpoint), models.slice(midpoint)];
@@ -645,7 +592,6 @@ const AddInnovation: React.FC = () => {
     );
   };
   
-
   // Bagi daftar model bisnis menjadi dua kolom
   const [firstColumn, secondColumn] = splitModels(predefinedModels, 2);
 
@@ -687,10 +633,10 @@ const AddInnovation: React.FC = () => {
   };
 
   return (
-    <Container page>
+    <>
       <TopBar title="Tambahkan Inovasi" onBack={() => navigate(-1)} />
-      <form onSubmit={onSubmitForm}>
-        <Box p="0 16px">
+      <Box p="48px 16px 20px 16px">
+        <form onSubmit={onSubmitForm} id="innovationForm">
           <Flex direction="column" marginTop="24px">
             <Stack spacing={3} width="100%">
               <Alert
@@ -1300,52 +1246,54 @@ const AddInnovation: React.FC = () => {
               </Flex>
             </Stack>
           </Flex>
-          {error && (
-            <Text color="red.500" fontSize="12px" mt="4px" textAlign="center">
-              {error}
-            </Text>
-          )}
-          {status !== "Menunggu" && (
-            <div>
-              <Button
-                type="submit"
-                isLoading={loading}
-                mt="20px"
-                width="100%"
-                onClick={() => {
-                  if (isFormValid()) {
-                    setIsModal1Open(true);
-                  } else {
-                    toast({
-                      title: "Form belum lengkap!",
-                      description: "Harap isi semua field wajib.",
-                      status: "error",
-                      duration: 3000,
-                      position: "top",
-                      isClosable: true,
+        </form>
+      </Box>
+      {error && (
+        <Text color="red.500" fontSize="12px" mt="4px" textAlign="center">
+          {error}
+        </Text>
+      )}
+      {status !== "Menunggu" && (
+        <>
+          <NavbarButton>
+            <Button
+              type="submit"
+              form="innovationForm"
+              isLoading={loading}
+              width="100%"
+              onClick={() => {
+                if (isFormValid()) {
+                  toast({
+                    title: "Form belum lengkap!",
+                    description: "Harap isi semua field wajib.",
+                    status: "error",
+                    duration: 3000,
+                    position: "top",
+                    isClosable: true,
                     });
-                  }
-                }}
-              >
-                {status === "Ditolak" ? "Ajukan Ulang" : "Ajukan Inovasi"}
-              </Button>
-              <ConfModal
-                isOpen={isModal1Open}
-                onClose={closeModal}
-                modalTitle=""
-                modalBody1={modalBody1} // Mengirimkan teks konten modal
-                onYes={handleModal1Yes}
-              />
-              <SecConfModal
-                isOpen={isModal2Open}
-                onClose={closeModal}
-                modalBody2={modalBody2} // Mengirimkan teks konten modal
-              />
-          </div>
-          )}
-        </Box>
-      </form>
-    </Container>
+                } else {
+                  setIsModal1Open(true);
+                }
+              }}
+            >
+              {status === "Ditolak" ? "Ajukan Ulang" : "Ajukan Inovasi"}
+            </Button>
+          </NavbarButton>
+          <ConfModal
+            isOpen={isModal1Open}
+            onClose={closeModal}
+            modalTitle=""
+            modalBody1={modalBody1} // Mengirimkan teks konten modal
+            onYes={handleModal1Yes}
+          />
+          <SecConfModal
+            isOpen={isModal2Open}
+            onClose={closeModal}
+            modalBody2={modalBody2} // Mengirimkan teks konten modal
+          />
+        </>
+      )}
+    </>
   );
 };
 

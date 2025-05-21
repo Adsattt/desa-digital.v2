@@ -132,7 +132,6 @@ function DetailInnovation() {
         console.log("Innovation Data:", innovationData);
         const inputDesaMenerapkan = innovationData?.inputDesaMenerapkan || [];
 
-
         if (inputDesaMenerapkan.length > 0) {
           console.log("Fetching villages for:", inputDesaMenerapkan);
           try {
@@ -525,7 +524,8 @@ function DetailInnovation() {
               paddingBottom="12px"
             > Lihat Semua </Text>
           </Flex>
-          {(data.inputDesaMenerapkan as string[] || []).map((desa: string, index: number) => {
+          {Array.isArray(data.inputDesaMenerapkan) &&
+          data.inputDesaMenerapkan.map((desa: string, index: number) => {
             const village = villageMap.get(desa); // Ambil data desa berdasarkan nama
             return (
               <ActionContainer 

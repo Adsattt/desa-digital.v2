@@ -1,7 +1,7 @@
 import { Box, Flex, Grid, Text, Stack, Image } from "@chakra-ui/react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import InnovationActive from "Assets/icons/innovation2.svg"; // Icon inovasi dari asset lokal
+import InnovationActive from "Assets/icons/innovation3.svg"; // Icon inovasi dari asset lokal
 
 const ScoreCardDashboardInnovations: React.FC = () => {
   const [totalInnovations, setTotalInnovations] = useState(0);
@@ -26,7 +26,7 @@ const ScoreCardDashboardInnovations: React.FC = () => {
       label: "Inovasi",
       value: totalInnovations,
       icon: InnovationActive,
-      iconBg: "#F0FFF4",
+      iconBg: "#C6D8D0",
     },
   ];
 

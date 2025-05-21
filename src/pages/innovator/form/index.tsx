@@ -8,6 +8,7 @@ import {
   Text,
   useToast,
 } from "@chakra-ui/react";
+import { NavbarButton } from "../../village/profile/_profileStyle";
 import Container from "Components/container";
 import FormSection from "Components/form/FormSection";
 import TopBar from "Components/topBar";
@@ -75,7 +76,6 @@ const InnovatorForm: React.FC = () => {
     website: "",
     whatsapp: "",
   });
-  const [modelBusiness, setModelBusiness] = useState("");
   const toast = useToast();
   const [isEditable, setIsEditable] = useState(true);
   const [status, setStatus] = useState("");
@@ -186,12 +186,6 @@ const InnovatorForm: React.FC = () => {
     setSelectedCategory(selectedOption);
   };
 
-  const onSelectModelBusiness = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setModelBusiness(event.target.value);
-  };
-
   const onSubmitForm = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
@@ -256,7 +250,6 @@ const InnovatorForm: React.FC = () => {
           namaInovator: name,
           deskripsi: description,
           kategori: selectedCategory?.label,
-          modelBisnis: modelBusiness,
           instagram: instagram,
           website: website,
           whatsapp: whatsapp,
@@ -276,7 +269,6 @@ const InnovatorForm: React.FC = () => {
           createdAt: serverTimestamp(),
           jumlahInovasi: 0,
           jumlahDesaDampingan: 0,
-          modelBisnis: modelBusiness,
           instagram,
           website,
           whatsapp,
@@ -361,7 +353,6 @@ const InnovatorForm: React.FC = () => {
             label: data.kategori,
             value: data.kategori.toLowerCase().replace(/\s+/g, "-"),
           });
-          setModelBusiness(data.modelBisnis);
           setSelectedLogo(data?.logo || "");
           setSelectedHeader(data?.header || "");
           setStatus(data.status);
@@ -436,12 +427,12 @@ const InnovatorForm: React.FC = () => {
   };
 
   return (
-    <Container page>
+    <>
       <TopBar
         title={owner ? "Edit Profil Inovator" : "Register Inovator"} 
         onBack={() => navigate(-1)} />
-      <Box p="0 16px">
-        <form onSubmit={onSubmitForm}>
+      <Box p="48px 16px 20px 16px">
+        <form onSubmit={onSubmitForm} id="InnovatorForm">
           <Flex direction="column" marginTop="24px">
             <Alert
               status={alertStatus}
@@ -477,35 +468,6 @@ const InnovatorForm: React.FC = () => {
                 isSearchable
                 isDisabled={!isEditable}
               />
-              
-              {/* <Text fontWeight="400" fontSize="14px">
-                Model Bisnis Digital <span style={{ color: "red" }}>*</span>
-              </Text>
-              <ChakraSelect
-                placeholder="Pilih Model Bisnis"
-                name="modelBusiness"
-                fontSize="10pt"
-                variant="outline"
-                cursor="pointer"
-                color={"black"}
-                disabled={!isEditable}
-                _focus={{
-                  outline: "none",
-                  bg: "white",
-                  border: "none",
-                  borderColor: "black",
-                }}
-                _placeholder={{ color: "gray.500" }}
-                value={modelBusiness}
-                onChange={onSelectModelBusiness}
-              >
-                {businessModels.map((model) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
-              </ChakraSelect> */}
-
               <FormSection
                 isTextArea
                 title="Deskripsi Inovator"
@@ -592,63 +554,63 @@ const InnovatorForm: React.FC = () => {
               />
             </Stack>
           </Flex>
-          {error && (
-            <Text color="red" fontSize="10pt" textAlign="center" mt={2}>
-              {error}
-            </Text>
-          )}
-          {status !== "Menunggu" && (
-            <div>
-              <Button
-                type="submit"
-                mt="30px"
-                mb="-10"
-                width="100%"
-                height="44px"
-                isLoading={loading}
-                onClick={() => {
-                  if (isFormValid()) {
-                    setIsModal1Open(true);
-                  } else {
-                    toast({
-                      title: "Form belum lengkap!",
-                      description: "Harap isi semua field wajib.",
-                      status: "error",
-                      duration: 3000,
-                      position: "top",
-                      isClosable: true,
-                    });
-                  }
-                }}
-              >
-                {user?.uid ? (
-                  // Jika status sudah "Ditolak" dan pengguna adalah owner
-                  status === "Ditolak" 
-                    ? "Kirim Ulang" 
-                    : owner
-                    ? "Update Inovator" // Jika owner, tombol berubah jadi "Update Inovator"
-                    : "Daftarkan Akun" // Jika bukan owner, tetap "Daftarkan Akun"
-                ) : (
-                  "Daftarkan Akun" // Jika tidak ada user yang terautentikasi, tetap "Daftarkan Akun"
-                )}
-              </Button>
-              <ConfModal
-                isOpen={isModal1Open}
-                onClose={closeModal}
-                modalTitle=""
-                modalBody1={modalBody1} // Mengirimkan teks konten modal
-                onYes={handleModal1Yes}
-              />
-              <SecConfModal
-                isOpen={isModal2Open}
-                onClose={closeModal}
-                modalBody2={modalBody2} // Mengirimkan teks konten modal
-              />
-            </div>
-          )}
         </form >
       </Box>
-    </Container>
+      {error && (
+        <Text color="red" fontSize="10pt" textAlign="center" mt={2}>
+          {error}
+        </Text>
+      )}
+      {status !== "Menunggu" && (
+        <>
+          <NavbarButton>
+            <Button
+              type="submit"
+              form="InnovatorForm"
+              width="100%"
+              isLoading={loading}
+              onClick={() => {
+                if (isFormValid()) {
+                  setIsModal1Open(true);
+                } else {
+                  toast({
+                    title: "Form belum lengkap!",
+                    description: "Harap isi semua field wajib.",
+                    status: "error",
+                    duration: 3000,
+                    position: "top",
+                    isClosable: true,
+                  });
+                }
+              }}
+            >
+              {user?.uid ? (
+                // Jika status sudah "Ditolak" dan pengguna adalah owner
+                status === "Ditolak" 
+                  ? "Kirim Ulang" 
+                  : owner
+                  ? "Update Inovator" // Jika owner, tombol berubah jadi "Update Inovator"
+                  : "Daftarkan Akun" // Jika bukan owner, tetap "Daftarkan Akun"
+              ) : (
+                "Daftarkan Akun" // Jika tidak ada user yang terautentikasi, tetap "Daftarkan Akun"
+              )}
+            </Button>
+          </NavbarButton>
+          <ConfModal
+            isOpen={isModal1Open}
+            onClose={closeModal}
+            modalTitle=""
+            modalBody1={modalBody1} // Mengirimkan teks konten modal
+            onYes={handleModal1Yes}
+          />
+          <SecConfModal
+            isOpen={isModal2Open}
+            onClose={closeModal}
+            modalBody2={modalBody2} // Mengirimkan teks konten modal
+          />
+        </>
+      )}
+    </>
   );
 };
 
