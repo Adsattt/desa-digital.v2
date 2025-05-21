@@ -10,6 +10,7 @@ import {
   Th,
   Td,
   TableContainer,
+  Icon
 } from "@chakra-ui/react";
 import {
   BarChart,
@@ -23,7 +24,7 @@ import {
 } from "recharts";
 import { useEffect, useState } from "react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
-import { DownloadIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "@chakra-ui/icons";
 import * as XLSX from "xlsx";
 
 const ITEMS_PER_PAGE = 5;
@@ -40,24 +41,39 @@ const Top5Innovations: React.FC = () => {
         const innovationsRef = collection(db, "innovations");
         const snapshot = await getDocs(innovationsRef);
 
-        const sortedInnovations = snapshot.docs
-          .map((doc) => ({
-            name: doc.data().namaInovasi as string,
-            count: doc.data().jumlahDesaKlaim as number || 0,
-          }))
-          .sort((a, b) => b.count - a.count);
+        // 🧼 Normalisasi data dari Firestore
+        const sortedInnovations = snapshot.docs.map((doc) => {
+          const rawName = doc.data().namaInovasi;
+          return {
+            name:
+              typeof rawName === "object" && rawName !== null && "text" in rawName
+                ? rawName.text
+                : String(rawName),
+            count: doc.data().jumlahDesaKlaim ?? 0,
+          };
+        });
 
+        // 🛠 Debug: cek jika ada yang bukan string
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data().namaInovasi;
+          if (typeof data !== "string") {
+            console.warn("⚠️ Nama inovasi bukan string:", data);
+          }
+        });
+
+        // 📋 Format untuk tabel — tidak perlu pengecekan ulang
         const tableFormatted = sortedInnovations.map((item, index) => ({
           no: index + 1,
-          name: item.name,
+          name: item.name, // Sudah string
           count: item.count,
         }));
 
         setTableData(tableFormatted);
 
+        // 👑 Setup chartData seperti sebelumnya
         const top5 = tableFormatted.slice(0, 5);
-        const customOrder = [3, 1, 0, 2, 4]; // Custom order for ranking
-        const customHeights = [20, 40, 50, 35, 15]; // Custom heights for bars
+        const customOrder = [3, 1, 0, 2, 4];
+        const customHeights = [20, 40, 50, 35, 15];
         const customRanks = ["4th", "2nd", "1st", "3rd", "5th"];
 
         const rankedInnovations = customOrder.map((index, rankIndex) => ({
@@ -214,19 +230,58 @@ const Top5Innovations: React.FC = () => {
 
         {/* 🔹 Pagination */}
         <Flex justify="center" mt={3} gap={2}>
-          {[...Array(totalPages)].map((_, index) => (
-            <Button
-              key={index}
-              size="xs"
-              borderRadius="full"
-              bg={currentPage === index + 1 ? "gray.800" : "white"}
-              color={currentPage === index + 1 ? "white" : "gray.800"}
-              onClick={() => setCurrentPage(index + 1)}
-              _hover={{ bg: "gray.300" }}
-            >
-              {index + 1}
-            </Button>
-          ))}
+          {(() => {
+            const pagesPerBlock = 5;
+            const currentBlock = Math.floor((currentPage - 1) / pagesPerBlock);
+            const startPage = currentBlock * pagesPerBlock + 1;
+            const endPage = Math.min(startPage + pagesPerBlock - 1, totalPages);
+
+            return (
+              <>
+                {/* Prev icon button */}
+                {startPage > 1 && (
+                  <Button
+                    size="xs"
+                    onClick={() => setCurrentPage(startPage - 1)}
+                    variant="ghost"
+                    p={1}
+                  >
+                    <Icon as={ChevronLeftIcon} />
+                  </Button>
+                )}
+
+                {/* Page numbers */}
+                {[...Array(endPage - startPage + 1)].map((_, index) => {
+                  const page = startPage + index;
+                  return (
+                    <Button
+                      key={page}
+                      size="xs"
+                      borderRadius="full"
+                      bg={currentPage === page ? "gray.800" : "white"}
+                      color={currentPage === page ? "white" : "gray.800"}
+                      onClick={() => setCurrentPage(page)}
+                      _hover={{ bg: "gray.300" }}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+
+                {/* Next icon button */}
+                {endPage < totalPages && (
+                  <Button
+                    size="xs"
+                    onClick={() => setCurrentPage(endPage + 1)}
+                    variant="ghost"
+                    p={1}
+                  >
+                    <Icon as={ChevronRightIcon} />
+                  </Button>
+                )}
+              </>
+            );
+          })()}
         </Flex>
       </Box>
     </Box>

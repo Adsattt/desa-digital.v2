@@ -11,7 +11,7 @@ import {
 import {
   ArrowUpRight,
   ArrowDownRight,
-  ArrowRight, 
+  ArrowRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
@@ -71,10 +71,12 @@ const InformasiUmum: React.FC = () => {
         const db = getFirestore();
         const villageRef = collection(db, "villages");
         const snapshot = await getDocs(villageRef);
+
         const validVillages = snapshot.docs.filter((doc) => {
           const data = doc.data();
-          return data.namaDesa && data.namaDesa.length > 1;
+          return typeof data.jumlahInovasi === "number" && data.jumlahInovasi > 0;
         });
+
         setTotalVillage(validVillages.length);
       } catch (error) {
         console.error("Error fetching village count:", error);
@@ -159,7 +161,7 @@ const InformasiUmum: React.FC = () => {
             },
             {
               label: "Inovator",
-              icon: <FaUsers size={25} color="#347357"/>,
+              icon: <FaUsers size={25} color="#347357" />,
               iconBg: "#C6D8D0",
               value: totalInnovators,
               change: changeInnovator,

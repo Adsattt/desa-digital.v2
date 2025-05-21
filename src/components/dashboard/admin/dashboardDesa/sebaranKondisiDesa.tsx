@@ -19,11 +19,12 @@ import {
   DrawerFooter,
   DrawerCloseButton,
   Select,
+  Icon
 } from "@chakra-ui/react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Filter } from "lucide-react";
-import { DownloadIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "@chakra-ui/icons";
 import * as XLSX from "xlsx";
 
 const SebaranKondisiDesa: React.FC = () => {
@@ -304,21 +305,60 @@ const SebaranKondisiDesa: React.FC = () => {
           </Table>
         </TableContainer>
 
-        {/* Pagination */}
+        {/* 🔹 Pagination */}
         <Flex justify="center" mt={3} gap={2}>
-          {[...Array(totalPages)].map((_, index) => (
-            <Button
-              key={index}
-              size="xs"
-              borderRadius="full"
-              bg={currentPage === index + 1 ? "gray.800" : "white"}
-              color={currentPage === index + 1 ? "white" : "gray.800"}
-              onClick={() => setCurrentPage(index + 1)}
-              _hover={{ bg: "gray.300" }}
-            >
-              {index + 1}
-            </Button>
-          ))}
+          {(() => {
+            const pagesPerBlock = 5;
+            const currentBlock = Math.floor((currentPage - 1) / pagesPerBlock);
+            const startPage = currentBlock * pagesPerBlock + 1;
+            const endPage = Math.min(startPage + pagesPerBlock - 1, totalPages);
+
+            return (
+              <>
+                {/* Prev icon button */}
+                {startPage > 1 && (
+                  <Button
+                    size="xs"
+                    onClick={() => setCurrentPage(startPage - 1)}
+                    variant="ghost"
+                    p={1}
+                  >
+                    <Icon as={ChevronLeftIcon} />
+                  </Button>
+                )}
+
+                {/* Page numbers */}
+                {[...Array(endPage - startPage + 1)].map((_, index) => {
+                  const page = startPage + index;
+                  return (
+                    <Button
+                      key={page}
+                      size="xs"
+                      borderRadius="full"
+                      bg={currentPage === page ? "gray.800" : "white"}
+                      color={currentPage === page ? "white" : "gray.800"}
+                      onClick={() => setCurrentPage(page)}
+                      _hover={{ bg: "gray.300" }}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+
+                {/* Next icon button */}
+                {endPage < totalPages && (
+                  <Button
+                    size="xs"
+                    onClick={() => setCurrentPage(endPage + 1)}
+                    variant="ghost"
+                    p={1}
+                  >
+                    <Icon as={ChevronRightIcon} />
+                  </Button>
+                )}
+              </>
+            );
+          })()}
         </Flex>
       </Box>
     </Box>

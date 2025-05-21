@@ -11,34 +11,61 @@ const ScoreCardDashboardInovator: React.FC = () => {
   const fetchData = async () => {
     try {
       const db = getFirestore();
+
+      // 🔹 Ambil dari koleksi 'innovators'
       const innovatorsRef = collection(db, "innovators");
-      const snapshot = await getDocs(innovatorsRef);
+      const innovatorsSnapshot = await getDocs(innovatorsRef);
 
       let inovatorCount = 0;
-      let desaDampinganCount = 0;
 
-      snapshot.docs.forEach((doc) => {
+      innovatorsSnapshot.docs.forEach((doc) => {
         const data = doc.data();
-
-        if (data.namaInovator) {
+        if (
+          typeof data.jumlahInovasi === "number" &&
+          data.jumlahInovasi > 0 &&
+          data.namaInovator
+        ) {
           inovatorCount++;
-        }
-
-        if (typeof data.jumlahDesaDampingan === "number") {
-          desaDampinganCount += data.jumlahDesaDampingan;
         }
       });
 
+      // 🔹 Ambil dari koleksi 'villages'
+      const villagesRef = collection(db, "villages");
+      const villagesSnapshot = await getDocs(villagesRef);
+
+      const villageSet = new Set<string>();
+
+      villagesSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+
+        if (
+          typeof data.jumlahInovasi === "number" &&
+          data.jumlahInovasi > 0
+        ) {
+          if (typeof data.namaDesa === "string" && data.namaDesa.length > 1) {
+            villageSet.add(data.namaDesa);
+          } else if (
+            data.namaDesa?.label &&
+            typeof data.namaDesa.label === "string" &&
+            data.namaDesa.label.length > 1
+          ) {
+            villageSet.add(data.namaDesa.label);
+          }
+        }
+      });
+
+      // ✅ Set ke state
       setTotalInovators(inovatorCount);
-      setTotalDesaDampingan(desaDampinganCount);
+      setTotalDesaDampingan(villageSet.size); // dari koleksi villages
     } catch (error) {
-      console.error("❌ Error fetching innovator data:", error);
+      console.error("Error fetching data:", error);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
+
 
   const stats = [
     {

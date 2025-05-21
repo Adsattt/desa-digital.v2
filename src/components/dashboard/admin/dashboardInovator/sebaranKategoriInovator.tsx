@@ -50,21 +50,26 @@ const SebaranKategoriInovator: React.FC = () => {
           }
         });
 
-        const sortedKategori = Object.entries(kategoriCount)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 3)
-          .map(([key, value], index) => ({
-            name: key,
-            value,
-            color: colors[index % colors.length],
-          }));
+        const sortedEntries = Object.entries(kategoriCount).sort((a, b) => b[1] - a[1]);
 
-        setKategoriData(sortedKategori);
-        setFilteredData(sortedKategori);
+        const fullData = sortedEntries.map(([key, value], index) => ({
+          name: key,
+          value,
+          color: colors[index % colors.length],
+        }));
+
+        setKategoriData(fullData); // semua kategori tetap disimpan
+
+        // Pilih 3 kategori target secara manual
+        const targetNames = ["Swasta (JALA)", "Pemerintah Daerah", "Start-up"];
+        const initialThree = fullData.filter(item => targetNames.includes(item.name));
+
+        setFilteredData(initialThree);
         setAllCategories(Object.keys(kategoriCount));
-        setSelectedCategories(Object.keys(kategoriCount).slice(0, 3));
+        setSelectedCategories(initialThree.map(item => item.name));
+
       } catch (error) {
-        console.error("❌ Error fetching kategori data:", error);
+        console.error("Error fetching kategori data:", error);
       }
     };
 
