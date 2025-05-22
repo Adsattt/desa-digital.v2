@@ -1,36 +1,37 @@
 import { SearchIcon } from "@chakra-ui/icons";
-import {
-  Flex,
-  Input,
-  InputGroup,
-  InputLeftElement
-} from "@chakra-ui/react";
+import { Flex, Input, InputGroup, InputLeftElement } from "@chakra-ui/react";
 import React from "react";
 
-// type SearchBarLinkProps = {
-//   placeholderText?: string;
-//   value?: string;
-//   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-// };
-
 interface SearchBarLinkProps {
-    placeholderText: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-};
+  placeholderText: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  width?: string | number;
+  maxW?: string | number;
+}
 
-const SearchBarLink: React.FC<SearchBarLinkProps> = ({ placeholderText, value, onChange }) => {
+const SearchBarLink: React.FC<SearchBarLinkProps> = ({
+  placeholderText,
+  value,
+  onChange,
+  onKeyDown,
+  width = "100%",
+  maxW = "100%",
+}) => {
   return (
-    <Flex justify="center" maxW="360px" width="100%">
-      <InputGroup>
+    <Flex justify="center" width={width} maxW={maxW}>
+      <InputGroup width="90%" mt={-3} mb={-3}>
         <InputLeftElement pointerEvents="none">
           <SearchIcon color="gray.300" />
         </InputLeftElement>
         <Input
+          bg="white"
           type="text"
           placeholder={placeholderText}
           value={value}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           fontSize="10pt"
           _placeholder={{ color: "#9CA3AF" }}
           _hover={{
@@ -44,8 +45,6 @@ const SearchBarLink: React.FC<SearchBarLinkProps> = ({ placeholderText, value, o
             borderColor: "#9CA3AF",
           }}
           borderRadius={100}
-          maxW="329px"
-          width="100%"
         />
       </InputGroup>
     </Flex>

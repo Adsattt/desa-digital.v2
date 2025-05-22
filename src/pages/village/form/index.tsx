@@ -92,6 +92,22 @@ const AddVillage: React.FC = () => {
   const [selectedRegency, setSelectedRegency] = useState<Option | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<Option | null>(null);
   const [selectedVillage, setSelectedVillage] = useState<Option | null>(null);
+  
+  type DropdownValue = {
+    kondisijalan: string | null;
+    jaringan: string | null;
+    listrik: string | null;
+    teknologi: string | null;
+    kemampuan: string | null;
+  };
+
+  const [dropdownValue, setDropdownValue] = useState<DropdownValue>({
+    kondisijalan: null,
+    jaringan: null,
+    listrik: null,
+    teknologi: null,
+    kemampuan: null,
+  });
 
   const [selectedPotensi, setSelectedPotensi] = useState<
     { value: string; label: string }[]
@@ -138,7 +154,12 @@ const AddVillage: React.FC = () => {
       textInputValue.resource.trim() !== "" &&
       textInputValue.whatsapp.trim() !== "" &&
       textInputValue.instagram.trim() !== "" &&
-      textInputValue.website.trim() !== ""
+      textInputValue.website.trim() !== "" &&
+      dropdownValue.kondisijalan !== null &&
+      dropdownValue.jaringan !== null &&
+      dropdownValue.listrik !== null &&
+      dropdownValue.teknologi !== null &&
+      dropdownValue.kemampuan !== null
     );
   };
 
@@ -333,6 +354,8 @@ const AddVillage: React.FC = () => {
         website,
       } = textInputValue;
 
+      const {kondisijalan, jaringan, listrik, teknologi: teknologiDropdown, kemampuan} = dropdownValue;
+
       const userId = user.uid;
       const docRef = doc(firestore, "villages", userId);
       // Cek dan hapus foto lama jika ada yang dihapus
@@ -451,7 +474,13 @@ const AddVillage: React.FC = () => {
           },
           status: "Menunggu", // Set status menjadi "Menunggu" setelah dikirim ulang
           editedAt: serverTimestamp(), // Tandai waktu edit
+          kondisijalan: kondisijalan || "",
+          jaringan: jaringan || "",
+          listrik: listrik || "",
+          teknologi: teknologiDropdown || "",
+          kemampuan: kemampuan || "",
         });
+
         console.log("Document updated with ID: ", userId);
         setStatus("Menunggu");
       } else {
@@ -482,7 +511,13 @@ const AddVillage: React.FC = () => {
           catatanAdmin: "",
           createdAt: serverTimestamp(),
           editedAt: serverTimestamp(),
+          kondisijalan: kondisijalan || "",
+          jaringan: jaringan || "",
+          listrik: listrik || "",
+          teknologi: teknologiDropdown || "",
+          kemampuan: kemampuan || "",
         });
+
         if (selectedLogo) {
           const logoRef = ref(storage, `villages/${userId}/logo`);
           await uploadString(logoRef, selectedLogo, "data_url").then(
@@ -597,6 +632,14 @@ const AddVillage: React.FC = () => {
           whatsapp: data.whatsapp || "",
           instagram: data.instagram || "",
           website: data.website || "",
+        });
+
+        setDropdownValue({
+          kondisijalan: data.kondisijalan || null,
+          jaringan: data.jaringan || null,
+          listrik: data.listrik || null,
+          teknologi: data.teknologi || null,
+          kemampuan: data.kemampuan || null,
         });
 
         // console.log(data.logo)
@@ -778,7 +821,7 @@ const AddVillage: React.FC = () => {
                 disabled={!isEditable}
               /> 
 
-              <Box>
+              <Box> 
                 <Text fontWeight="700" fontSize="16px" mb="6px">
                   Karakteristik Desa
                 </Text>
@@ -793,8 +836,124 @@ const AddVillage: React.FC = () => {
                   maxWords={30}
                 />
               </Box>
+              
+              <Text fontWeight="400" fontSize="16px" mb="6px">
+                  Infrastruktur <Text as="span" color="red.500">*</Text>
+              </Text>
+              <LocationSelector
+                label="Kondisi Jalan"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.kondisijalan
+                    ? { value: dropdownValue.kondisijalan, label: dropdownValue.kondisijalan }
+                    : null
+                }
+                options={[
+                  { value: "Seluruh jalan beraspal", label: "Seluruh jalan beraspal" },
+                  { value: "Lebih dari 50% beraspal", label: "Lebih dari 50% beraspal" },
+                  { value: "Kurang dari 50% beraspal", label: "Kurang dari 50% beraspal" },
+                  { value: "Beraspal namun rusak", label: "Beraspal namun rusak" },
+                  { value: "Masih tanah dan bebatuan", label: "Masih tanah dan bebatuan" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({...prev ,kondisijalan: selected?.value ?? null}))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Jaringan Internet"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.jaringan
+                    ? { value: dropdownValue.jaringan, label: dropdownValue.jaringan }
+                    : null
+                }
+                options={[
+                  { value: "Jaringan Internet baik di seluruh tempat", label: "Jaringan Internet baik di seluruh tempat" },
+                  { value: "Jaringan Internet baik di beberapa tempat", label: "Jaringan Internet baik di beberapa tempat" },
+                  { value: "Jaringan internet lemah", label: "Jaringan internet lemah" },
+                  { value: "Ada sinyal, namun tidak ada jaringan internet", label: "Ada sinyal, namun tidak ada jaringan internet" },
+                  { value: "Sinyal lemah, namun ada internet (wifi)", label: "Sinyal lemah, namun ada internet (wifi)" },
+                  { value: "Sinyal lemah / tidak ada, dan tidak ada internet", label: "Sinyal lemah / tidak ada, dan tidak ada internet" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, jaringan: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Ketersediaan Listrik"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.listrik
+                    ? { value: dropdownValue.listrik, label: dropdownValue.listrik }
+                    : null
+                }
+                options={[
+                  { value: "Listrik tersedia di seluruh tempat", label: "Listrik tersedia di seluruh tempat" },
+                  { value: "Listrik tersedia di beberapa tempat", label: "Listrik tersedia di beberapa tempat" },
+                  { value: "Listrik 24 jam hanya di beberapa tempat", label: "Listrik 24 jam hanya di beberapa tempat" },
+                  { value: "Listrik tersedia, namun waktu terbatas", label: "Listrik tersedia, namun waktu terbatas" },
+                  { value: "Listrik tidak tersedia", label: "Listrik tidak tersedia" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, listrik: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
 
               <FormSection
+                title="Lain-lain"
+                name="infrastruktur"
+                placeholder="Masukkan hal lain terkait infrastruktur"
+                value={textInputValue.infrastruktur}
+                disabled={!isEditable}
+                onChange={onTextChange}
+                wordCount={currentWordCount(textInputValue.infrastruktur)}
+                maxWords={30}
+              />
+
+              <LocationSelector
+                label="Perkembangan Teknologi Digital"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.teknologi
+                    ? { value: dropdownValue.teknologi, label: dropdownValue.teknologi }
+                    : null
+                }
+                options={[
+                  { value: "Seluruhnya berkembang dengan baik", label: "Seluruhnya berkembang dengan baik" },
+                  { value: "Lebih dari 50% sudah dikembangkan", label: "Lebih dari 50% sudah dikembangkan" },
+                  { value: "Kurang dari 50% sudah dikembangkan", label: "Kurang dari 50% sudah dikembangkan" },
+                  { value: "Baru dimulai", label: "Baru dimulai" },
+                  { value: "Belum siap", label: "Belum siap" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, teknologi: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Kemampuan Teknologi"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.kemampuan
+                    ? { value: dropdownValue.kemampuan, label: dropdownValue.kemampuan }
+                    : null
+                }
+                options={[
+                  { value: "Kemampuan masyarakat sangat baik", label: "Kemampuan masyarakat sangat baik" },
+                  { value: "Kemampuan masyarakat cukup baik", label: "Kemampuan masyarakat cukup baik" },
+                  { value: "Hanya beberapa masyarakat yang cukup baik", label: "Hanya beberapa masyarakat yang cukup baik" },
+                  { value: "Kemampuan masyarakat terbatas", label: "Kemampuan masyarakat terbatas" },
+                  { value: "Masyarakat belum mampu memakai teknologi digital", label: "Masyarakat belum mampu memakai teknologi digital" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, kemampuan: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+
+              {/* <FormSection
                 title="Infrastruktur"
                 name="infrastruktur"
                 placeholder="Deskripsi infrastruktur desa"
@@ -836,8 +995,7 @@ const AddVillage: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={currentWordCount(textInputValue.pelayanan)}
                 maxWords={30}
-              />
-
+              /> */}
               <FormSection
                 title="Sosial dan Budaya"
                 name="sosial"

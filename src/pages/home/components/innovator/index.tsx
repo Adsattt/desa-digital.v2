@@ -45,7 +45,15 @@ function Innovator() {
             />
           ))} */}
           {[...innovators]
-          .sort((a, b) => b.jumlahInovasi - a.jumlahInovasi) // urutkan dari terbanyak
+          .sort((a, b) => {
+            if (b.jumlahInovasi !== a.jumlahInovasi){
+              return b.jumlahInovasi - a.jumlahInovasi;
+            }
+            if (b.jumlahDesaDampingan !== a.jumlahDesaDampingan){
+              return b.jumlahDesaDampingan - a.jumlahDesaDampingan;
+            }
+            return a.namaInovator.localeCompare(b.namaInovator);
+          }) 
           .slice(0, 5) // ambil 5 teratas
           .map((item, idx) => (
             <CardInnovator
@@ -56,6 +64,7 @@ function Innovator() {
               namaInovator={item.namaInovator}
               jumlahDesaDampingan={item.jumlahDesaDampingan}
               jumlahInovasi={item.jumlahInovasi}
+              ranking={idx + 1}
               onClick={() =>
                 navigate(
                   generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id })
