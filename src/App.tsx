@@ -21,12 +21,15 @@ import DashboardAdmin from "./pages/admin/dashboard";
 import DashboardAdminDesa from "./pages/admin/dashboard/dashboardDesa";
 import DashboardAdminInovasi from "./pages/admin/dashboard/dashboardInovasi";
 import DashboardAdminInovator from "./pages/admin/dashboard/dashboardInovator";
+import ReportAdmin from "./pages/admin/report";
+import PreviewReportAdmin from "./pages/admin/report/preview";
 import VerificationPage from "./pages/admin/verification/VerificationPage";
 import BantuanFAQ from "./pages/bantuanFAQ";
 import EmailReset from "./pages/emailreset/EmailReset";
 import AddInnovation from "./pages/innovation/add/index";
 import DesaYangMenerapkan from "./pages/innovation/desaYangMenerapkan";
 import EditInnovation from "./pages/innovation/edit";
+import ReportInnovator from "./pages/innovator/report";
 import InnovationListPage from "./pages/innovator/detail/ProdukInovasi/InnovationListPage";
 import InnovatorForm from "./pages/innovator/form";
 import ProfileInnovator from "./pages/innovator/profile";
@@ -42,8 +45,7 @@ import KlaimInovasiManual from "./pages/village/klaimInovasi/manual";
 import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
-import SearchPage from "./pages/home/components/search/SearchPage";
-import { Bounce, ToastContainer } from "react-toastify"; 
+import { Bounce, ToastContainer } from "react-toastify";
 
 const queryClient = new QueryClient();
 
@@ -222,8 +224,32 @@ const routes = [
     ),
   },
   {
+    path: paths.REPORT_ADMIN,
+    element: (
+      <AdminGuard>
+        <ReportAdmin />
+      </AdminGuard>
+    ),
+  },
+  {
+    path: paths.PREVIEW_REPORT_ADMIN,
+    element: (
+      <AdminGuard>
+        <PreviewReportAdmin />
+      </AdminGuard>
+    ),
+  },
+  {
     path: paths.VILLAGE_DASHBOARD,
     element: <DashboardPerangkatDesa />,
+  },
+  {
+    path: paths.REPORT_INNOVATOR,
+    element: <ReportInnovator />,
+  },
+  {
+    path: paths.REPORT_VILLAGE,
+    element: <ReportVillage />,
   },
   {
     path: paths.VILLAGE_RECOMENDATION,
