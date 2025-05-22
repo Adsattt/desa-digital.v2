@@ -11,6 +11,8 @@ import {
 import defaultHeader from "@public/images/default-header.svg";
 import defaultLogo from "@public/images/default-logo.svg";
 import badge1 from "@public/icons/badge-1.svg";
+import badge2 from "@public/icons/badge-2.svg";
+import badge3 from "@public/icons/badge-3.svg";
 import {Flex} from "@chakra-ui/react";
 
 
@@ -22,6 +24,7 @@ type CardInnovatorProps = {
   jumlahDesaDampingan: number
   jumlahInovasi: number
   onClick: () => void;
+  ranking?: number;
 };
 
 function CardInnovator(props: CardInnovatorProps) {
@@ -31,7 +34,8 @@ function CardInnovator(props: CardInnovatorProps) {
     namaInovator,
     onClick,
     jumlahDesaDampingan,
-    jumlahInovasi
+    jumlahInovasi,
+    ranking
   } = props;
 
   return (
@@ -40,8 +44,9 @@ function CardInnovator(props: CardInnovatorProps) {
       <CardContent>
         <Logo src={logo || defaultLogo} alt={logo} />
         <ContBadge>
-          {" "}
-          <img src={badge1} alt="badge" />{" "}
+          {ranking == 1 && <img src={badge1} alt="badge" />}
+          {ranking == 2 && <img src={badge2} alt="badge" />}
+          {ranking == 3 && <img src={badge3} alt="badge" />}
         </ContBadge>
         <Title>{namaInovator}</Title>
         <Flex direction="column" marginTop="auto">
