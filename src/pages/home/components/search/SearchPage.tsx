@@ -1,139 +1,179 @@
-import React, { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Box,
-  Heading,
-  Text,
-  VStack,
-  Flex,
-  Image,
-  Badge,
-  HStack,
-} from "@chakra-ui/react";
-import Loading from "Components/loading";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { firestore } from "../../../../firebase/clientApp"; 
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, Location } from "react-router-dom";
+import { firestore } from "../../../../firebase/clientApp";
+import { collection, getDocs } from "firebase/firestore";
+import CardInnovation from "Components/card/innovation";
 import { paths } from "Consts/path";
+import Container from "Components/container";
+import TopBar from "Components/topBar";
+import { Box, Heading, Text, Flex } from "@chakra-ui/react";
+import SearchBarLink from "./SearchBarLink";
+import { debounce } from "lodash";
 
-interface SearchResult {
+interface InovationData {
   id: string;
-  name: string;
-  description: string;
-  category: string;
-  innovator: string;
-  imageUrl: string;
-  appliedInVillages: number;
+  namaInovasi?: string;
+  kategori?: string;
+  deskripsi?: string;
+  tahunDibuat?: string;
+  images?: string[];
+  innovatorLogo?: string;
+  innovatorName?: string;
+  manfaat?: { deskripsi: string }[];
+  status?: string;
+  [key: string]: any;
 }
 
-const SearchPage = () => {
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
+function SearchPage() {
+  const query = useQuery();
+  const initialSearchTerm = query.get("q")?.toLowerCase().trim() || "";
+  const [results, setResults] = useState<InovationData[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const location = useLocation();
+  const [searchValue, setSearchValue] = useState(initialSearchTerm);
+  const [role] = useState("user"); // Set default role or fetch from authentication
   const navigate = useNavigate();
 
-  const queryParam = new URLSearchParams(location.search).get("q") || "";
-  const category = new URLSearchParams(location.search).get("category") || "";
+  // Debounced fetch and filter function
+  const fetchData = debounce(async (keyword: string) => {
+    setLoading(true);
+    setResults([]);
 
+    try {
+      const collectionRef = collection(firestore, "innovations");
+      const snapshot = await getDocs(collectionRef);
+
+      console.log("Search keyword:", keyword);
+      console.log("Fetched documents:", snapshot.docs.length);
+
+      const filtered = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() } as InovationData))
+        .filter((item) => {
+          const namaInovasi = (item.namaInovasi || "").toLowerCase().trim();
+          const isVerified = item.status === "Terverifikasi";
+          console.log(
+            `Item: ${namaInovasi}, Status: ${item.status || "missing"}, Matches: ${namaInovasi.includes(keyword)}, Verified: ${isVerified}`
+          );
+          if (!isVerified) return false;
+          if (!namaInovasi) return false;
+          return keyword ? namaInovasi.includes(keyword) : isVerified;
+        })
+        .sort((a, b) => (a.namaInovasi || "").localeCompare(b.namaInovasi || ""));
+
+      console.log(
+        "Filtered and sorted results:",
+        filtered.map((item) => ({ id: item.id, namaInovasi: item.namaInovasi, status: item.status }))
+      );
+      setResults(filtered);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+
+    setLoading(false);
+  }, 300);
+
+  // Run debounced fetch when searchValue changes
   useEffect(() => {
-    const fetchInnovations = async () => {
-      if (queryParam || category) {
-        setLoading(true);
-        setError(null);
-        try {
-          const innovationsRef = collection(firestore, "innovations");
-          let q = query(innovationsRef, where("status", "==", "Terverifikasi"));
+    fetchData(searchValue.toLowerCase().trim());
+    return () => fetchData.cancel();
+  }, [searchValue]);
 
-          if (category) {
-            q = query(q, where("kategori", "==", category));
-          }
-          if (queryParam) {
-            q = query(
-              q,
-              where("namaInovasi", ">=", queryParam),
-              where("namaInovasi", "<=", queryParam + "\uf8ff")
-            );
-          }
+  // Reset scroll position on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }
+  , []);
 
-          const snapshot = await getDocs(q);
-          const results = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            name: doc.data().namaInovasi,
-            description: doc.data().deskripsi,
-            category: doc.data().kategori,
-            innovator: doc.data().namaInnovator,
-            imageUrl: doc.data().images?.[0] || "",
-            appliedInVillages: doc.data().inputDesaMenerapkan?.split(",").length || 0,
-          }));
-          setSearchResults(results);
-          setLoading(false);
-        } catch (error) {
-          console.error("Fetch error:", error);
-          setError("Gagal memuat hasil pencarian. Silakan coba lagi.");
-          setLoading(false);
-        }
+  const handleCardClick = (id: string) => {
+    // destinasi ke halaman detail inovasi namun pastikan dulu usernya sebagai inovator atau bukan kalau inovator dia punya akses edit kalau bukan inovator dia tidak punya akses edit
+    const destination = paths.INNOVATION_DETAIL.replace(":id", id);
+    // logic user role
+    if (role === "innovator") {
+      // check if the user is the owner of the innovation
+      const isOwner = results.some((item) => item.id === id && item.status === "Terverifikasi");
+      if (isOwner) {
+        navigate(destination);
+      } else {
+        navigate(destination);
       }
-    };
+    }
+    // if the user is not an innovator, just navigate to the detail page
+    else {
+      navigate(destination);
+    }
+    navigate(destination);
+  };
 
-    fetchInnovations();
-  }, [queryParam, category]);
-
-  const handleResultClick = (id: string) => {
-    navigate(paths.DETAIL_INNOVATION_PAGE.replace(":id", id));
+  const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setSearchValue(e.currentTarget.value.trim());
+      navigate(`/search?q=${encodeURIComponent(e.currentTarget.value.trim())}`);
+    }
   };
 
   return (
-    <Box p={4}>
-      <Heading size="md" mb={4}>
-        Menampilkan {searchResults.length} hasil pencarian untuk "{queryParam || category}"
-      </Heading>
-      {loading ? (
-        <Loading />
-      ) : error ? (
-        <Text color="red.500">{error}</Text>
-      ) : searchResults.length > 0 ? (
-        <VStack spacing={4} align="stretch">
-          {searchResults.map((item) => (
-            <Box
-              key={item.id}
-              p={4}
-              borderWidth="1px"
-              borderRadius="md"
-              onClick={() => handleResultClick(item.id)}
-              cursor="pointer"
-              _hover={{ bg: "gray.50" }}
-            >
-              <Flex>
-                <Image
-                  src={item.imageUrl}
-                  alt={item.name}
-                  boxSize="100px"
-                  objectFit="cover"
-                  borderRadius="md"
-                  mr={4}
-                  fallbackSrc="https://via.placeholder.com/100"
-                />
-                <VStack align="start" spacing={1}>
-                  <Heading size="sm">{item.name}</Heading>
-                  <Text fontSize="sm" color="gray.600">
-                    {item.description}
-                  </Text>
-                  <HStack>
-                    <Badge colorScheme="green">{item.category}</Badge>
-                    <Text fontSize="sm">
-                      Diterapkan di {item.appliedInVillages} desa
-                    </Text>
-                  </HStack>
-                </VStack>
-              </Flex>
-            </Box>
-          ))}
-        </VStack>
-      ) : (
-        <Text>Tidak ada hasil ditemukan untuk "{queryParam || category}"</Text>
-      )}
-    </Box>
+    <Container page>
+      <TopBar
+        title="Hasil Pencarian"
+        onBack={() => navigate(paths.LANDING_PAGE)}
+      />
+      <Box px={5} py={8} >
+          <SearchBarLink
+            key={(useLocation() as Location & { key: string }).key}
+            placeholderText="Cari Inovasi di sini..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onKeyDown={handleSearchSubmit}
+            width="100%" 
+            maxW="100%"
+          />
+
+        <Flex align="center" mb={2} mt={6}>
+          <Heading fontSize="15px" fontWeight="800" color="gray.700">
+            Hasil Pencarian: "{searchValue || 'Semua Inovasi'}"
+          </Heading>
+        </Flex>
+
+        {loading ? (
+          <Text color="gray.500" fontSize="12px">
+            Sedang mencari...
+          </Text>
+        ) : results.length === 0 ? (
+          <Text fontSize="12px" color="gray.500">
+            Tidak ada inovasi yang ditemukan.
+          </Text>
+        ) : (
+          <Box
+            display="grid"
+            gridTemplateColumns={{
+              base: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(2, 1fr)",
+            }}
+            gap={4}
+            mt={3}
+          >
+            {results.map((item) => (
+              <CardInnovation
+                key={item.id}
+                images={item.images}
+                namaInovasi={item.namaInovasi}
+                kategori={item.kategori}
+                deskripsi={item.deskripsi}
+                tahunDibuat={item.tahunDibuat}
+                innovatorLogo={item.innovatorLogo}
+                innovatorName={item.innovatorName}
+                onClick={() => handleCardClick(item.id)}
+              />
+            ))}
+          </Box>
+        )}
+      </Box>
+    </Container>
   );
-};
+}
 
 export default SearchPage;

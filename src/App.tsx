@@ -43,7 +43,7 @@ import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
 import SearchPage from "./pages/home/components/search/SearchPage";
-import { Bounce, ToastContainer } from "react-toastify";
+import { Bounce, ToastContainer } from "react-toastify"; 
 
 const queryClient = new QueryClient();
 
@@ -228,6 +228,10 @@ const routes = [
   {
     path: paths.VILLAGE_RECOMENDATION,
     element: <RekomendasiInovasi />,
+  },
+  {
+    path: '/search',
+    element: <SearchPage />,
   },
 ];
 

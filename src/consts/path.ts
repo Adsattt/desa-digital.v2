@@ -42,6 +42,7 @@ export const paths = {
   // ! innovation
   INNOVATION_PAGE: "/innovation",
   ADD_INNOVATION: "/innovation/add",
+  INNOVATION_DETAIL: "/innovation/detail/:id",
   INNOVATION_CATEGORY_PAGE: "/innovation/:category",
   DETAIL_INNOVATION_PAGE: "/innovation/detail/:id",
   EDIT_INNOVATION_PAGE: "/innovation/edit/:id",

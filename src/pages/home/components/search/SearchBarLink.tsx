@@ -1,65 +1,37 @@
 import { SearchIcon } from "@chakra-ui/icons";
-import {
-  Flex,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  InputRightElement,
-  IconButton,
-  Select,
-} from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import { Flex, Input, InputGroup, InputLeftElement } from "@chakra-ui/react";
+import React from "react";
 
 interface SearchBarLinkProps {
-  placeholderText?: string;
+  placeholderText: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  width?: string | number;
+  maxW?: string | number;
 }
 
-const SearchBarLink: React.FC<SearchBarLinkProps> = ({ placeholderText }) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [category, setCategory] = useState("");
-  const navigate = useNavigate();
-
-  const categories = [
-    { value: "", label: "Semua Kategori" },
-    { value: "Pertanian Cerdas", label: "Pertanian Cerdas" },
-    { value: "Pemasaran Agri-Food dan E-Commerce", label: "Pemasaran Agri-Food dan E-Commerce" },
-    { value: "E-Government", label: "E-Government" },
-    { value: "Sistem Informasi", label: "Sistem Informasi" },
-    { value: "Infrastruktur Lokal", label: "Infrastruktur Lokal" },
-    { value: "Lintas Semua", label: "Lintas Semua" },
-  ];
-
-  const handleSearch = () => {
-    if (searchQuery.trim() || category) {
-      const queryParams = new URLSearchParams();
-      if (searchQuery) queryParams.set("q", searchQuery);
-      if (category) queryParams.set("category", category);
-      console.log("Navigating to:", `/search?${queryParams.toString()}`); // Debug log
-      navigate(`/search?${queryParams.toString()}`);
-    } else {
-      console.log("No search query or category provided");
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
+const SearchBarLink: React.FC<SearchBarLinkProps> = ({
+  placeholderText,
+  value,
+  onChange,
+  onKeyDown,
+  width = "100%",
+  maxW = "100%",
+}) => {
   return (
-    <Flex justify="center" maxW="360px" width="100%" direction="column" gap={2}>
-      <InputGroup>
+    <Flex justify="center" width={width} maxW={maxW}>
+      <InputGroup width="90%" mt={-3} mb={-3}>
         <InputLeftElement pointerEvents="none">
           <SearchIcon color="gray.300" />
         </InputLeftElement>
         <Input
+          bg="white"
           type="text"
           placeholder={placeholderText}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={handleKeyPress}
+          value={value}
+          onChange={onChange}
+          onKeyDown={onKeyDown}
           fontSize="10pt"
           _placeholder={{ color: "#9CA3AF" }}
           _hover={{
@@ -73,35 +45,8 @@ const SearchBarLink: React.FC<SearchBarLinkProps> = ({ placeholderText }) => {
             borderColor: "#9CA3AF",
           }}
           borderRadius={100}
-          maxW="329px"
-          width="100%"
         />
-        <InputRightElement>
-          <IconButton
-            aria-label="Search"
-            icon={<SearchIcon />}
-            size="sm"
-            onClick={handleSearch}
-            variant="ghost"
-          />
-        </InputRightElement>
       </InputGroup>
-      <Select
-        placeholder="Kategori Inovasi"
-        value={category}
-        onChange={(e) => setCategory(e.target.value)}
-        maxW="329px"
-        width="100%"
-        fontSize="10pt"
-        borderRadius={100}
-        color={category ? "black" : "#9CA3AF"}
-      >
-        {categories.map((cat) => (
-          <option key={cat.value} value={cat.value}>
-            {cat.label}
-          </option>
-        ))}
-      </Select>
     </Flex>
   );
 };
