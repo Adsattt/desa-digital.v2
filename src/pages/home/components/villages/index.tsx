@@ -1,5 +1,4 @@
 import { Box } from "@chakra-ui/react";
-import CardInnovator from "Components/card/innovator"
 import { paths } from "Consts/path";
 import React, { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -10,7 +9,7 @@ import { auth, firestore } from "../../../../firebase/clientApp";
 import {Title, Horizontal, CardContainer} from "./_villagesStyle";
 import defaultHeader from "@public/images/default-header.svg";
 import defaultLogo from "@public/images/default-logo.svg";
-import { collection, DocumentData, getDocs } from "firebase/firestore";
+import {collection, DocumentData, getDocs } from "firebase/firestore";
 import CardVillage from "Components/card/village";
 
 interface Location {
@@ -18,7 +17,7 @@ interface Location {
   name: string;
 }
 
-const Village: React.FC = () => {
+  const Village: React.FC = () => {
   const navigate = useNavigate();
   const villagesRef = collection(firestore, "villages");
   const [villages, setVillages] = useState<DocumentData[]>([]);
@@ -49,21 +48,31 @@ return (
     <CardContainer>
       <Horizontal>
       {isFetched &&
-            villages?.map((item: any, idx: number) => (
-              <CardVillage
-                key={idx}
-                namaDesa={item.namaDesa}
-                logo={item.logo || defaultLogo} 
-                header={item.header || defaultHeader}
-                kabupatenKota={item.kabupatenKota}
-                provinsi={item.provinsi}
-                id={item.userId}
-                onClick={() => {
-                  const path = generatePath(paths.DETAIL_VILLAGE_PAGE, {
-                    id: item.userId,
-                  });
-                  navigate(path);
-                }}
+      [...villages]
+        .sort((a, b) => {
+          if (b.jumlahInovasiDiterapkan !== a.jumlahInovasiDiterapkan) {
+            return b.jumlahInovasiDiterapkan - a.jumlahInovasiDiterapkan; 
+          }
+          return a.namaDesa.localeCompare(b.namaDesa); 
+        })
+        .slice(0, 5)
+        .map((item: any, idx: number) => (
+          <CardVillage isHome={true}
+            key={idx}
+            namaDesa={item.namaDesa}
+            logo={item.logo || defaultLogo}
+            header={item.header || defaultHeader}
+            kabupatenKota={item.kabupatenKota}
+            provinsi={item.provinsi}
+            jumlahInovasiDiterapkan={item.jumlahInovasiDiterapkan}
+            ranking={idx + 1}
+            id={item.userId}
+            onClick={() => {
+              const path = generatePath(paths.DETAIL_VILLAGE_PAGE, {
+                id: item.userId,
+              });
+              navigate(path);
+            }}
           />
         ))}
       </Horizontal>

@@ -937,7 +937,6 @@ const AddInnovation: React.FC = () => {
                       value={textInputsValue.priceMax}
                       onChange={onTextChange}
                       disabled={!isEditable}
-                      required
                     />
                   </InputGroup>
                 </Flex>
