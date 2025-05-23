@@ -8,7 +8,6 @@ import {
   useToast,
 } from "@chakra-ui/react";
 import { NavbarButton } from "../../village/profile/_profileStyle";
-import Container from "Components/container";
 import LocationSelector from "Components/form/LocationSellector";
 import MultiSellect from "Components/form/MultiSellect";
 import TopBar from "Components/topBar";
