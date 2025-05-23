@@ -109,9 +109,9 @@ const InnovatorForm: React.FC = () => {
 
 useEffect(() => {
   if (confirmedSubmit) {
-    setIsFormLocked(true);        // ⏱️ langsung kunci form
-    setIsModal2Open(true);        // tampilkan modal sukses          // kirim data
-    setConfirmedSubmit(false);    // reset flag
+    setIsFormLocked(true);        
+    setIsModal2Open(true);        
+    setConfirmedSubmit(false);    
   }
 }, [confirmedSubmit]);
 
@@ -119,14 +119,13 @@ useEffect(() => {
   const isFormValid = () => {
     return (
       selectedCategory !== null &&
-      selectedLogo !== null &&
+      selectedLogo.trim() !== "" &&
+      selectedHeader.trim() !== "" &&
       textInputsValue.name.trim() !== "" &&
       textInputsValue.description.trim() !== "" &&
       textInputsValue.whatsapp.trim() !== ""
     );
   };
-  
-  
 
   const categoryOptions = categories.map((category) => ({
     label: category, // Label yang ditampilkan pada dropdown
@@ -448,6 +447,7 @@ useEffect(() => {
         onBack={() => navigate(-1)} />
       <Box p="0 16px">
       <form
+      id="InnovatorForm"
           onSubmit={(e) => {
             e.preventDefault(); 
             if (isFormValid()) {
@@ -456,7 +456,7 @@ useEffect(() => {
             }
           }}
         >
-          <Flex direction="column" marginTop="24px">
+          <Flex direction="column" marginTop="50px">
             <Alert
               status={alertStatus}
               fontSize={12}
@@ -466,7 +466,7 @@ useEffect(() => {
             >
               {alertMessage}
             </Alert>
-            <Stack spacing="12px" width="100%">
+            <Stack spacing="8px" width="100%">
               <FormSection
                 title="Nama Inovator"
                 name="name"
@@ -492,34 +492,6 @@ useEffect(() => {
                 isSearchable
                 isDisabled={!isEditable || isFormLocked}
               />
-              
-              {/* <Text fontWeight="400" fontSize="14px">
-                Model Bisnis Digital <span style={{ color: "red" }}>*</span>
-              </Text>
-              <ChakraSelect
-                placeholder="Pilih Model Bisnis"
-                name="modelBusiness"
-                fontSize="10pt"
-                variant="outline"
-                cursor="pointer"
-                color={"black"}
-                disabled={!isEditable}
-                _focus={{
-                  outline: "none",
-                  bg: "white",
-                  border: "none",
-                  borderColor: "black",
-                }}
-                _placeholder={{ color: "gray.500" }}
-                value={modelBusiness}
-                onChange={onSelectModelBusiness}
-              >
-                {businessModels.map((model) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
-              </ChakraSelect> */}
 
               <FormSection
                 isTextArea

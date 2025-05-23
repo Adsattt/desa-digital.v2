@@ -61,6 +61,9 @@ const AddVillage: React.FC = () => {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [isEditable, setIsEditable] = useState(true);
+  const [isFormLocked, setIsFormLocked] = useState(false);
+  const [confirmedSubmit, setConfirmedSubmit] = useState(false);
+  const [submitEvent, setSubmitEvent] = useState<React.FormEvent<HTMLFormElement> | null>(null);
   const toast = useToast();
   const [textInputValue, setTextInputValue] = useState({
     name: "",
@@ -93,7 +96,7 @@ const AddVillage: React.FC = () => {
   const [selectedDistrict, setSelectedDistrict] = useState<Option | null>(null);
   const [selectedVillage, setSelectedVillage] = useState<Option | null>(null);
   
-  type DropdownValue = {
+   type DropdownValue = {
     kondisijalan: string | null;
     jaringan: string | null;
     listrik: string | null;
@@ -131,10 +134,21 @@ const AddVillage: React.FC = () => {
   };
 
   const handleModal1Yes = () => {
-    setIsModal2Open(true);
-    setIsModal1Open(false); // Tutup modal pertama
-    // Di sini tidak membuka modal kedua
-  };
+  setIsModal1Open(false); //tutup modal pertama
+  setIsModal2Open(true);
+  setConfirmedSubmit(true);
+  if (submitEvent) {
+    onSubmitForm(submitEvent); // Kirim data form
+  }
+};
+
+useEffect(() => {
+  if (confirmedSubmit) {
+    setIsFormLocked(true);        
+    setIsModal2Open(true);        
+    setConfirmedSubmit(false);    
+  }
+}, [confirmedSubmit]);
 
   const isFormValid = () => {
     return (
@@ -144,22 +158,17 @@ const AddVillage: React.FC = () => {
       selectedDistrict !== null &&
       selectedVillage !== null &&
       selectedPotensi !== null &&
-      selectedLogo !== "" &&
+      selectedLogo.trim() !== "" &&
+      selectedHeader.trim() !== "" &&
       textInputValue.geografis.trim() !== "" &&
-      textInputValue.infrastruktur.trim() !== "" &&
-      textInputValue.kesiapan.trim() !== "" &&
-      textInputValue.teknologi.trim() !== "" &&
-      textInputValue.pelayanan.trim() !== "" &&
       textInputValue.sosial.trim() !== "" &&
       textInputValue.resource.trim() !== "" &&
       textInputValue.whatsapp.trim() !== "" &&
-      textInputValue.instagram.trim() !== "" &&
-      textInputValue.website.trim() !== "" &&
       dropdownValue.kondisijalan !== null &&
       dropdownValue.jaringan !== null &&
       dropdownValue.listrik !== null &&
       dropdownValue.teknologi !== null &&
-      dropdownValue.kemampuan !== null
+      dropdownValue.kemampuan !== null 
     );
   };
 
@@ -686,7 +695,13 @@ const AddVillage: React.FC = () => {
       <TopBar title="Registrasi Profil Desa" onBack={() => navigate(-1)} />
       <Box p="48px 16px 20px 16px">
         <form 
-          onSubmit={onSubmitForm}
+           onSubmit={(e) => {
+            e.preventDefault(); 
+            if (isFormValid()) {
+              setSubmitEvent(e); // Simpan event
+              setIsModal1Open(true); // Tampilkan modal
+            }
+          }}
           onKeyDown={handleKeyDown}
           id="VillageForm">
           <Flex direction="column" marginTop="24px">
@@ -706,7 +721,8 @@ const AddVillage: React.FC = () => {
                 placeholder="Nama Desa"
                 value={textInputValue.name}
                 onChange={onTextChange}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
+                isRequired
               />
               <LocationSelector
                 label="Provinsi"
@@ -715,7 +731,7 @@ const AddVillage: React.FC = () => {
                 value={selectedProvince}
                 onChange={handleProvinceChange}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
 
               <LocationSelector
@@ -726,7 +742,7 @@ const AddVillage: React.FC = () => {
                 onChange={handleRegencyChange}
                 isDisabled={!selectedProvince}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
               <LocationSelector
                 label="Kecamatan"
@@ -736,7 +752,7 @@ const AddVillage: React.FC = () => {
                 onChange={handleDistrictChange}
                 isDisabled={!selectedRegency}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
               <LocationSelector
                 label="Desa/Kelurahan"
@@ -746,7 +762,7 @@ const AddVillage: React.FC = () => {
                 onChange={handleVillageChange}
                 isDisabled={!selectedDistrict}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
 
               <Box>
@@ -761,13 +777,13 @@ const AddVillage: React.FC = () => {
                   setSelectedLogo={setSelectedLogo}
                   selectFileRef={selectedLogoRef}
                   onSelectLogo={onSelectLogo}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
                 />
               </Box>
 
               <Box>
                 <Text fontWeight="400" fontSize="14px">
-                  Header Desa
+                  Logo Desa <span style={{ color: "red" }}>*</span>
                 </Text>
                 <Text fontWeight="400" fontSize="10px" mb="6px" color="#9CA3AF">
                   Maks 1 foto. format: png, jpg.
@@ -777,7 +793,8 @@ const AddVillage: React.FC = () => {
                   setSelectedHeader={setSelectedHeader}
                   selectFileRef={selectedHeaderRef}
                   onSelectHeader={onSelectHeader}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
+                  
                 />
               </Box>
 
@@ -808,6 +825,7 @@ const AddVillage: React.FC = () => {
                 isTextArea
                 wordCount={currentWordCount(textInputValue.description)}
                 maxWords={100}
+                isRequired
               />
 
               <MultiSellect
@@ -834,6 +852,7 @@ const AddVillage: React.FC = () => {
                   onChange={onTextChange}
                   wordCount={currentWordCount(textInputValue.geografis)}
                   maxWords={30}
+                  isRequired  
                 />
               </Box>
               
@@ -843,7 +862,7 @@ const AddVillage: React.FC = () => {
               <LocationSelector
                 label="Kondisi Jalan"
                 placeholder="Pilih"
-                value={
+                 value={
                   dropdownValue.kondisijalan
                     ? { value: dropdownValue.kondisijalan, label: dropdownValue.kondisijalan }
                     : null
@@ -1005,6 +1024,7 @@ const AddVillage: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={currentWordCount(textInputValue.sosial)}
                 maxWords={30}
+                isRequired
               />
 
               <FormSection
@@ -1016,6 +1036,7 @@ const AddVillage: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={currentWordCount(textInputValue.resource)}
                 maxWords={30}
+                isRequired
               />
 
               <Text fontWeight="700" fontSize="16px">
@@ -1029,6 +1050,7 @@ const AddVillage: React.FC = () => {
                 value={textInputValue.whatsapp}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired
               />
 
               <FormSection
