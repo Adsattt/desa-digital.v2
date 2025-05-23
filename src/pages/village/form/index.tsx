@@ -418,7 +418,6 @@ useEffect(() => {
           );
         }
         const existingImages = existingData?.images || [];
-
         const imagesToDelete = existingImages.filter(
           (img: string) => !selectedFiles.includes(img)
         );
