@@ -199,6 +199,19 @@ const UserMenu: React.FC<UserMenuProps> = ({ user }) => {
               <MenuItem onClick={handleProfileClick}>
                 {profileExists ? "Profile" : "Isi Profile"}
               </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  if (userRole === "innovator") {
+                    navigate(paths.REPORT_INNOVATOR);
+                  } else if (userRole === "village") {
+                    navigate(paths.REPORT_VILLAGE);
+                  } else if (userRole === "admin") {
+                    navigate(paths.REPORT_ADMIN);
+                  }}
+                }
+              >
+                Report
+              </MenuItem>
               <MenuItem onClick={handleLogout}>Logout</MenuItem>
               <MenuItem onClick={() => navigate(paths.BANTUAN_FAQ_PAGE)}>Bantuan dan FAQ</MenuItem>
             </>
