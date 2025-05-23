@@ -213,8 +213,10 @@ const AddInnovation: React.FC = () => {
   };
 
   const getVillagesWordCount = () => {
-    return textInputsValue.villages.split(/\s+/).filter((word) => word !== "")
-      .length;
+    return textInputsValue.villages
+    .toString()
+    .split(/\s+/)
+    .filter((word) => word !== "").length;
   };
 
   const onAddRequirement = () => {
@@ -935,7 +937,6 @@ const AddInnovation: React.FC = () => {
                       value={textInputsValue.priceMax}
                       onChange={onTextChange}
                       disabled={!isEditable}
-                      required
                     />
                   </InputGroup>
                 </Flex>

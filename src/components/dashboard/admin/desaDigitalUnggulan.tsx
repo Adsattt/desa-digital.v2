@@ -63,7 +63,7 @@ const DesaDigitalUnggulan: React.FC = () => {
                 const villages = snapshot.docs
                     .map((doc) => ({
                         name: doc.data().namaDesa as string,
-                        value: doc.data().jumlahInovasi as number || 0,
+                        value: doc.data().jumlahInovasiDiterapkan as number || 0,
                     }))
                     .sort((a, b) => b.value - a.value)
                     .slice(0, 5); // Top 5

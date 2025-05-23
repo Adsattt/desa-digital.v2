@@ -21,6 +21,7 @@ import { toast } from "react-toastify";
 import { useUser } from "src/contexts/UserContext";
 import Hero from "./components/hero";
 import Innovator from "./components/innovator";
+import Villages from "./components/villages";
 import Menu from "./components/menu";
 import { useEffect, useState } from "react";
 
@@ -96,6 +97,9 @@ const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
         <BestBanner />
         <Box mt="120px">
           <Innovator />
+        </Box>
+        <Box mt="-10px">
+          <Villages />
         </Box>
       </Stack>
       {role === "innovator" && (

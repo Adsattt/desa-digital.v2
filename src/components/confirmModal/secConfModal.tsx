@@ -16,13 +16,19 @@ interface ClaimModalProps {
   isOpen: boolean;
   onClose: () => void;
   modalBody2: string;    // Prop untuk konten modal
+  onDone?: () => void;
 }
 
 const ConfModal: React.FC<ClaimModalProps> = ({
   isOpen,
   onClose,
   modalBody2,
+  onDone,
 }) => {
+  const handleClose = () => {
+    if (onDone) onDone();  
+    onClose();
+  };
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="xs" isCentered>
       <ModalOverlay />
@@ -34,7 +40,7 @@ const ConfModal: React.FC<ClaimModalProps> = ({
           </Flex>
         </ModalBody>
         <ModalFooter paddingTop={2} justifyContent={'center'} >
-          <Button borderRadius={4} onClick={onClose} size={'xs'} paddingInline={6} fontWeight={500} fontSize="10px">Oke</Button>
+          <Button borderRadius={4} onClick={handleClose} size={'xs'} paddingInline={6} fontWeight={500} fontSize="10px">Oke</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
