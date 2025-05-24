@@ -28,6 +28,8 @@ function TopBar(props: TopBarProps) {
   const [village, setVillage] = useState(false);
   const { isVillageVerified } = useUser();
   const [claimStatus, setClaimStatus] = useState("");
+  const [claimDocId, setClaimDocId] = useState<string | null>(null);
+  const [previousFormData, setPreviousFormData] = useState<any>(null);
 
   const allowedPaths = [paths.LANDING_PAGE, paths.ADMIN_PAGE];
   const isUserMenuVisible = allowedPaths.includes(location.pathname);
@@ -57,16 +59,19 @@ function TopBar(props: TopBarProps) {
       getDocs(q).then((querySnapshot) => {
         if (querySnapshot.empty) {
           setClaimStatus("");
+          setClaimDocId(null);
         } else {
           querySnapshot.forEach((doc) => {
             const data = doc.data();
             setClaimStatus(data.status);
+            setClaimDocId(doc.id);
+            setPreviousFormData(data);
           });
         }
-      }
-      );
+      });
     }
   }, [user, id]);
+
 
    const { label, bg, color, leftIcon, isDisabled, hover } = (() => {
      switch (claimStatus) {
@@ -120,7 +125,15 @@ function TopBar(props: TopBarProps) {
 
 
   const handleClick = () => {
-    if (isDisabled) return;
+    if (isDisabled && (claimStatus === "Terverifikasi" || claimStatus === "Menunggu")) {
+      // Arahkan ke halaman detail klaim jika sudah klaim atau dalam proses
+      navigate(`/village/klaimInovasi/detail/${claimDocId}`);
+      return;
+    }
+    if (claimStatus === "Ditolak") {
+      navigate("/village/klaimInovasi", { state: { id, previousFormData } });
+      return;
+    }
     if (!isVillageVerified) {
       toast.warning(
         "Akun anda belum terdaftar atau terverifikaasi sebagai desa digital",

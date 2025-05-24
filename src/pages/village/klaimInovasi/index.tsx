@@ -77,6 +77,7 @@ const KlaimInovasi: React.FC = () => {
   } = useDisclosure();
 
   const location = useLocation();
+  const claimDataPrefill = location.state?.claimData;
   const inovasiId = location.state?.id;
   // console.log("Inovasi ID:", inovasiId);
 
@@ -339,9 +340,24 @@ const KlaimInovasi: React.FC = () => {
           const claimRef = doc(firestore, "claimInnovations", id);
           const claimSnap = await getDoc(claimRef);
           if (claimSnap.exists()) {
-            const claimData = claimSnap.data();
-            console.log("Claim data:", JSON.stringify(claimData, null, 2));
-            setClaimData(claimData);
+            const data = claimSnap.data();
+            setClaimData(data);
+
+            // Logika untuk redirect jika status ditolak
+            if (data.status === "Ditolak") {
+              toast.info("Status klaim ditolak. Silakan perbaiki dan ajukan kembali.", {
+                position: "top-center",
+                autoClose: 3000,
+              });
+              // Redirect ke halaman form klaim dengan data sebelumnya
+              navigate("/village/klaim", {
+                state: {
+                  id: data.inovasiId, // ID inovasi yang akan diisi ulang
+                  claimData: data,     // Data lama untuk prefill form
+                },
+              });
+            }
+            
             setEditable(claimData.status === undefined || claimData.status === "");
             setSelectedCheckboxes(claimData.jenisDokumen || []);
             setSelectedFiles(claimData.images || []);
@@ -359,6 +375,17 @@ const KlaimInovasi: React.FC = () => {
       fetchClaim();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (claimDataPrefill) {
+      setClaimData(claimDataPrefill);
+      setEditable(true);
+      setSelectedCheckboxes(claimDataPrefill.jenisDokumen || []);
+      setSelectedFiles(claimDataPrefill.images || []);
+      setSelectedVid(claimDataPrefill.video || "");
+      setSelectedDoc(claimDataPrefill.dokumen || []);
+    }
+  }, [claimDataPrefill]);
 
   // console.log("Claim Data:", JSON.stringify(claimData, null, 2));
 
