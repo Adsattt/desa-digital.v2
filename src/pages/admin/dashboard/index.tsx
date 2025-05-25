@@ -27,6 +27,7 @@ import InovatorUnggulan from "Components/dashboard/admin/inovatorUnggulan";
 import InovasiUnggulan from "Components/dashboard/admin/inovasiUnggulan";
 import DownloadReport from "Components/dashboard/admin/downloadReport";
 import Leaderboard from "Components/dashboard/admin/merger";
+import Peta from "Components/dashboard/admin/peta";
 
 const DashboardAdmin: React.FC = () => {
     const navigate = useNavigate();
@@ -55,7 +56,9 @@ const DashboardAdmin: React.FC = () => {
             {/* <DesaDigitalUnggulan/>
             <InovatorUnggulan/>
             <InovasiUnggulan/> */}
-            <Box pb={10} />
+            <Box pb={5} />
+            <Peta/>
+            <Box pb={50} />
         </Box>
     );
 };

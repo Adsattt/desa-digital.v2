@@ -33,7 +33,7 @@ const DashboardAdminDesa: React.FC = () => {
             <Stack gap="16px" paddingTop="55px" />
 
             <ScoreCardDashboardDesa/>
-            <SebaranProvinsiDashboardDesa/>
+            {/* <SebaranProvinsiDashboardDesa/> dipindah ke dashboard depan */}
             <SebaranKlasifikasiDashboardDesa/>
             <SebaranPotensiDesa/>
             <SebaranKondisiDesa/>

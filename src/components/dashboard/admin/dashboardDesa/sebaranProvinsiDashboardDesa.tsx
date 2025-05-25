@@ -88,10 +88,10 @@ const SebaranDesaDashboard: React.FC = () => {
                     lon: parseFloat(data[0].lon),
                 };
             } else {
-                console.warn(`⚠️ Koordinat tidak ditemukan untuk: ${query}`);
+                console.warn(`Koordinat tidak ditemukan untuk: ${query}`);
             }
         } catch (error) {
-            console.error("❌ Gagal ambil koordinat:", error);
+            console.error("Gagal ambil koordinat:", error);
             if (retryCount > 0) {
                 console.log(`🔄 Retry untuk: ${query}, sisa percobaan: ${retryCount}`);
                 await delay(2000);  // Tambahkan delay 2 detik sebelum mencoba lagi
@@ -107,7 +107,7 @@ const SebaranDesaDashboard: React.FC = () => {
 
         for (let i = 0; i < villages.length; i += batchSize) {
             const batch = villages.slice(i, i + batchSize);
-            console.log(`🗺️ Memproses batch ${Math.floor(i / batchSize) + 1}...`);
+            console.log(`Memproses batch ${Math.floor(i / batchSize) + 1}...`);
 
             // Process each village in the batch
             const results = await Promise.all(batch.map((village) => getCoordinatesByVillage(village)));
@@ -209,22 +209,6 @@ const SebaranDesaDashboard: React.FC = () => {
                     Sebaran Desa Digital
                 </Text>
                 <Flex gap={2}>
-                    {/* <Button
-                        size="sm"
-                        bg="white"
-                        boxShadow="md"
-                        border="2px solid"
-                        borderColor="gray.200"
-                        px={2}
-                        py={2}
-                        display="flex"
-                        alignItems="center"
-                        _hover={{ bg: "gray.100" }}
-                        cursor="pointer"
-                        onClick={handleDownloadExcel}
-                    >
-                        <DownloadIcon boxSize={3} color="black" />
-                    </Button> */}
                     <Button
                         size="sm"
                         bg="white"
