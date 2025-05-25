@@ -6,6 +6,7 @@ export const Container = styled.div<{ isHome?: boolean }>`
   border-radius: 8px;
   display: flex;
   width: ${(props) => (props.isHome ? '36%' : '100%')};
+  flex-shrink: 0;
   height: 197px;
   flex-direction: column;
   align-items: flex-start;

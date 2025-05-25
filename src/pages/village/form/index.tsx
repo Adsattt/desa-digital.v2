@@ -781,7 +781,7 @@ useEffect(() => {
 
               <Box>
                 <Text fontWeight="400" fontSize="14px">
-                  Logo Desa <span style={{ color: "red" }}>*</span>
+                  Header Desa <span style={{ color: "red" }}>*</span>
                 </Text>
                 <Text fontWeight="400" fontSize="10px" mb="6px" color="#9CA3AF">
                   Maks 1 foto. format: png, jpg.
