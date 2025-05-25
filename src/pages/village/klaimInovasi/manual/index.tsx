@@ -46,7 +46,6 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useUser } from "src/contexts/UserContext";
-import RecommendationDrawer from "Components/drawer/RecommendationDrawer";
 
 const KlaimInovasiManual: React.FC = () => {
   const navigate = useNavigate();
@@ -57,9 +56,17 @@ const KlaimInovasiManual: React.FC = () => {
   const [selectedDoc, setSelectedDoc] = useState<string[]>([]);
   const [selectedVid, setSelectedVid] = useState<string>("");
   const [selectedCheckboxes, setSelectedCheckboxes] = useState<string[]>([]);
+  
+  // Separate state for innovation info images
+  const [logoFiles, setLogoFiles] = useState<string[]>([]);
+  const [innovationImages, setInnovationImages] = useState<string[]>([]);
+  
   const selectedFileRef = useRef<HTMLInputElement>(null);
   const selectedVidRef = useRef<HTMLInputElement>(null);
   const selectedDocRef = useRef<HTMLInputElement>(null);
+  const logoFileRef = useRef<HTMLInputElement>(null);
+  const innovationImageRef = useRef<HTMLInputElement>(null);
+  
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [error, setError] = useState("");
@@ -71,21 +78,20 @@ const KlaimInovasiManual: React.FC = () => {
   const [modalInput, setModalInput] = useState("");
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [disabled, setDisabled] = useState(false);
-  const [editable, setEditable] = useState(false);
+  const [editable, setEditable] = useState(true); // Set to true for manual form
   const {
     isOpen: isRecOpen,
     onOpen: onRecOpen,
     onClose: onRecClose,
   } = useDisclosure();
   const [textInputsValue, setTextInputsValue] = useState({
-      inovationName: "",
-      inovatorName: "",
-      description: "",
-    });
+    inovationName: "",
+    inovatorName: "",
+    description: "",
+  });
 
   const location = useLocation();
   const inovasiId = location.state?.id;
-  // console.log("Inovasi ID:", inovasiId);
 
   const { role } = useUser();
   useEffect(() => {
@@ -98,64 +104,75 @@ const KlaimInovasiManual: React.FC = () => {
 
   const handleCheckboxChange = (checkbox: string) => {
     if (selectedCheckboxes.includes(checkbox)) {
-      // Jika checkbox sudah dipilih, hapus dari array
       setSelectedCheckboxes(
         selectedCheckboxes.filter((item) => item !== checkbox)
       );
     } else {
-      // Jika checkbox belum dipilih, tambahkan ke array
       setSelectedCheckboxes([...selectedCheckboxes, checkbox]);
     }
   };
 
-  const handleAjukanKlaim = () => {
+  // Validation function
+  const validateForm = () => {
+    // Check text inputs
+    if (!textInputsValue.inovationName.trim() || 
+        !textInputsValue.inovatorName.trim() || 
+        !textInputsValue.description.trim()) {
+      toast.error("Mohon lengkapi semua informasi inovasi", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return false;
+    }
+
+    // Check if at least one evidence type is selected
     if (selectedCheckboxes.length === 0) {
       toast.error(
         "Minimal pilih 1 jenis bukti klaim (Foto, Video, atau Dokumen)",
         {
           position: "top-center",
           autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
         }
       );
-      return;
+      return false;
     }
 
-    let isValid = true;
+    // Check if selected evidence types have corresponding files
     if (selectedCheckboxes.includes("foto") && selectedFiles.length === 0) {
-      isValid = false;
+      toast.error("Mohon upload foto bukti klaim", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return false;
     }
+
     if (selectedCheckboxes.includes("video") && selectedVid === "") {
-      isValid = false;
+      toast.error("Mohon upload video bukti klaim", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return false;
     }
+
     if (selectedCheckboxes.includes("dokumen") && selectedDoc.length === 0) {
-      isValid = false;
+      toast.error("Mohon upload dokumen bukti klaim", {
+        position: "top-center",
+        autoClose: 2000,
+      });
+      return false;
     }
 
-    if (!isValid) {
-      toast.error(
-        "Mohon lengkapi semua bukti klaim yang dipilih (Foto, Video, atau Dokumen)",
-        {
-          position: "top-center",
-          autoClose: 2000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-        }
-      );
-      return;
-    }
-
-    setIsModal1Open(true);
-    setDisabled(true);
+    return true;
   };
 
+  const handleAjukanKlaim = () => {
+    if (!validateForm()) {
+      return;
+    }
+    setIsModal1Open(true);
+  };
+
+  // File upload handlers
   const onSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files) {
@@ -172,6 +189,32 @@ const KlaimInovasiManual: React.FC = () => {
         };
         reader.readAsDataURL(files[i]);
       }
+    }
+  };
+
+  const onSelectLogo = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const reader = new FileReader();
+      reader.onload = (readerEvent) => {
+        if (readerEvent.target?.result) {
+          setLogoFiles([readerEvent.target.result as string]);
+        }
+      };
+      reader.readAsDataURL(files[0]);
+    }
+  };
+
+  const onSelectInnovationImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const reader = new FileReader();
+      reader.onload = (readerEvent) => {
+        if (readerEvent.target?.result) {
+          setInnovationImages([readerEvent.target.result as string]);
+        }
+      };
+      reader.readAsDataURL(files[0]);
     }
   };
 
@@ -208,47 +251,85 @@ const KlaimInovasiManual: React.FC = () => {
 
   const onSubmitForm = async (event: React.FormEvent<HTMLElement>) => {
     event.preventDefault();
-    submitClaim();
-    setEditable(false);
+    if (!validateForm()) {
+      return;
+    }
+    setIsModal1Open(true);
   };
 
   const submitClaim = async () => {
     console.log("Submitting claim...");
     setLoading(true);
+    
     if (!user?.uid) {
-      setError("User atau ID inovasi tidak ditemukan");
+      setError("User tidak ditemukan");
       setLoading(false);
+      toast.error("User tidak ditemukan");
       return;
     }
-    if (selectedCheckboxes.length === 0) {
-      setError("Minimal pilih 1 jenis bukti klaim (Foto, Video, atau Dokumen)");
-      setLoading(false);
-      return;
-    }
+
     try {
       const userId = user.uid;
+      
+      // Get village data
       const desaRef = doc(firestore, "villages", userId);
       const desaSnap = await getDoc(desaRef);
       const dataDesa = desaSnap.data();
 
-      const inovRef = doc(firestore, "innovations", inovasiId);
-      const inovSnap = await getDoc(inovRef);
-      const dataInov = inovSnap.data();
+      if (!dataDesa) {
+        throw new Error("Data desa tidak ditemukan");
+      }
 
-      const docRef = await addDoc(collection(firestore, "claimInnovations"), {
+      // Create the claim document with manual innovation data
+      const claimDocData = {
         namaDesa: dataDesa?.namaDesa,
         desaId: userId,
-        namaInovasi: dataInov?.namaInovasi,
+        namaInovasi: textInputsValue.inovationName,
+        namaInovator: textInputsValue.inovatorName,
+        deskripsiInovasi: textInputsValue.description,
         jenisDokumen: selectedCheckboxes,
-        inovasiId: inovasiId,
-        inovatorId: dataInov?.innovatorId,
+        inovasiId: null, // This is manual, so no existing innovation ID
+        inovatorId: null, // This is manual, so no existing innovator ID
         status: "Menunggu",
         catatanAdmin: "",
+        isManual: true, // Flag to identify manual claims
         createdAt: serverTimestamp(),
-      });
+      };
+
+      const docRef = await addDoc(collection(firestore, "claimInnovations"), claimDocData);
       console.log("Document written with ID: ", docRef.id);
+
+      // Upload logo if exists
+      if (logoFiles.length > 0) {
+        const logoRef = ref(storage, `claimInnovations/${userId}/logo/${Date.now()}`);
+        const response = await fetch(logoFiles[0]);
+        const blob = await response.blob();
+        await uploadBytes(logoRef, blob);
+        const downloadURL = await getDownloadURL(logoRef);
+        
+        await updateDoc(docRef, {
+          logoInovator: downloadURL,
+        });
+        console.log("Logo uploaded", downloadURL);
+      }
+
+      // Upload innovation images if exists
+      if (innovationImages.length > 0) {
+        const innovImgRef = ref(storage, `claimInnovations/${userId}/innovationImage/${Date.now()}`);
+        const response = await fetch(innovationImages[0]);
+        const blob = await response.blob();
+        await uploadBytes(innovImgRef, blob);
+        const downloadURL = await getDownloadURL(innovImgRef);
+        
+        await updateDoc(docRef, {
+          fotoInovasi: downloadURL,
+        });
+        console.log("Innovation image uploaded", downloadURL);
+      }
+
+      // Upload evidence images
       if (selectedFiles.length > 0) {
-        const storageRef = ref(storage, `claimInnovations/${userId}/images`);
+        const storageRef = ref(storage, `claimInnovations/${userId}/evidence/images`);
         const imageUrls: string[] = [];
 
         for (let i = 0; i < selectedFiles.length; i++) {
@@ -264,11 +345,12 @@ const KlaimInovasiManual: React.FC = () => {
         await updateDoc(docRef, {
           images: imageUrls,
         });
-        console.log("Images uploaded", imageUrls);
+        console.log("Evidence images uploaded", imageUrls);
       }
 
+      // Upload evidence video
       if (selectedVid) {
-        const videoRef = ref(storage, `claimInnovations/${userId}/video.mp4`);
+        const videoRef = ref(storage, `claimInnovations/${userId}/evidence/video_${Date.now()}.mp4`);
         const response = await fetch(selectedVid);
         const blob = await response.blob();
         await uploadBytes(videoRef, blob);
@@ -277,12 +359,14 @@ const KlaimInovasiManual: React.FC = () => {
         await updateDoc(docRef, {
           video: downloadURL,
         });
-        console.log("Video uploaded", downloadURL);
+        console.log("Evidence video uploaded", downloadURL);
       }
 
+      // Upload evidence documents
       if (selectedDoc.length > 0) {
-        const storageRef = ref(storage, `claimInnovations/${userId}/docs`);
+        const storageRef = ref(storage, `claimInnovations/${userId}/evidence/docs`);
         const docUrls: string[] = [];
+        
         for (let i = 0; i < selectedDoc.length; i++) {
           const file = selectedDoc[i];
           const docRef = ref(storageRef, `${Date.now()}_${i}`);
@@ -292,33 +376,49 @@ const KlaimInovasiManual: React.FC = () => {
           const downloadURL = await getDownloadURL(docRef);
           docUrls.push(downloadURL);
         }
+        
         await updateDoc(docRef, {
           dokumen: docUrls,
         });
-        console.log("Documents uploaded", docUrls);
+        console.log("Evidence documents uploaded", docUrls);
       }
-      setIsModal1Open(false);
+
       toast.success("Klaim inovasi berhasil diajukan", {
         position: "top-center",
         autoClose: 2000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
       });
-      // onRecOpen();
+
+      // Reset form after successful submission
+      setTextInputsValue({
+        inovationName: "",
+        inovatorName: "",
+        description: "",
+      });
+      setSelectedCheckboxes([]);
+      setSelectedFiles([]);
+      setSelectedVid("");
+      setSelectedDoc([]);
+      setLogoFiles([]);
+      setInnovationImages([]);
+
+      // Navigate back or to claims list
+      setTimeout(() => {
+        navigate(`/village/pengajuan/${user?.uid}`);
+      }, 2000);
+
     } catch (error) {
-      setError("Failed to submit claim");
+      console.error("Error submitting claim:", error);
+      setError("Gagal mengajukan klaim");
+      toast.error("Gagal mengajukan klaim. Silakan coba lagi.");
     } finally {
       setLoading(false);
-      // setIsModal2Open(true);
-      // navigate(`/village/pengajuan/${user?.uid}`);
+      setIsModal1Open(false);
     }
   };
 
   const [isModal1Open, setIsModal1Open] = useState(false);
   const [isModal2Open, setIsModal2Open] = useState(false);
+  
   const closeModal = () => {
     setIsModal1Open(false);
     setIsModal2Open(false);
@@ -336,47 +436,48 @@ const KlaimInovasiManual: React.FC = () => {
   };
 
   const onTextChange = ({
-      target: { name, value },
-    }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
-      if (name === "description") {
-        if (wordCount <= 80) {
-          setTextInputsValue((prev) => ({
-            ...prev,
-            [name]: value,
-          }));
-        }
-      } else if (name === "inovationName") {
-        if (wordCount <= 5) {
-          setTextInputsValue((prev) => ({
-            ...prev,
-            [name]: value,
-          }));
-        }
-      } else if (name === "inovatorName") {
-        if (wordCount <= 5) {
-          setTextInputsValue((prev) => ({
-            ...prev,
-            [name]: value,
-          }));
-        }
-      } else {
+    target: { name, value },
+  }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
+    
+    if (name === "description") {
+      if (wordCount <= 80) {
         setTextInputsValue((prev) => ({
           ...prev,
           [name]: value,
         }));
       }
-    };
+    } else if (name === "inovationName") {
+      if (wordCount <= 5) {
+        setTextInputsValue((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    } else if (name === "inovatorName") {
+      if (wordCount <= 5) {
+        setTextInputsValue((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    } else {
+      setTextInputsValue((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
 
   useEffect(() => {
-    // Jika salah satu modal terbuka, sembunyikan scrollbar
     if (isModal1Open || isModal2Open) {
       document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ""; // Kembalikan scrollbar jika kedua modal tertutup
+      document.body.style.overflow = "";
     }
   }, [isModal1Open, isModal2Open]);
 
+  // For existing claims (admin view)
   useEffect(() => {
     if (id) {
       const fetchClaim = async () => {
@@ -393,6 +494,15 @@ const KlaimInovasiManual: React.FC = () => {
             setSelectedFiles(claimData.images || []);
             setSelectedVid(claimData.video || "");
             setSelectedDoc(claimData.dokumen || []);
+            
+            // Set text inputs for existing claims
+            if (claimData.isManual) {
+              setTextInputsValue({
+                inovationName: claimData.namaInovasi || "",
+                inovatorName: claimData.namaInovator || "",
+                description: claimData.deskripsiInovasi || "",
+              });
+            }
           } else {
             console.log("Claim not found");
           }
@@ -406,8 +516,6 @@ const KlaimInovasiManual: React.FC = () => {
     }
   }, [id]);
 
-  // console.log("Claim Data:", JSON.stringify(claimData, null, 2));
-
   const handleVerify = async () => {
     setLoading(true);
     try {
@@ -417,31 +525,35 @@ const KlaimInovasiManual: React.FC = () => {
           status: "Terverifikasi",
         });
 
-        const inovasiRef = doc(firestore, "innovations", claimData.inovasiId);
-        await updateDoc(inovasiRef, {
-          desaId: [claimData.desaId],
-          jumlahKlaim: increment(1),
-        });
+        // Only update related collections if this is not a manual claim
+        if (!claimData.isManual && claimData.inovasiId && claimData.inovatorId) {
+          const inovasiRef = doc(firestore, "innovations", claimData.inovasiId);
+          await updateDoc(inovasiRef, {
+            desaId: [claimData.desaId],
+            jumlahKlaim: increment(1),
+          });
 
-        const inovatorRef = doc(firestore, "innovators", claimData.inovatorId);
-        await updateDoc(inovatorRef, {
-          jumlahDesaDampingan: increment(1),
-          desaId: [claimData.desaId],
-        });
+          const inovatorRef = doc(firestore, "innovators", claimData.inovatorId);
+          await updateDoc(inovatorRef, {
+            jumlahDesaDampingan: increment(1),
+            desaId: [claimData.desaId],
+          });
+        }
 
         const desaRef = doc(firestore, "villages", claimData.desaId);
         await updateDoc(desaRef, {
           inovasiDiTerapkan: increment(1),
-          inovasiId: [claimData.inovasiId],
+          inovasiId: claimData.inovasiId ? [claimData.inovasiId] : [],
         });
       }
       console.log("Claim verified successfully");
+      toast.success("Klaim berhasil diverifikasi");
     } catch (error) {
       setError("Failed to verify claim");
+      toast.error("Gagal memverifikasi klaim");
     } finally {
       setLoading(false);
       onClose();
-      // navigate(`/village/pengajuan/${user?.uid}`);
     }
   };
 
@@ -456,8 +568,10 @@ const KlaimInovasiManual: React.FC = () => {
         });
       }
       console.log("Claim rejected successfully");
+      toast.success("Klaim berhasil ditolak");
     } catch (error) {
       setError("Failed to reject claim");
+      toast.error("Gagal menolak klaim");
     } finally {
       setLoading(false);
       setOpenModal(false);
@@ -478,116 +592,116 @@ const KlaimInovasiManual: React.FC = () => {
         />
         <Container>
           <Flex flexDirection="column" gap="2px">
-            <Label>
-                Informasi Inovasi
-            </Label>
-            <Text2> Silahkan masukkan informasi inovator dan inovasi yang akan anda klaim penerapannya </Text2>
+            <Label>Informasi Inovasi</Label>
+            <Text2>
+              Silahkan masukkan informasi inovator dan inovasi yang akan anda
+              klaim penerapannya
+            </Text2>
           </Flex>
-            <Text fontWeight="400" fontSize="14px" mb="-2">
-                Nama Inovator <span style={{ color: "red" }}>*</span>
-            </Text>
-            <Input
-                name="inovatorName"
-                fontSize="14px"
-                placeholder="Nama Inovator"
-                //isDisabled={!isEditable}
-                _placeholder={{ color: "#9CA3AF" }}
-                _focus={{
+          
+          <Text fontWeight="400" fontSize="14px" mb="-2">
+            Nama Inovator <span style={{ color: "red" }}>*</span>
+          </Text>
+          <Input
+            name="inovatorName"
+            fontSize="14px"
+            placeholder="Nama Inovator"
+            isDisabled={!editable}
+            _placeholder={{ color: "#9CA3AF" }}
+            _focus={{
+              outline: "none",
+              bg: "white",
+              border: "none",
+            }}
+            value={textInputsValue.inovatorName}
+            onChange={onTextChange}
+            required
+          />
+          
+          <Text fontWeight="400" fontSize="14px" mb="-2">
+            Nama Inovasi <span style={{ color: "red" }}>*</span>
+          </Text>
+          <Input
+            name="inovationName"
+            fontSize="14px"
+            placeholder="Nama Inovasi"
+            isDisabled={!editable}
+            _placeholder={{ color: "#9CA3AF" }}
+            _focus={{
+              outline: "none",
+              bg: "white",
+              border: "none",
+            }}
+            value={textInputsValue.inovationName}
+            onChange={onTextChange}
+            required
+          />
+          
+          <Text fontWeight="400" fontSize="14px" mb="-2">
+            Deskripsi Inovasi <span style={{ color: "red" }}>*</span>
+          </Text>
+          <Flex direction="column" alignItems="flex-start">
+            <Textarea
+              name="description"
+              fontSize="14px"
+              placeholder="Masukkan deskripsi singkat tentang inovasi"
+              disabled={!editable}
+              _placeholder={{ color: "#9CA3AF" }}
+              _focus={{
                 outline: "none",
                 bg: "white",
                 border: "none",
-                }}
-                value={textInputsValue.inovatorName}
-                onChange={onTextChange}
-                required
+              }}
+              height="100px"
+              value={textInputsValue.description}
+              onChange={onTextChange}
+              required
             />
-            <Text fontWeight="400" fontSize="14px" mb="-2">
-                Nama Inovasi <span style={{ color: "red" }}>*</span>
+            <Text
+              fontWeight="400"
+              fontStyle="normal"
+              fontSize="10px"
+              color="gray.500"
+            >
+              {getDescriptionWordCount()}/80 kata
             </Text>
-            <Input
-                name="inovationName"
-                fontSize="14px"
-                placeholder="Nama Inovasi"
-                //isDisabled={!isEditable}
-                _placeholder={{ color: "#9CA3AF" }}
-                _focus={{
-                outline: "none",
-                bg: "white",
-                border: "none",
-                }}
-                value={textInputsValue.inovationName}
-                onChange={onTextChange}
-                required
-            />
-            <Text fontWeight="400" fontSize="14px" mb="-2">
-                Deskripsi Inovasi <span style={{ color: "red" }}>*</span>
-            </Text>
-            <Flex direction="column" alignItems="flex-start">
-                <Textarea
-                    name="description"
-                    fontSize="14px"
-                    placeholder="Masukkan deskripsi singkat tentang inovasi"
-                    //disabled={!isEditable}
-                    _placeholder={{ color: "#9CA3AF" }}
-                    _focus={{
-                    outline: "none",
-                    bg: "white",
-                    border: "none",
-                    }}
-                    height="100px"
-                    value={textInputsValue.description}
-                    onChange={onTextChange}
-                    required
-                />
-                <Text
-                    fontWeight="400"
-                    fontStyle="normal"
-                    fontSize="10px"
-                    color="gray.500"
-                >
-                    {getDescriptionWordCount()}/80 kata
-                </Text>
-            </Flex>
-            <Field>
-              <Flex flexDirection="column" gap="2px">
-                <Text1>
-                  Logo Inovator
-                </Text1>
-                <Text2> Maks 1 foto. format: png, jpg </Text2>
-                <ImageUpload
-                  selectedFiles={selectedFiles}
-                  setSelectedFiles={setSelectedFiles}
-                  selectFileRef={selectedFileRef}
-                  onSelectImage={onSelectImage}
-                  maxFiles={1}
-                />
-              </Flex>
-            </Field>
-            <Field>
-              <Flex flexDirection="column" gap="2px">
-                <Text1>
-                  Foto Inovasi
-                </Text1>
-                <Text2> Maks 1 foto. format: png, jpg </Text2>
-                <ImageUpload
-                  selectedFiles={selectedFiles}
-                  setSelectedFiles={setSelectedFiles}
-                  selectFileRef={selectedFileRef}
-                  onSelectImage={onSelectImage}
-                  maxFiles={1}
-                />
-              </Flex>
-            </Field>
+          </Flex>
 
-            
+          <Field>
+            <Flex flexDirection="column" gap="2px">
+              <Text1>Logo Inovator</Text1>
+              <Text2>Maks 1 foto. format: png, jpg</Text2>
+              <ImageUpload
+                selectedFiles={logoFiles}
+                setSelectedFiles={setLogoFiles}
+                selectFileRef={logoFileRef}
+                onSelectImage={onSelectLogo}
+                maxFiles={1}
+              />
+            </Flex>
+          </Field>
+
+          <Field>
+            <Flex flexDirection="column" gap="2px">
+              <Text1>Foto Inovasi</Text1>
+              <Text2>Maks 1 foto. format: png, jpg</Text2>
+              <ImageUpload
+                selectedFiles={innovationImages}
+                setSelectedFiles={setInnovationImages}
+                selectFileRef={innovationImageRef}
+                onSelectImage={onSelectInnovationImage}
+                maxFiles={1}
+              />
+            </Flex>
+          </Field>
+
           <Flex flexDirection="column" gap="2px">
-            <Label>
-                Bukti Klaim
-            </Label>
-            <Text2> Silahkan masukkan bukti klaim penerapan inovasi </Text2>
+            <Label>Bukti Klaim</Label>
+            <Text2>Silahkan masukkan bukti klaim penerapan inovasi</Text2>
           </Flex>
+
           <Flex flexDirection="column" gap="2px">
-            {isAdmin && (
+            {isAdmin && claimData && (
               <Text fontWeight="700" mb={2} fontSize="16px">
                 Desa {claimData.namaDesa}
               </Text>
@@ -595,42 +709,46 @@ const KlaimInovasiManual: React.FC = () => {
             <Label>
               Jenis Dokumen Bukti Klaim <span style={{ color: "red" }}>*</span>
             </Label>
-            <Text2> Dapat lebih dari 1 </Text2>
+            <Text2>Dapat lebih dari 1</Text2>
           </Flex>
+
           <CheckboxGroup>
             <JenisKlaim>
               <input
                 style={{
-                  transform: "scale(1.3)", // Memperbesar checkbox
-                  marginRight: "8px", // Memberi jarak ke teks
+                  transform: "scale(1.3)",
+                  marginRight: "8px",
                 }}
                 type="checkbox"
                 onChange={() => handleCheckboxChange("foto")}
                 checked={selectedCheckboxes.includes("foto")}
+                disabled={!editable}
               />
               Foto
             </JenisKlaim>
             <JenisKlaim>
               <input
                 style={{
-                  transform: "scale(1.3)", // Memperbesar checkbox
-                  marginRight: "8px", // Memberi jarak ke teks
+                  transform: "scale(1.3)",
+                  marginRight: "8px",
                 }}
                 type="checkbox"
                 onChange={() => handleCheckboxChange("video")}
                 checked={selectedCheckboxes.includes("video")}
+                disabled={!editable}
               />
               Video
             </JenisKlaim>
             <JenisKlaim>
               <input
                 style={{
-                  transform: "scale(1.3)", // Memperbesar checkbox
-                  marginRight: "8px", // Memberi jarak ke teks
+                  transform: "scale(1.3)",
+                  marginRight: "8px",
                 }}
                 type="checkbox"
                 onChange={() => handleCheckboxChange("dokumen")}
                 checked={selectedCheckboxes.includes("dokumen")}
+                disabled={!editable}
               />
               Dokumen
             </JenisKlaim>
@@ -640,10 +758,10 @@ const KlaimInovasiManual: React.FC = () => {
             <Field>
               <Flex flexDirection="column" gap="2px">
                 <Text1>
-                  Foto Inovasi
+                  Foto Bukti Klaim
                   <span style={{ color: "red" }}>*</span>
                 </Text1>
-                <Text2> Maks 2 foto. format: png, jpg </Text2>
+                <Text2>Maks 2 foto. format: png, jpg</Text2>
                 <ImageUpload
                   selectedFiles={selectedFiles}
                   setSelectedFiles={setSelectedFiles}
@@ -659,10 +777,10 @@ const KlaimInovasiManual: React.FC = () => {
             <Field>
               <Flex flexDirection="column" gap="2px">
                 <Text1>
-                  Video inovasi
+                  Video Bukti Klaim
                   <span style={{ color: "red" }}>*</span>
                 </Text1>
-                <Text2> Maks 100 mb. Format: mp4 </Text2>
+                <Text2>Maks 100 mb. Format: mp4</Text2>
               </Flex>
               <VidUpload
                 selectedVid={selectedVid}
@@ -680,26 +798,22 @@ const KlaimInovasiManual: React.FC = () => {
                   Dokumen Pendukung
                   <span style={{ color: "red" }}>*</span>
                 </Text1>
-                <Text2> Maks 3 file, 50 mb. Format: pdf, doc, docx </Text2>
+                <Text2>Maks 3 file, 50 mb. Format: pdf, doc, docx</Text2>
               </Flex>
               <DocUpload
                 selectedDoc={selectedDoc}
                 setSelectedDoc={setSelectedDoc}
                 selectDocRef={selectedDocRef}
-                onSelectDoc={onSelectDoc} // Ensure this matches the updated DocUploadProps
+                onSelectDoc={onSelectDoc}
               />
             </Field>
           </Collapse>
-          {/* <RecommendationDrawer
-            innovationId={inovasiId}
-            isOpen={isRecOpen}
-            onClose={() => onRecClose()}
-          /> */}
         </Container>
+
         <div>
           {isAdmin ? (
-            claimData.status === "Terverifikasi" ||
-            claimData.status === "Ditolak" ? (
+            claimData && (claimData.status === "Terverifikasi" ||
+            claimData.status === "Ditolak") ? (
               <StatusCard
                 status={claimData.status}
                 message={claimData.catatanAdmin}
@@ -724,12 +838,13 @@ const KlaimInovasiManual: React.FC = () => {
                 isLoading={loading}
                 onClick={handleAjukanKlaim}
                 type="button"
-                disabled={disabled}
+                disabled={disabled || loading}
               >
                 Ajukan Klaim
               </Button>
             </NavbarButton>
           )}
+
           <ConfModal
             isOpen={isModal1Open}
             onClose={closeModal}
@@ -738,11 +853,13 @@ const KlaimInovasiManual: React.FC = () => {
             onYes={handleModal1Yes}
             isLoading={loading}
           />
+
           <SecConfModal
             isOpen={isModal2Open}
             onClose={closeModal}
-            modalBody2={modalBody2} // Mengirimkan teks konten modal
+            modalBody2={modalBody2}
           />
+
           <RejectionModal
             isOpen={openModal}
             onClose={() => setOpenModal(false)}
@@ -751,6 +868,7 @@ const KlaimInovasiManual: React.FC = () => {
             setMessage={setModalInput}
             loading={loading}
           />
+
           <ActionDrawer
             isOpen={isOpen}
             onClose={onClose}
@@ -765,4 +883,3 @@ const KlaimInovasiManual: React.FC = () => {
     </Box>
   );
 };
-export default KlaimInovasiManual;
