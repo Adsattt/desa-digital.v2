@@ -115,6 +115,15 @@ const Peta: React.FC = () => {
         setFilterC('');
     }, [selectedCategory]);
 
+    useEffect(() => {
+        setFilterB('');
+        setFilterC('');
+    }, [filterA]);
+
+    useEffect(() => {
+        setFilterC('');
+    }, [filterB]);
+
     const getCategoryLabel = () => {
         switch (selectedCategory) {
             case 'desa': return 'Desa Digital';
@@ -132,11 +141,26 @@ const Peta: React.FC = () => {
 
     const getFilterOptions = () => {
         const allData = markers.map(m => m.raw);
+
+        const extractUnique = (data: any[], field: string) =>
+            [...new Set(data.map(item => item[field]).filter(Boolean))];
+
+        // Selalu pakai allData untuk filter A (global)
+        const filterAOptions = (() => {
+            switch (selectedCategory) {
+                case 'desa': return extractUnique(allData, 'provinsi');
+                case 'inovator': return extractUnique(allData, 'kategoriInovator');
+                case 'inovasi': return extractUnique(allData, 'tahunDibuat');
+                default: return [];
+            }
+        })();
+
+        // Filtered subset (cascade) untuk B dan C
         let filtered = allData;
 
         if (filterA) {
             if (selectedCategory === 'desa') filtered = filtered.filter(item => item.provinsi === filterA);
-            if (selectedCategory === 'inovator') filtered = filtered.filter(item => item.kategori === filterA);
+            if (selectedCategory === 'inovator') filtered = filtered.filter(item => item.kategoriInovator === filterA);
             if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.tahunDibuat === filterA);
         }
 
@@ -146,32 +170,29 @@ const Peta: React.FC = () => {
             if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.namaInovasi === filterB);
         }
 
-        const extractUnique = (data: any[], field: string) =>
-            [...new Set(data.map(item => item[field]).filter(Boolean))];
+        const filterBOptions = (() => {
+            switch (selectedCategory) {
+                case 'desa': return extractUnique(filtered, 'namaDesa');
+                case 'inovator': return extractUnique(filtered, 'namaInovator');
+                case 'inovasi': return extractUnique(filtered, 'namaInovasi');
+                default: return [];
+            }
+        })();
 
-        switch (selectedCategory) {
-            case 'desa':
-                return {
-                    a: extractUnique(allData, 'provinsi'), // tetap global
-                    b: extractUnique(filtered, 'namaDesa'),
-                    c: extractUnique(filtered, 'kategoriInovasi')
-                };
-            case 'inovator':
-                return {
-                    a: extractUnique(allData, 'kategori'),
-                    b: extractUnique(filtered, 'namaInovator')
-                };
-            case 'inovasi':
-                return {
-                    a: extractUnique(allData, 'tahunDibuat'), // tetap global
-                    b: extractUnique(filtered, 'namaInovasi'),
-                    c: extractUnique(filtered, 'kategori')
-                };
-            default:
-                return { a: [], b: [], c: [] };
-        }
+        const filterCOptions = (() => {
+            switch (selectedCategory) {
+                case 'desa': return extractUnique(filtered, 'kategoriInovasi');
+                case 'inovasi': return extractUnique(filtered, 'kategori');
+                default: return [];
+            }
+        })();
+
+        return {
+            a: filterAOptions,
+            b: filterBOptions,
+            c: filterCOptions,
+        };
     };
-
 
     const getFilteredMarkers = () => {
         return markers.filter((marker) => {
@@ -180,7 +201,7 @@ const Peta: React.FC = () => {
 
             if (filterA) {
                 if (selectedCategory === 'desa') conditions.push(data.provinsi === filterA);
-                if (selectedCategory === 'inovator') conditions.push(data.kategori === filterA);
+                if (selectedCategory === 'inovator') conditions.push(data.kategoriInovator === filterA);
                 if (selectedCategory === 'inovasi') conditions.push(data.tahunDibuat === filterA);
             }
             if (filterB) {
@@ -304,7 +325,7 @@ const Peta: React.FC = () => {
                                     placeholder={`Pilih ${selectedCategory === 'desa'
                                         ? 'Provinsi'
                                         : selectedCategory === 'inovator'
-                                            ? 'Kategori'
+                                            ? 'Kategori Inovator'
                                             : 'Tahun Dibuat'
                                         }`}
                                     value={filterA}
@@ -319,16 +340,21 @@ const Peta: React.FC = () => {
                             {/* Filter B */}
                             {filterOptions.b && (
                                 <Select
-                                    fontSize="sm" // label / tampilan luar tetap normal
+                                    fontSize="sm"
                                     sx={{
                                         option: {
-                                            fontSize: '9px',           // perkecil hanya isi opsi
+                                            fontSize: '9px',
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
                                         }
                                     }}
-                                    placeholder="Pilih Nama Inovator"
+                                    placeholder={`Pilih ${selectedCategory === 'desa'
+                                        ? 'Nama Desa'
+                                        : selectedCategory === 'inovator'
+                                            ? 'Nama Inovator'
+                                            : 'Nama Inovasi'
+                                        }`}
                                     value={filterB}
                                     onChange={handleFilterChange(setFilterB)}
                                 >
@@ -336,13 +362,12 @@ const Peta: React.FC = () => {
                                         <option key={val} value={val}>{val}</option>
                                     ))}
                                 </Select>
-
                             )}
 
                             {/* Filter C */}
-                            {filterOptions.c && (
+                            {filterOptions.c && selectedCategory !== 'inovator' && (
                                 <Select
-                                fontSize="sm" // label / tampilan luar tetap normal
+                                    fontSize="sm" // label / tampilan luar tetap normal
                                     sx={{
                                         option: {
                                             fontSize: '9px',           // perkecil hanya isi opsi
