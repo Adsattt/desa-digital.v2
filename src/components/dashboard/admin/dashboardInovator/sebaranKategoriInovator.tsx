@@ -31,7 +31,7 @@ const SebaranKategoriInovator: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const colors: string[] = ["#A7C7A5", "#1E5631", "#174E3B", "#FF8C00", "#FF5733", "#6A5ACD"];
+  const colors: string[] = ["#A7C7A5", "#1E5631", "#779e74", "#4d7161"];
 
   useEffect(() => {
     const fetchKategoriData = async () => {
@@ -44,8 +44,8 @@ const SebaranKategoriInovator: React.FC = () => {
 
         snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.kategori) {
-            const kategori = data.kategori.trim();
+          if (data.kategoriInovator) {
+            const kategori = data.kategoriInovator.trim(); // Ganti dari 'kategori' ke 'kategoriInovator'
             kategoriCount[kategori] = (kategoriCount[kategori] || 0) + 1;
           }
         });
@@ -61,7 +61,7 @@ const SebaranKategoriInovator: React.FC = () => {
         setKategoriData(fullData); // semua kategori tetap disimpan
 
         // Pilih 3 kategori target secara manual
-        const targetNames = ["Swasta (JALA)", "Pemerintah Daerah", "Start-up"];
+        const targetNames = ["Akademisi", "Pemerintah Daerah", "Start Up"];
         const initialThree = fullData.filter(item => targetNames.includes(item.name));
 
         setFilteredData(initialThree);
@@ -74,6 +74,7 @@ const SebaranKategoriInovator: React.FC = () => {
     };
 
     fetchKategoriData();
+
   }, []);
 
   const handleDownload = () => {
@@ -106,15 +107,29 @@ const SebaranKategoriInovator: React.FC = () => {
   };
 
   const applyFilter = () => {
+    if (selectedCategories.length < 2) {
+      alert("Pilih minimal 2 kategori.");
+      return;
+    }
+
     const filtered = kategoriData.filter((item) => selectedCategories.includes(item.name));
     setFilteredData(filtered);
     setIsOpen(false);
   };
 
+
   const handleCheckboxChange = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category) ? prev.filter((item) => item !== category) : [...prev, category]
-    );
+    setSelectedCategories((prev) => {
+      // Cegah menghapus jika tinggal dua
+      if (prev.length === 2 && prev.includes(category)) {
+        alert("Minimal harus memilih 2 kategori.");
+        return prev;
+      }
+
+      return prev.includes(category)
+        ? prev.filter((item) => item !== category)
+        : [...prev, category];
+    });
   };
 
   return (
