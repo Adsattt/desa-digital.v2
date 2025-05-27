@@ -47,7 +47,6 @@ const PerkembanganInovasiDesa: React.FC = () => {
         return;
       }
 
-      // 1. Ambil namaDesa berdasarkan userId
       const desaQuery = query(
         collection(db, "villages"),
         where("userId", "==", user.uid)
@@ -57,49 +56,60 @@ const PerkembanganInovasiDesa: React.FC = () => {
       let namaDesa = "";
       if (!desaSnap.empty) {
         const desaData = desaSnap.docs[0].data();
-        namaDesa = desaData?.namaDesa || "";
+        namaDesa = desaData?.namaDesa?.toLowerCase().trim() || "";
       } else {
-        console.warn("Desa tidak ditemukan untuk user ini");
+        console.warn("Desa tidak ditemukan");
         return;
       }
 
-      // 2. Ambil semua inovasi
       const innovationsRef = collection(db, "innovations");
       const snapshot = await getDocs(innovationsRef);
 
       const yearCount: Record<string, number> = {};
 
-      // 3. Filter inovasi berdasarkan inputDesaMenerapkan
       snapshot.forEach((doc) => {
         const data = doc.data();
-        const inputDesaMenerapkan = data.inputDesaMenerapkan;
+        const input = data.inputDesaMenerapkan;
+        const tahun = data.tahunDibuat;
 
-        const cocok = Array.isArray(inputDesaMenerapkan) &&
-          inputDesaMenerapkan.some((nama: string) =>
-            nama?.toLowerCase().trim() === namaDesa.toLowerCase().trim()
+        let cocok = false;
+
+        if (Array.isArray(input)) {
+          cocok = input.some(
+            (nama: string) => nama?.toLowerCase().trim() === namaDesa
           );
+        } else if (typeof input === "string") {
+          cocok = input.toLowerCase().trim() === namaDesa;
+        }
 
-        if (cocok && data.createdAt) {
-          const year = new Date(data.createdAt.toDate()).getFullYear().toString();
-          yearCount[year] = (yearCount[year] || 0) + 1;
+        if (cocok && (typeof tahun === "number" || typeof tahun === "string")) {
+          const year = tahun.toString().trim();
+          if (/^\d{4}$/.test(year)) { // validasi tahun 4 digit
+            yearCount[year] = (yearCount[year] || 0) + 1;
+          }
         }
       });
 
       const allYearsList = Object.keys(yearCount).sort();
       setAllYears(allYearsList);
 
-      const filteredYears = selectedYears.length > 0 ? selectedYears : allYearsList;
+      const filteredYears =
+        selectedYears.length > 0 ? selectedYears : allYearsList;
 
       const chartData = filteredYears.map((year) => ({
         name: year,
         value: yearCount[year] || 0,
       }));
 
+      console.log("✅ yearCount:", yearCount);
+      console.log("✅ chartData:", chartData);
+
       setBarData(chartData);
     } catch (error) {
-      console.error("Error fetching innovation data:", error);
+      console.error("❌ Error fetching innovation data:", error);
     }
   };
+
 
   useEffect(() => {
     fetchInovasiData();
@@ -129,28 +139,28 @@ const PerkembanganInovasiDesa: React.FC = () => {
     XLSX.writeFile(workbook, "perkembangan_inovasi_desa.xlsx");
   };
 
-const CustomTooltip = ({
-  active,
-  payload,
-  label,
-}: {
-  active?: boolean;
-  payload?: any[];
-  label?: string;
-}) => {
-  if (active && payload && payload.length > 0) {
-    const data = payload[0].payload;
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: any[];
+    label?: string;
+  }) => {
+    if (active && payload && payload.length > 0) {
+      const data = payload[0].payload;
 
-    return (
-      <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
-        <p style={{ margin: 0, fontWeight: "bold" }}>{label}</p>
-        <p style={{ margin: 0 }}>Jumlah Inovasi: {data.value}</p> {/* Ubah ini */}
-      </div>
-    );
-  }
+      return (
+        <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
+          <p style={{ margin: 0, fontWeight: "bold" }}>{label}</p>
+          <p style={{ margin: 0 }}>Jumlah Inovasi: {data.value}</p> {/* Ubah ini */}
+        </div>
+      );
+    }
 
-  return null;
-};
+    return null;
+  };
 
 
   return (
