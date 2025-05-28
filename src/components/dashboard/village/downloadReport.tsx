@@ -174,9 +174,9 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
     }
 
     // Body
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
-    currentY = 55;
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    currentY = 40;
     const today = new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
       month: "long",
@@ -186,7 +186,8 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
     doc.text(`Diunduh pada: ${today}`, marginLeft, currentY);
 
     // Potensi Desa
-    currentY += lineHeight * 2;
+    doc.setTextColor(0,0,0);
+    currentY += lineHeight * 2 + 5;
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text("Potensi Desa:", marginLeft, currentY);
