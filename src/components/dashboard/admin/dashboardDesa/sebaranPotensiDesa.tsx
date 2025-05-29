@@ -25,7 +25,7 @@ import {
     Cell,
 } from "recharts";
 import { DownloadIcon } from "@chakra-ui/icons";
-import {ChevronLeftIcon, ChevronRightIcon} from "@chakra-ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
 type ChartData = {
     valueAsli: any;
@@ -80,6 +80,13 @@ const CustomTooltip = ({
     return null;
 };
 
+function toTitleCase(str: string): string {
+    return str.toLowerCase().split(' ').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
+
 const SebaranPotensiDesa: React.FC = () => {
     const [barData, setBarData] = useState<ChartData[]>([]);
     const [allPotensiData, setAllPotensiData] = useState<Record<string, number>>({});
@@ -98,10 +105,13 @@ const SebaranPotensiDesa: React.FC = () => {
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 if (Array.isArray(data.potensiDesa)) {
-                    data.potensiDesa.forEach((potensi: string) => {
-                        const formattedPotensi =
-                            potensi.charAt(0).toUpperCase() + potensi.slice(1).toLowerCase();
-                        potensiCount[formattedPotensi] = (potensiCount[formattedPotensi] || 0) + 1;
+                    data.potensiDesa.forEach((potensiItem: string) => {
+                        const potensiSplit = potensiItem.split(',').map(p => p.trim());
+
+                        potensiSplit.forEach((potensi: string) => {
+                            const formattedPotensi = toTitleCase(potensi);
+                            potensiCount[formattedPotensi] = (potensiCount[formattedPotensi] || 0) + 1;
+                        });
                     });
                 }
             });
