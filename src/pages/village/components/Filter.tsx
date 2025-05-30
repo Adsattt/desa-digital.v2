@@ -68,6 +68,7 @@ const Dropdown: React.FC<DropdownProps> = ({
       }))}
       placeholder={placeholder}
       isSearchable
+      isClearable
       styles={customStyles}
     />
   );
