@@ -40,7 +40,7 @@ const ConfModal: React.FC<ClaimModalProps> = ({
           </Flex>
         </ModalBody>
         <ModalFooter paddingTop={2} justifyContent={'center'} >
-          <Button borderRadius={4} onClick={handleClose} size={'xs'} paddingInline={6} fontWeight={500} fontSize="10px">Oke</Button>
+          <Button borderRadius={4} onClick={onClose} size={'xs'} paddingInline={6} fontWeight={500} fontSize="11px">Oke</Button>
         </ModalFooter>
       </ModalContent>
     </Modal>

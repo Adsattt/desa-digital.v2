@@ -27,7 +27,6 @@ import {
 } from "./_registerStyle";
 import TopBar from "Components/topBar";
 
-
 const Register: React.FC = () => {
   const [regisForm, setRegisForm] = useState({
     email: "",
@@ -101,7 +100,6 @@ const Register: React.FC = () => {
     } catch (error) {
       console.error("Error creating user document", error);
     }
-
   };
   useEffect(() => {
     if (userCred) {
@@ -111,118 +109,121 @@ const Register: React.FC = () => {
   }, [userCred]);
 
   return (
-<Box>
-<TopBar title="" onBack={() => navigate(-1)} />
-    <Background>
-      <Container>
-        <Title>Halo!</Title>
-        <Description>Silahkan melakukan registrasi akun</Description>
+    <Box>
+      <TopBar title="" onBack={() => navigate(-1)} />
+      <Background>
+        <Container>
+          <Title>Halo!</Title>
+          <Description>Silahkan melakukan registrasi akun</Description>
 
-        <form onSubmit={onSubmit}>
-          <Text fontSize="10pt" mt="12px">
-            Email
-          </Text>
-          <Input
-            name="email"
-            type="email"
-            onChange={onChange}
-            required
-            placeholder="Email"
-            mt="4px"
-            fontSize="10pt"
-          />
-          <Text fontSize="10pt" mt="12px">
-            Kata sandi
-          </Text>
-
-          <InputGroup mt="4px" alignItems="center">
-            <Input
-              name="password"
-              type={show ? "text" : "password"}
-              onChange={onChange}
-              required
-              placeholder="Kata sandi"
-              fontSize="10pt"
-            />
-            <InputRightElement
-              onClick={onShowPassword}
-              cursor="pointer"
-            >
-              {show ? <FaEyeSlash /> : <FaEye />}
-            </InputRightElement>
-          </InputGroup>
-
-          <Text fontSize="10pt" mt="12px">
-            Ulangi kata sandi
-          </Text>
-
-          <InputGroup mt="4px" alignItems="center">
-            <Input
-              name="password"
-              type={show ? "text" : "password"}
-              onChange={handleConfirmPasswordChange} // Gunakan handleConfirmPasswordChange
-              required
-              placeholder="Tulis ulang kata sandi"
-              fontSize="10pt"
-            />
-            <InputRightElement
-              onClick={onShowPassword}
-              cursor="pointer"
-            >
-              {show ? <FaEyeSlash /> : <FaEye />}
-            </InputRightElement>
-          </InputGroup>
-
-          <Label mt={12}>Daftar sebagai:</Label>
-          <CheckboxContainer mt={12}>
-            <input
-              name="role"
-              type="radio"
-              value="innovator"
-              onChange={onChange}
-              required
-            />
-            <Label>Inovator</Label>
-          </CheckboxContainer>
-
-          <CheckboxContainer mt={12}>
-            <input
-              name="role"
-              type="radio"
-              value="village"
-              onChange={onChange}
-              required
-            />
-            <Label>Perangkat desa</Label>
-          </CheckboxContainer>
-
-          {(error || userError) && (
-            <Text textAlign="center" color="red" fontSize="10pt" mt={2}>
-              {error ||
-                FIREBASE_ERRORS[
-                  userError?.message as keyof typeof FIREBASE_ERRORS
-                ]}
+          <form onSubmit={onSubmit}>
+            <Text fontSize="10pt" mt="12px">
+              Email
             </Text>
-          )}
+            <Input
+              name="email"
+              type="email"
+              onChange={onChange}
+              required
+              placeholder="Email"
+              mt="4px"
+              fontSize="10pt"
+            />
+            <Text fontSize="10pt" mt="12px">
+              Kata sandi
+            </Text>
 
-          <Button
-            mt={4}
-            type="submit"
-            alignItems="center"
-            width="100%"
-            isLoading={loading}
-            fontSize="14px"
-          >
-            Registrasi
-          </Button>
-        </form>
+            <InputGroup mt="4px" alignItems="center">
+              <Input
+                name="password"
+                type={show ? "text" : "password"}
+                onChange={onChange}
+                required
+                placeholder="Kata sandi"
+                fontSize="10pt"
+              />
+              <InputRightElement onClick={onShowPassword} cursor="pointer">
+                {show ? <FaEyeSlash /> : <FaEye />}
+              </InputRightElement>
+            </InputGroup>
+            <Text
+              fontWeight="400"
+              fontStyle="normal"
+              fontSize="10px"
+              color="#9CA3AF"
+              mb="-2"
+            >
+              Kata sandi minimal 6 karakter.
+            </Text>
 
-        <ActionContainer mt={16}>
-          <Label>Sudah memiliki akun?</Label>
-          <Action onClick={() => navigate(paths.LOGIN_PAGE)}>Login</Action>
-        </ActionContainer>
-      </Container>
-    </Background>
+            <Text fontSize="10pt" mt="12px">
+              Ulangi kata sandi
+            </Text>
+
+            <InputGroup mt="4px" alignItems="center">
+              <Input
+                name="password"
+                type={show ? "text" : "password"}
+                onChange={handleConfirmPasswordChange} // Gunakan handleConfirmPasswordChange
+                required
+                placeholder="Tulis ulang kata sandi"
+                fontSize="10pt"
+              />
+              <InputRightElement onClick={onShowPassword} cursor="pointer">
+                {show ? <FaEyeSlash /> : <FaEye />}
+              </InputRightElement>
+            </InputGroup>
+
+            <Label mt={12}>Daftar sebagai:</Label>
+            <CheckboxContainer mt={12}>
+              <input
+                name="role"
+                type="radio"
+                value="innovator"
+                onChange={onChange}
+                required
+              />
+              <Label>Inovator</Label>
+            </CheckboxContainer>
+
+            <CheckboxContainer mt={12}>
+              <input
+                name="role"
+                type="radio"
+                value="village"
+                onChange={onChange}
+                required
+              />
+              <Label>Perangkat desa</Label>
+            </CheckboxContainer>
+
+            {(error || userError) && (
+              <Text textAlign="center" color="red" fontSize="10pt" mt={2}>
+                {error ||
+                  FIREBASE_ERRORS[
+                    userError?.message as keyof typeof FIREBASE_ERRORS
+                  ]}
+              </Text>
+            )}
+
+            <Button
+              mt={4}
+              type="submit"
+              alignItems="center"
+              width="100%"
+              isLoading={loading}
+              fontSize="14px"
+            >
+              Registrasi
+            </Button>
+          </form>
+
+          <ActionContainer mt={16}>
+            <Label>Sudah memiliki akun?</Label>
+            <Action onClick={() => navigate(paths.LOGIN_PAGE)}>Login</Action>
+          </ActionContainer>
+        </Container>
+      </Background>
     </Box>
   );
 };
