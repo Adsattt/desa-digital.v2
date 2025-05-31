@@ -85,9 +85,12 @@ const InnovatorForm: React.FC = () => {
   const [alertMessage, setAlertMessage] = useState(
     "Profil masih kosong. Silahkan isi data di bawah terlebih dahulu"
   );
+
+  const [submitEvent, setSubmitEvent] = useState<React.FormEvent<HTMLFormElement> | null>(null);
+  const [isFormLocked, setIsFormLocked] = useState(false);
+  const [confirmedSubmit, setConfirmedSubmit] = useState(false);
   const modalBody1 = "Apakah anda yakin ingin mendaftarkan profil?"; // Konten Modal
   const modalBody2 = "Profil sudah didaftarkan. Admin sedang memverifikasi pengajuan daftar profil"; // Konten Modal
-
   const [isModal1Open, setIsModal1Open] = useState(false);
   const [isModal2Open, setIsModal2Open] = useState(false);
   const closeModal = () => {
@@ -96,20 +99,31 @@ const InnovatorForm: React.FC = () => {
   };
 
   const handleModal1Yes = () => {
-    setIsModal2Open(true);
-    setIsModal1Open(false); // Tutup modal pertama
-    // Di sini tidak membuka modal kedua
-  };
+  setIsModal1Open(false); //tutup modal pertama
+  setIsModal2Open(true);
+  setConfirmedSubmit(true);
+  if (submitEvent) {
+    onSubmitForm(submitEvent); // Kirim data form
+  }
+};
+
+useEffect(() => {
+  if (confirmedSubmit) {
+    setIsFormLocked(true);        
+    setIsModal2Open(true);        
+    setConfirmedSubmit(false);    
+  }
+}, [confirmedSubmit]);
+
 
   const isFormValid = () => {
     return (
       selectedCategory !== null &&
-      selectedLogo !== null &&
+      selectedLogo.trim() !== "" &&
+      selectedHeader.trim() !== "" &&
       textInputsValue.name.trim() !== "" &&
       textInputsValue.description.trim() !== "" &&
-      textInputsValue.whatsapp.trim() !== "" &&
-      textInputsValue.website.trim() !== "" &&
-      textInputsValue.instagram.trim() !== ""
+      textInputsValue.whatsapp.trim() !== ""
     );
   };
 
@@ -312,7 +326,7 @@ const InnovatorForm: React.FC = () => {
       toast({
         title: "Profile berhasil dibuat",
         status: "success",
-        duration: 5000,
+        duration: 1000,
         isClosable: true,
         position: "top",
       });
@@ -324,7 +338,7 @@ const InnovatorForm: React.FC = () => {
         title: "Error",
         description: "Terjadi kesalahan saat menambahkan dokumen.",
         status: "error",
-        duration: 5000,
+        duration: 1000,
         isClosable: true,
         position: "top",
       });
@@ -431,9 +445,18 @@ const InnovatorForm: React.FC = () => {
       <TopBar
         title={owner ? "Edit Profil Inovator" : "Register Inovator"} 
         onBack={() => navigate(-1)} />
-      <Box p="48px 16px 20px 16px">
-        <form onSubmit={onSubmitForm} id="InnovatorForm">
-          <Flex direction="column" marginTop="24px">
+      <Box p="0 16px">
+      <form
+      id="InnovatorForm"
+          onSubmit={(e) => {
+            e.preventDefault(); 
+            if (isFormValid()) {
+              setSubmitEvent(e); // Simpan event
+              setIsModal1Open(true); // Tampilkan modal
+            }
+          }}
+        >
+          <Flex direction="column" marginTop="50px">
             <Alert
               status={alertStatus}
               fontSize={12}
@@ -443,7 +466,7 @@ const InnovatorForm: React.FC = () => {
             >
               {alertMessage}
             </Alert>
-            <Stack spacing="12px" width="100%">
+            <Stack spacing="8px" width="100%">
               <FormSection
                 title="Nama Inovator"
                 name="name"
@@ -452,7 +475,8 @@ const InnovatorForm: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={getNameWordCount()}
                 maxWords={10}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
+                isRequired
               />
               <Text fontWeight="400" fontSize="14px" mb="-2">
                 Kategori Inovator <span style={{ color: "red" }}>*</span>
@@ -466,8 +490,9 @@ const InnovatorForm: React.FC = () => {
                 styles={customStyles}
                 isClearable
                 isSearchable
-                isDisabled={!isEditable}
+                isDisabled={!isEditable || isFormLocked}
               />
+
               <FormSection
                 isTextArea
                 title="Deskripsi Inovator"
@@ -477,7 +502,8 @@ const InnovatorForm: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={getDescriptionWordCount()}
                 maxWords={80}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
+                isRequired
               />
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -498,11 +524,11 @@ const InnovatorForm: React.FC = () => {
                   setSelectedLogo={setSelectedLogo}
                   selectFileRef={selectLogoRef}
                   onSelectLogo={onSelectLogo}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
                 />
               </Flex>
               <Text fontWeight="400" fontSize="14px" mb="-2">
-                Header Inovator
+                Header Inovator <span style={{ color: "red" }}>*</span>
               </Text>
               <Flex direction="column" alignItems="flex-start">
                 <Text
@@ -518,7 +544,8 @@ const InnovatorForm: React.FC = () => {
                   setSelectedHeader={setSelectedHeader}
                   selectFileRef={selectHeaderRef}
                   onSelectHeader={onSelectHeader}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
+                  
                 />
               </Flex>
 
@@ -532,7 +559,8 @@ const InnovatorForm: React.FC = () => {
                 type="number"
                 value={textInputsValue.whatsapp}
                 onChange={onTextChange}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
+                isRequired={true}
               />
               <FormSection
                 title="Instagram"
@@ -540,7 +568,7 @@ const InnovatorForm: React.FC = () => {
                 placeholder="https://instagram.com/username"
                 type="url"
                 value={textInputsValue.instagram}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
                 onChange={onTextChange}
               />
               <FormSection
@@ -549,7 +577,7 @@ const InnovatorForm: React.FC = () => {
                 placeholder="https://website.com"
                 type="url"
                 value={textInputsValue.website}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
                 onChange={onTextChange}
               />
             </Stack>
