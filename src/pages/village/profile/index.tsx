@@ -616,5 +616,4 @@ export default function ProfileVillage() {
       />
     </Box>
   );
-  </>
 }
