@@ -4,17 +4,19 @@ import {
   Collapse,
   Flex,
   Text,
+  Textarea,
+  Input,
   useDisclosure,
 } from "@chakra-ui/react";
 import TopBar from "Components/topBar";
 import React, { useEffect, useRef, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
-import ConfModal from "../../../components/confirmModal/confModal";
-import SecConfModal from "../../../components/confirmModal/secConfModal";
-import DocUpload from "../../../components/form/DocUpload";
-import ImageUpload from "../../../components/form/ImageUpload";
-import VidUpload from "../../../components/form/VideoUpload";
-import { auth, firestore, storage } from "../../../firebase/clientApp";
+import ConfModal from "../../../../components/confirmModal/confModal";
+import SecConfModal from "../../../../components/confirmModal/secConfModal";
+import DocUpload from "../../../../components/form/DocUpload";
+import ImageUpload from "../../../../components/form/ImageUpload";
+import VidUpload from "../../../../components/form/VideoUpload";
+import { auth, firestore, storage } from "../../../../firebase/clientApp";
 
 import {
   CheckboxGroup,
@@ -25,7 +27,7 @@ import {
   NavbarButton,
   Text1,
   Text2,
-} from "./_klaimStyles";
+} from "../_klaimStyles";
 
 import StatusCard from "Components/card/status/StatusCard";
 import RejectionModal from "Components/confirmModal/RejectionModal";
@@ -46,7 +48,7 @@ import { toast } from "react-toastify";
 import { useUser } from "src/contexts/UserContext";
 import RecommendationDrawer from "Components/drawer/RecommendationDrawer";
 
-const KlaimInovasi: React.FC = () => {
+const KlaimInovasiManual: React.FC = () => {
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   const { id } = useParams<{ id: string }>();
@@ -75,6 +77,11 @@ const KlaimInovasi: React.FC = () => {
     onOpen: onRecOpen,
     onClose: onRecClose,
   } = useDisclosure();
+  const [textInputsValue, setTextInputsValue] = useState({
+      inovationName: "",
+      inovatorName: "",
+      description: "",
+    });
 
   const location = useLocation();
   const inovasiId = location.state?.id;
@@ -322,6 +329,45 @@ const KlaimInovasi: React.FC = () => {
     await submitClaim();
   };
 
+  const getDescriptionWordCount = () => {
+    return textInputsValue.description
+      .split(/\s+/)
+      .filter((word) => word !== "").length;
+  };
+
+  const onTextChange = ({
+      target: { name, value },
+    }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const wordCount = value.split(/\s+/).filter((word) => word !== "").length;
+      if (name === "description") {
+        if (wordCount <= 80) {
+          setTextInputsValue((prev) => ({
+            ...prev,
+            [name]: value,
+          }));
+        }
+      } else if (name === "inovationName") {
+        if (wordCount <= 5) {
+          setTextInputsValue((prev) => ({
+            ...prev,
+            [name]: value,
+          }));
+        }
+      } else if (name === "inovatorName") {
+        if (wordCount <= 5) {
+          setTextInputsValue((prev) => ({
+            ...prev,
+            [name]: value,
+          }));
+        }
+      } else {
+        setTextInputsValue((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      }
+    };
+
   useEffect(() => {
     // Jika salah satu modal terbuka, sembunyikan scrollbar
     if (isModal1Open || isModal2Open) {
@@ -427,10 +473,119 @@ const KlaimInovasi: React.FC = () => {
     <Box>
       <form onSubmit={onSubmitForm}>
         <TopBar
-          title={isAdmin ? "Verifikasi Klaim Inovasi" : "Klaim Inovasi"}
+          title={isAdmin ? "Verifikasi Klaim Inovasi" : "Klaim Penerapan Inovasi"}
           onBack={() => navigate(-1)}
         />
         <Container>
+          <Flex flexDirection="column" gap="2px">
+            <Label>
+                Informasi Inovasi
+            </Label>
+            <Text2> Silahkan masukkan informasi inovator dan inovasi yang akan anda klaim penerapannya </Text2>
+          </Flex>
+            <Text fontWeight="400" fontSize="14px" mb="-2">
+                Nama Inovator <span style={{ color: "red" }}>*</span>
+            </Text>
+            <Input
+                name="inovatorName"
+                fontSize="14px"
+                placeholder="Nama Inovator"
+                //isDisabled={!isEditable}
+                _placeholder={{ color: "#9CA3AF" }}
+                _focus={{
+                outline: "none",
+                bg: "white",
+                border: "none",
+                }}
+                value={textInputsValue.inovatorName}
+                onChange={onTextChange}
+                required
+            />
+            <Text fontWeight="400" fontSize="14px" mb="-2">
+                Nama Inovasi <span style={{ color: "red" }}>*</span>
+            </Text>
+            <Input
+                name="inovationName"
+                fontSize="14px"
+                placeholder="Nama Inovasi"
+                //isDisabled={!isEditable}
+                _placeholder={{ color: "#9CA3AF" }}
+                _focus={{
+                outline: "none",
+                bg: "white",
+                border: "none",
+                }}
+                value={textInputsValue.inovationName}
+                onChange={onTextChange}
+                required
+            />
+            <Text fontWeight="400" fontSize="14px" mb="-2">
+                Deskripsi Inovasi <span style={{ color: "red" }}>*</span>
+            </Text>
+            <Flex direction="column" alignItems="flex-start">
+                <Textarea
+                    name="description"
+                    fontSize="14px"
+                    placeholder="Masukkan deskripsi singkat tentang inovasi"
+                    //disabled={!isEditable}
+                    _placeholder={{ color: "#9CA3AF" }}
+                    _focus={{
+                    outline: "none",
+                    bg: "white",
+                    border: "none",
+                    }}
+                    height="100px"
+                    value={textInputsValue.description}
+                    onChange={onTextChange}
+                    required
+                />
+                <Text
+                    fontWeight="400"
+                    fontStyle="normal"
+                    fontSize="10px"
+                    color="gray.500"
+                >
+                    {getDescriptionWordCount()}/80 kata
+                </Text>
+            </Flex>
+            <Field>
+              <Flex flexDirection="column" gap="2px">
+                <Text1>
+                  Logo Inovator
+                </Text1>
+                <Text2> Maks 1 foto. format: png, jpg </Text2>
+                <ImageUpload
+                  selectedFiles={selectedFiles}
+                  setSelectedFiles={setSelectedFiles}
+                  selectFileRef={selectedFileRef}
+                  onSelectImage={onSelectImage}
+                  maxFiles={1}
+                />
+              </Flex>
+            </Field>
+            <Field>
+              <Flex flexDirection="column" gap="2px">
+                <Text1>
+                  Foto Inovasi
+                </Text1>
+                <Text2> Maks 1 foto. format: png, jpg </Text2>
+                <ImageUpload
+                  selectedFiles={selectedFiles}
+                  setSelectedFiles={setSelectedFiles}
+                  selectFileRef={selectedFileRef}
+                  onSelectImage={onSelectImage}
+                  maxFiles={1}
+                />
+              </Flex>
+            </Field>
+
+            
+          <Flex flexDirection="column" gap="2px">
+            <Label>
+                Bukti Klaim
+            </Label>
+            <Text2> Silahkan masukkan bukti klaim penerapan inovasi </Text2>
+          </Flex>
           <Flex flexDirection="column" gap="2px">
             {isAdmin && (
               <Text fontWeight="700" mb={2} fontSize="16px">
@@ -610,4 +765,4 @@ const KlaimInovasi: React.FC = () => {
     </Box>
   );
 };
-export default KlaimInovasi;
+export default KlaimInovasiManual;
