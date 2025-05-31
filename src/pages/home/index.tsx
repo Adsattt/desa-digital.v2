@@ -13,7 +13,7 @@ import Container from "Components/container";
 import Dashboard from "Components/dashboard/dashboard";
 import Loading from "Components/loading";
 import Rediness from "Components/rediness/Rediness";
-import SearchBarLink from "Components/search/SearchBarLink";
+import SearchBarLink from "./components/search/SearchBarLink";
 import TopBar from "Components/topBar";
 import { paths } from "Consts/path";
 import { useNavigate } from "react-router-dom";
@@ -21,11 +21,32 @@ import { toast } from "react-toastify";
 import { useUser } from "src/contexts/UserContext";
 import Hero from "./components/hero";
 import Innovator from "./components/innovator";
+import Villages from "./components/villages";
 import Menu from "./components/menu";
+import { useEffect, useState } from "react";
 
 function Home() {
   const navigate = useNavigate();
   const { role, isInnovatorVerified, loading } = useUser()
+  const [searchValue, setSearchValue] = useState("");
+
+const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  if (e.key === "Enter" && searchValue.trim()) {
+    navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+  }
+};
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && searchValue.trim()) {
+        navigate(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [searchValue, navigate]);
 
   if (loading) {
     return <Loading />
@@ -61,7 +82,12 @@ function Home() {
         isVillage={role === "village"}
       />
       <Stack direction="column" gap={2}>
-        <SearchBarLink placeholderText="Cari Inovasi atau inovator di sini..." />
+        <SearchBarLink 
+          placeholderText="Cari Inovasi di sini..."
+          value={searchValue}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchValue(e.target.value)}
+          onKeyDown={handleSearchSubmit}
+        />
         <Menu />
         <Flex direction="row" justifyContent="space-between" padding="0 14px">
           <Rediness />
@@ -71,6 +97,9 @@ function Home() {
         <BestBanner />
         <Box mt="120px">
           <Innovator />
+        </Box>
+        <Box mt="-10px">
+          <Villages />
         </Box>
       </Stack>
       {role === "innovator" && (

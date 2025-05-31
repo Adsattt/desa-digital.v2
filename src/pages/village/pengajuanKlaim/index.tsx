@@ -166,7 +166,39 @@ const PengajuanKlaim: React.FC = () => {
     <Container page>
       <TopBar title="Pengajuan Klaim" onBack={() => navigate(-1)} />
       <Stack padding="0 16px" gap={2}>
-        <Flex gap={2} mb={2} mt={8}>
+        <Flex 
+          flexDirection="column" 
+          mb={2}
+          mt={3}
+          backgroundColor="#DCFCE7"
+          alignItems="center"
+          ml="-16px" // Netralisir padding dari Stack
+          mr="-16px">
+          <Text
+            fontSize={12}
+            mb={2}
+            mt={3}
+            textAlign={"center"}
+            color={"#347357"}>
+            Inovasi belum terdaftar pada sistem ?
+          </Text>
+          <Button 
+            mb={2} 
+            fontSize={12}
+            backgroundColor="#FFFFFF"
+            color="#347357"
+            width="90%"
+            borderRadius={6}
+            border="1px solid #347357"
+            _hover={{
+              backgroundColor: "#347357",
+              color: "#FFFFFF"
+            }}
+            onClick={() => navigate(generatePath(paths.MANUAL_KLAIM_INOVASI))}>
+            Klaim manual di sini
+          </Button>
+        </Flex>
+        <Flex gap={2} mb={2}>
           <InputGroup flex={1}>
             <InputLeftElement pointerEvents="none">
               <SearchIcon color="gray.400" />

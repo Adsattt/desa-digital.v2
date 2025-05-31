@@ -21,6 +21,7 @@ type VidUploadProps = {
     disable,
   }) => {
     const [uploading, setUploading] = useState(false);
+    const [disabled, setDisabled] = useState(false);
 
     const handleSelectVid = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -129,7 +130,7 @@ type VidUploadProps = {
                     onClick={() => selectVidRef.current?.click()}
                     fontSize="10pt" color="#347357" fontWeight="400"
                     justifyContent="left"
-                    isDisabled={uploading}
+                    isLoading={uploading}
                 >
                     Pilih Video
                     <input

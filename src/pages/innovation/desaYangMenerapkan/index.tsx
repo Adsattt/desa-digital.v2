@@ -22,7 +22,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { auth, firestore } from "../../../firebase/clientApp";
 import { useAuthState } from "react-firebase-hooks/auth";
-import { collection, getDocs, orderBy, query, startAfter, limit } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, orderBy, query, startAfter, limit, where } from "firebase/firestore";
 import { paths } from "Consts/path";
 
 const SkeletonCard = () => (
@@ -39,13 +39,14 @@ const SkeletonCard = () => (
 );
 
 const DesaYangMenerapkan: React.FC = () => {
-  const { id: innovationId } = useParams();
+  const { id: inovasiId } = useParams();
 
   const navigate = useNavigate();
   const [user] = useAuthState(auth);
   const [data, setData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [villages, setVillages] = useState<any[]>([]);
 
   // Pencarian dan filter
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,7 +66,9 @@ const DesaYangMenerapkan: React.FC = () => {
         namaDesa: string;
         deskripsi?: string;
         status: string;
-        innovationId: string;
+        inovasiId: string;
+        desaId: string;
+        kabupatenKota: string;
       };
   
       try {
@@ -73,6 +76,7 @@ const DesaYangMenerapkan: React.FC = () => {
         if (isNextPage && lastVisible) {
           q = query(
             collection(firestore, "claimInnovations"),
+            where("inovasiId", "==", inovasiId),
             orderBy("createdAt", "desc"),
             startAfter(lastVisible),
             limit(itemsPerPage)
@@ -80,6 +84,7 @@ const DesaYangMenerapkan: React.FC = () => {
         } else {
           q = query(
             collection(firestore, "claimInnovations"),
+            where("inovasiId", "==", inovasiId),
             orderBy("createdAt", "desc"),
             limit(itemsPerPage)
           );
@@ -90,10 +95,30 @@ const DesaYangMenerapkan: React.FC = () => {
         setHasMore(docs.docs.length === itemsPerPage);
   
         const newData: Inovasi[] = docs.docs.map(doc => ({ id: doc.id, ...doc.data() } as Inovasi));
-        const filteredByInovasi = newData.filter(item => item.innovationId === innovationId);
-  
-        setData(filteredByInovasi);
-        setFilteredData(filteredByInovasi);
+
+        // Ambil data kabupatenKota dari dokumen village
+        const enrichedData = await Promise.all(
+          newData.map(async (item) => {
+            try {
+              const villageRef = doc(firestore, "villages", item.desaId);
+              const villageSnap = await getDoc(villageRef);
+              const villageData = villageSnap.exists() ? villageSnap.data() : {};
+              return {
+                ...item,
+                kabupatenKota: villageData.lokasi.kabupatenKota.label || "Tidak diketahui",
+              };
+            } catch (e) {
+              console.error("Error fetching village data:", e);
+              return {
+                ...item,
+                kabupatenKota: "Gagal mengambil data",
+              };
+            }
+          })
+        );
+        
+        setData(enrichedData);
+        setFilteredData(enrichedData);
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {
@@ -102,7 +127,8 @@ const DesaYangMenerapkan: React.FC = () => {
     };
   
     useEffect(() => {
-      if (user) fetchData();
+      if (user) 
+        fetchData();
     }, [user]);
   
     useEffect(() => {
@@ -196,16 +222,12 @@ const DesaYangMenerapkan: React.FC = () => {
           filteredData.map((item, idx) => (
             <CardNotification
               key={idx}
-              title={item.namaDesa || "Tanpa Nama Inovasi"}
+              title={item.namaDesa || "Tanpa Nama Desa"}
               status={item.status || "Unknown"}
               date={formatTimestamp(item.createdAt)}
-              description={item.deskripsi || "Tidak ada deskripsi"}
+              description={item.kabupatenKota || "Tidak ada deskripsi"}
               onClick={() => {
-                if (innovationId) {
-                  navigate(paths.DETAIL_VILLAGE_PAGE.replace(":id", innovationId));
-                } else {
-                  console.error("Innovation ID is undefined");
-                }
+                  navigate(paths.DETAIL_VILLAGE_PAGE.replace(":id", item.id));
               }}
             />
           ))

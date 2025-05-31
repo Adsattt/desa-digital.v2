@@ -119,6 +119,7 @@ type DocUploadProps = {
                         onClick={() => selectDocRef.current?.click()}
                         fontSize="10pt" color="#347357" fontWeight="400"
                         justifyContent="left"
+                        isLoading={uploading}
                     >
                         Pilih Dokumen
                         <input
