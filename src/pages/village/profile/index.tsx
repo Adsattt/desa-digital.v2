@@ -614,6 +614,6 @@ export default function ProfileVillage() {
         loading={loading}
         setOpenModal={setOpenModal}
       />
-    </Box>
+    </>
   );
 }
