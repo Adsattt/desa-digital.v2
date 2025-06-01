@@ -52,7 +52,7 @@ const CustomTooltip = ({
         return (
             <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
                 <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
-                <p style={{ margin: 0 }}>Total Klaim Inovasi: {data.valueAsli}</p> {/* Menampilkan Total Klaim Inovasi */}
+                <p style={{ margin: 0 }}>Total Desa Menerapkan: {data.valueAsli}</p> {/* Menampilkan Total Klaim Inovasi */}
             </div>
         );
     }

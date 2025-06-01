@@ -49,15 +49,15 @@ const SebaranDesaDashboard: React.FC = () => {
                     data.lokasi?.provinsi?.label &&
                     data.lokasi?.kabupatenKota?.label &&
                     data.lokasi?.kecamatan?.label
-                  ) {
+                ) {
                     villageList.push({
-                      name: data.namaDesa.trim(),
-                      provinsi: data.lokasi.provinsi.label.trim(),
-                      kabupaten: data.lokasi.kabupatenKota.label.trim(),
-                      kecamatan: data.lokasi.kecamatan.label.trim(),
+                        name: data.namaDesa.trim(),
+                        provinsi: data.lokasi.provinsi.label.trim(),
+                        kabupaten: data.lokasi.kabupatenKota.label.trim(),
+                        kecamatan: data.lokasi.kecamatan.label.trim(),
                     });
                     console.log("✅ Desa dimasukkan:", villageList[villageList.length - 1]);
-                  }                  
+                }
             });
 
             setVillageData(villageList);
@@ -67,47 +67,80 @@ const SebaranDesaDashboard: React.FC = () => {
         }
     };
 
-    const getCoordinatesByVillage = async (village: any) => {
+    // Delay utility function to avoid rate limiting
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Function to get coordinates with retry mechanism
+    const getCoordinatesByVillage = async (village: any, retryCount = 3): Promise<{ lat: number, lon: number } | null> => {
         const query = `${village.name}, ${village.kecamatan}, ${village.kabupaten}, ${village.provinsi}, Indonesia`;
         console.log("🔍 Mencari koordinat untuk:", query);
         try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
-          );
-          const data = await response.json();
-          if (data.length > 0) {
-            return {
-              lat: parseFloat(data[0].lat),
-              lon: parseFloat(data[0].lon),
-            };
-          }
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+            );
+            const data = await response.json();
+
+            // Return first valid result
+            if (data.length > 0) {
+                console.log(`✅ Koordinat ditemukan untuk ${village.name}:`, data[0]);
+                return {
+                    lat: parseFloat(data[0].lat),
+                    lon: parseFloat(data[0].lon),
+                };
+            } else {
+                console.warn(`Koordinat tidak ditemukan untuk: ${query}`);
+            }
         } catch (error) {
-          console.error("❌ Gagal ambil koordinat:", error);
+            console.error("Gagal ambil koordinat:", error);
+            if (retryCount > 0) {
+                console.log(`🔄 Retry untuk: ${query}, sisa percobaan: ${retryCount}`);
+                await delay(2000);  // Tambahkan delay 2 detik sebelum mencoba lagi
+                return getCoordinatesByVillage(village, retryCount - 1);
+            }
         }
         return null;
-      };
-      
+    };
 
+    // Function to process villages in batches to avoid rate limiting
+    const processVillagesInBatches = async (villages: any[], batchSize = 5) => {
+        const markerUpdates: { [key: string]: { lat: number; lon: number } } = {};
+
+        for (let i = 0; i < villages.length; i += batchSize) {
+            const batch = villages.slice(i, i + batchSize);
+            console.log(`Memproses batch ${Math.floor(i / batchSize) + 1}...`);
+
+            // Process each village in the batch
+            const results = await Promise.all(batch.map((village) => getCoordinatesByVillage(village)));
+
+            results.forEach((coords, index) => {
+                const villageName = batch[index].name;
+                if (coords) {
+                    markerUpdates[villageName] = coords;
+                }
+            });
+
+            console.log(`✅ Batch ${Math.floor(i / batchSize) + 1} selesai.`);
+
+            // Delay between batches to avoid server overload
+            await delay(2000);
+        }
+
+        return markerUpdates;
+    };
+
+    // Update markers using batch processing
     useEffect(() => {
         const updateMarkers = async () => {
-            const newMarkers: typeof markers = {};
-            for (const village of filteredData) {
-                if (!markers[village.name]) {
-                    console.log("Memproses desa:", village.name);
-                    const coords = await getCoordinatesByVillage(village);
-                    console.log("Hasil koordinat:", coords);
-                    if (coords) {
-                        newMarkers[village.name] = coords;
-                    }
-                }
-            }
-            setMarkers((prev) => ({ ...prev, ...newMarkers }));
+            if (filteredData.length === 0) return;
 
+            console.log("🔄 Memperbarui marker desa...");
+            const newMarkers = await processVillagesInBatches(filteredData, 5);
+
+            // Update the markers state
+            setMarkers((prev) => ({ ...prev, ...newMarkers }));
         };
 
-        if (filteredData.length > 0) {
-            updateMarkers();
-        }
+        updateMarkers();
     }, [filteredData]);
 
     console.log("Filtered Data:", filteredData);
@@ -166,6 +199,7 @@ const SebaranDesaDashboard: React.FC = () => {
     const provinces = Array.from(new Set(villageData.map((village) => village.provinsi)));
     const regencies = selectedProvinces ? Array.from(new Set(villageData.filter((village) => village.provinsi === selectedProvinces).map((village) => village.kabupaten))) : [];
     const districts = selectedRegencies ? Array.from(new Set(villageData.filter((village) => village.kabupaten === selectedRegencies).map((village) => village.kecamatan))) : [];
+    const dataToShow = filteredData.length > 0 ? filteredData : villageData;
 
     return (
         <Box>
@@ -175,22 +209,6 @@ const SebaranDesaDashboard: React.FC = () => {
                     Sebaran Desa Digital
                 </Text>
                 <Flex gap={2}>
-                    {/* <Button
-                        size="sm"
-                        bg="white"
-                        boxShadow="md"
-                        border="2px solid"
-                        borderColor="gray.200"
-                        px={2}
-                        py={2}
-                        display="flex"
-                        alignItems="center"
-                        _hover={{ bg: "gray.100" }}
-                        cursor="pointer"
-                        onClick={handleDownloadExcel}
-                    >
-                        <DownloadIcon boxSize={3} color="black" />
-                    </Button> */}
                     <Button
                         size="sm"
                         bg="white"
@@ -236,7 +254,7 @@ const SebaranDesaDashboard: React.FC = () => {
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     />
-                    {filteredData.map((item, index) => {
+                    {dataToShow.map((item, index) => {
                         const coords = markers[item.name];
                         if (!coords) return null;
                         return (

@@ -43,20 +43,20 @@ const CustomTooltip = ({
     active,
     payload,
     label,
-  }: TooltipProps<ValueType, NameType>) => {
+}: TooltipProps<ValueType, NameType>) => {
     if (active && payload && payload.length > 0) {
-      const data = payload[0].payload;
-  
-      return (
-        <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
-          <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
-          <p style={{ margin: 0 }}>Total Inovasi : {data.valueAsli}</p>
-        </div>
-      );
+        const data = payload[0].payload;
+
+        return (
+            <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
+                <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
+                <p style={{ margin: 0 }}>Total Inovasi : {data.valueAsli}</p>
+            </div>
+        );
     }
-  
+
     return null;
-  };
+};
 
 const KategoriInovasiDesa: React.FC = () => {
     const [barData, setBarData] = useState<ChartData[]>([]);
@@ -77,7 +77,7 @@ const KategoriInovasiDesa: React.FC = () => {
                 return;
             }
 
-            // Ambil nama desa berdasarkan userId
+            // 1. Ambil namaDesa dari villages
             const desaQuery = query(
                 collection(db, "villages"),
                 where("userId", "==", user.uid)
@@ -87,13 +87,13 @@ const KategoriInovasiDesa: React.FC = () => {
             let namaDesa = "";
             if (!desaSnap.empty) {
                 const desaData = desaSnap.docs[0].data() as { namaDesa: string };
-                namaDesa = desaData.namaDesa || "";
+                namaDesa = desaData.namaDesa?.trim().toLowerCase() || "";
             } else {
                 console.warn("Desa tidak ditemukan");
                 return;
             }
 
-            // Ambil semua inovasi
+            // 2. Ambil data inovasi
             const innovationsRef = collection(db, "innovations");
             const snapshot = await getDocs(innovationsRef);
 
@@ -101,37 +101,52 @@ const KategoriInovasiDesa: React.FC = () => {
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                const inputDesaMenerapkan = data.inputDesaMenerapkan;
+                const input = data.inputDesaMenerapkan;
+                const kategori = data.kategori;
 
-                const cocok = Array.isArray(inputDesaMenerapkan) &&
-                    inputDesaMenerapkan.some((nama: string) =>
-                        nama?.toLowerCase().trim() === namaDesa.toLowerCase().trim()
+                let cocok = false;
+
+                if (Array.isArray(input)) {
+                    cocok = input.some(
+                        (nama: string) => nama?.toLowerCase().trim() === namaDesa
                     );
+                } else if (typeof input === "string") {
+                    cocok = input.toLowerCase().trim() === namaDesa;
+                }
 
-                if (cocok && data.kategori && typeof data.kategori === "string") {
-                    const formatted = data.kategori.charAt(0).toUpperCase() + data.kategori.slice(1).toLowerCase();
+                if (cocok && typeof kategori === "string" && kategori.trim()) {
+                    const formatted = kategori.charAt(0).toUpperCase() + kategori.slice(1).toLowerCase();
                     kategoriCount[formatted] = (kategoriCount[formatted] || 0) + 1;
                 }
             });
 
+
+            console.log("✅ Nama desa:", namaDesa);
+            console.log("✅ kategoriCount:", kategoriCount);
+
+            // 3. Set semua kategori
             setAllKategoriData({ ...kategoriCount });
 
-            const kondisiArray = Object.keys(kategoriCount)
-                .map((key) => ({
-                    kategori: key,
-                    jumlah: kategoriCount[key],
-                }))
+            const kondisiArray = Object.entries(kategoriCount)
+                .map(([kategori, jumlah]) => ({ kategori, jumlah }))
                 .sort((a, b) => b.jumlah - a.jumlah);
 
             setKondisiData(kondisiArray);
 
-            // Top 5 chart data
-            const sortedKategori = Object.keys(kategoriCount)
-                .map((name) => ({ name, value: kategoriCount[name] }))
+            // 4. Buat top 5 kategori
+            const sortedKategori = Object.entries(kategoriCount)
+                .map(([name, value]) => ({ name, value }))
                 .sort((a, b) => b.value - a.value)
                 .slice(0, 5);
 
-            // Custom rank & tampilan chart tetap, tapi pakai value asli juga
+            // 5. Handle kasus jika data < 5 (isi dummy)
+            while (sortedKategori.length < 5) {
+                sortedKategori.push({
+                    name: "",
+                    value: 0,
+                });
+            }
+
             const customOrder = [3, 1, 0, 2, 4];
             const customHeights = [20, 40, 50, 35, 15];
             const customRanks = ["4th", "2nd", "1st", "3rd", "5th"];
@@ -139,18 +154,20 @@ const KategoriInovasiDesa: React.FC = () => {
             const rankedData = customOrder.map((index, rankIndex) => {
                 const item = sortedKategori[index];
                 return {
-                    name: item?.name || "",
+                    name: item?.name || "-",
                     value: customHeights[rankIndex],
                     valueAsli: item?.value || 0,
                     rank: customRanks[rankIndex],
                 };
             });
 
+            console.log("✅ rankedData:", rankedData);
             setBarData(rankedData);
         } catch (error) {
-            console.error("Error fetching kategori data:", error);
+            console.error("❌ Error fetching kategori data:", error);
         }
     };
+
 
 
     const handleDownload = () => {
