@@ -55,7 +55,7 @@ import {
       const fetchInnovatorCount = async () => {
         try {
           const db = getFirestore();
-          const innovatorsRef = collection(db, "innovators");
+          const innovatorsRef = collection(db, "profilInovator");
           const snapshot = await getDocs(innovatorsRef);
           setTotalInnovators(snapshot.size);
         } catch (error) {
@@ -66,7 +66,7 @@ import {
       const fetchVillageCount = async () => {
         try {
           const db = getFirestore();
-          const villageRef = collection(db, "villages");
+          const villageRef = collection(db, "profilDesa");
           const snapshot = await getDocs(villageRef);
           const validVillages = snapshot.docs.filter((doc) => {
             const data = doc.data();
@@ -112,7 +112,13 @@ import {
           </Text>
           <Link
             as={NavLink}
-            to={userRole === "admin" ? paths.ADMIN_DASHBOARD : paths.VILLAGE_DASHBOARD}
+          to={
+            userRole === "admin"
+              ? paths.ADMIN_DASHBOARD
+              : userRole === "village"
+              ? paths.VILLAGE_DASHBOARD
+              : paths.DASHBOARD_INNOVATOR_HOME
+          }
             fontSize="sm"
             color="gray.500"
             textDecoration="underline"

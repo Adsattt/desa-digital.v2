@@ -56,7 +56,7 @@ function Home() {
       <Hero
         description="KMS Desa Digital"
         text="Indonesia"
-        isAdmin={role === "Admin"}
+        isAdmin={role === "admin"}
         isInnovator={role === "innovator"}
         isVillage={role === "village"}
       />
@@ -67,7 +67,7 @@ function Home() {
           <Rediness />
           <Ads />
         </Flex>
-        {role === "village" && <Dashboard />}
+        {(role === "village" || role === "innovator") && <Dashboard />}
         <BestBanner />
         <Box mt="120px">
           <Innovator />

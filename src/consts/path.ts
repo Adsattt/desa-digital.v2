@@ -45,4 +45,13 @@ export const paths = {
   DETAIL_INNOVATION_PAGE: "/innovation/detail/:id",
   EDIT_INNOVATION_PAGE: "/innovation/edit/:id",
   DESA_YANG_MENERAPKAN_PAGE: "/innovation/desaYangMenerapkan/:id",
+
+  // ! DASHBOARD
+  DASHBOARD_INNOVATOR_HOME: "/dashboard/innovator",
+  DASHBOARD_INNOVATOR_INNOVATION: "/dashboard/innovator/innovation",
+  DASHBOARD_INNOVATOR_VILLAGE: "/dashboard/innovator/village",
+  DASHBOARD_MINISTRY_HOME: "/dashboard/ministry",
+  DASHBOARD_MINISTRY_INNOVATION: "/dashboard/ministry/innovation",
+  DASHBOARD_MINISTRY_INNOVATOR: "/dashboard/ministry/innovator",
+  DASHBOARD_MINISTRY_VILLAGE: "/dashboard/ministry/village",
 };
