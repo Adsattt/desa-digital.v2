@@ -1102,7 +1102,7 @@ useEffect(() => {
               }
             }}
           >
-            {status === "Ditolak" ? "Kirim Ulang" : "Daftarkan Aku"}
+            {status === "Ditolak" ? "Kirim Ulang" : "Daftarkan Akun"}
           </Button>
           <ConfModal
             isOpen={isModal1Open}

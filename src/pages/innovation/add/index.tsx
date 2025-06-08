@@ -127,7 +127,10 @@ const AddInnovation: React.FC = () => {
   const modalBody1 = "Apakah anda yakin ingin menambah inovasi?"; // Konten Modal
   const modalBody2 =
     "Inovasi sudah ditambahkan. Admin sedang memverifikasi pengajuan tambah inovasi"; // Konten Modal
-
+  
+  const [isFormLocked, setIsFormLocked] = useState(false);
+  const [confirmedSubmit, setConfirmedSubmit] = useState(false);
+  const [submitEvent, setSubmitEvent] = useState<React.FormEvent<HTMLFormElement> | null>(null);
   const [isModal1Open, setIsModal1Open] = useState(false);
   const [isModal2Open, setIsModal2Open] = useState(false);
   const closeModal = () => {
@@ -138,8 +141,19 @@ const AddInnovation: React.FC = () => {
   const handleModal1Yes = () => {
     setIsModal2Open(true);
     setIsModal1Open(false); // Tutup modal pertama
-    // Di sini tidak membuka modal kedua
+    setConfirmedSubmit(true);
+    if (submitEvent) {
+      onSubmitForm(submitEvent); // Kirim data form
+    }
   };
+
+  useEffect(() => {
+    if (confirmedSubmit) {
+      setIsFormLocked(true);        
+      setIsModal2Open(true);        
+      setConfirmedSubmit(false);    
+    }
+  }, [confirmedSubmit]);
 
   const onSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
@@ -638,7 +652,14 @@ const AddInnovation: React.FC = () => {
     <>
       <TopBar title="Tambahkan Inovasi" onBack={() => navigate(-1)} />
       <Box p="48px 16px 20px 16px">
-        <form onSubmit={onSubmitForm} id="innovationForm">
+        <form onSubmit={(e) => {
+            e.preventDefault(); 
+            if (isFormValid()) {
+              setSubmitEvent(e); // Simpan event
+              setIsModal1Open(true); // Tampilkan modal
+            }
+          }} 
+          id="innovationForm">
           <Flex direction="column" marginTop="24px">
             <Stack spacing={3} width="100%">
               <Alert
@@ -656,7 +677,7 @@ const AddInnovation: React.FC = () => {
                 defaultValue="Masih diproduksi"
                 name="status"
                 onChange={(value) => setSelectedStatus(value)}
-                isDisabled={!isEditable}
+                isDisabled={!isEditable || isFormLocked}
               >
                 <HStack spacing={4}>
                   {options.map((option) => (
@@ -685,7 +706,7 @@ const AddInnovation: React.FC = () => {
                 name="name"
                 fontSize="14px"
                 placeholder="Nama Inovasi"
-                isDisabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
                 _placeholder={{ color: "#9CA3AF" }}
                 _focus={{
                   outline: "none",
@@ -694,7 +715,7 @@ const AddInnovation: React.FC = () => {
                 }}
                 value={textInputsValue.name}
                 onChange={onTextChange}
-                required
+                isRequired
               />
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -704,13 +725,12 @@ const AddInnovation: React.FC = () => {
                 placeholder="Pilih kategori"
                 options={categoryOptions}
                 value={selectedCategory}
-                isDisabled={!isEditable}
+                isDisabled={!isEditable || isFormLocked}
                 onChange={(selectedOption) =>
                   setSelectedCategory(selectedOption)
                 }
                 styles={customStyles} // Terapkan gaya khusus
                 isClearable
-                required
               />
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -720,7 +740,7 @@ const AddInnovation: React.FC = () => {
                 name="year"
                 fontSize="14px"
                 placeholder="Ketik tahun"
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
                 _placeholder={{ color: "#9CA3AF" }}
                 _focus={{
                   outline: "none",
@@ -729,7 +749,7 @@ const AddInnovation: React.FC = () => {
                 }}
                 value={textInputsValue.year}
                 onChange={onTextChange}
-                required
+                isRequired
               />
 
               <Text fontWeight="400" fontSize="14px" mb="-2">
@@ -740,7 +760,7 @@ const AddInnovation: React.FC = () => {
                   name="description"
                   fontSize="14px"
                   placeholder="Masukkan deskripsi singkat tentang inovasi"
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
                   _placeholder={{ color: "#9CA3AF" }}
                   _focus={{
                     outline: "none",
@@ -750,7 +770,7 @@ const AddInnovation: React.FC = () => {
                   height="100px"
                   value={textInputsValue.description}
                   onChange={onTextChange}
-                  required
+                  isRequired
                 />
                 <Text
                   fontWeight="400"
@@ -776,7 +796,7 @@ const AddInnovation: React.FC = () => {
                     colorScheme="green"
                     value={selectedModels}
                     onChange={setSelectedModels}
-                    isDisabled={!isEditable}
+                    isDisabled={!isEditable || isFormLocked}
                   >
                     <Flex gap={4}>
                       {[firstColumn, secondColumn].map((column, colIndex) => (
@@ -811,7 +831,7 @@ const AddInnovation: React.FC = () => {
                       name="otherBusinessModel"
                       placeholder="Silahkan tulis model bisnis lainnya"
                       value={otherBusinessModel}
-                      disabled={!isEditable}
+                      disabled={!isEditable || isFormLocked}
                       onChange={(e) => {
                         const wordCount = e.target.value
                           .split(/\s+/)
@@ -865,9 +885,9 @@ const AddInnovation: React.FC = () => {
                   }}
                   height="100px"
                   value={textInputsValue.villages}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
                   onChange={onTextChange}
-                  required
+                  isRequired
                 />
                 <Text
                   fontWeight="400"
@@ -912,7 +932,7 @@ const AddInnovation: React.FC = () => {
                       }}
                       value={textInputsValue.priceMin}
                       onChange={onTextChange}
-                      disabled={!isEditable}
+                      disabled={!isEditable || isFormLocked}
                     />
                   </InputGroup>
                   <MinusIcon mx="2" color="#9CA3AF" mt="3" />
@@ -936,7 +956,7 @@ const AddInnovation: React.FC = () => {
                       }}
                       value={textInputsValue.priceMax}
                       onChange={onTextChange}
-                      disabled={!isEditable}
+                      disabled={!isEditable || isFormLocked}
                     />
                   </InputGroup>
                 </Flex>
@@ -961,7 +981,7 @@ const AddInnovation: React.FC = () => {
                   selectFileRef={selectFileRef}
                   onSelectImage={onSelectImage}
                   maxFiles={5}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
                 />
               </Flex>
 
@@ -987,8 +1007,8 @@ const AddInnovation: React.FC = () => {
                       _placeholder={{ color: "#9CA3AF" }}
                       _focus={{ outline: "none", bg: "white", border: "none" }}
                       value={item.benefit}
-                      disabled={!isEditable}
-                      required
+                      disabled={!isEditable || isFormLocked}
+                      //isRequired
                       onChange={(e) => {
                         const wordCount = e.target.value
                           .split(/\s+/)
@@ -1003,7 +1023,7 @@ const AddInnovation: React.FC = () => {
                     {benefit.length > 1 && (
                       <Button
                         variant="none"
-                        disabled={!isEditable}
+                        disabled={!isEditable || isFormLocked}
                         onClick={() => {
                           setBenefit((prev) =>
                             prev.filter((_, i) => i !== index)
@@ -1038,8 +1058,8 @@ const AddInnovation: React.FC = () => {
                       _placeholder={{ color: "#9CA3AF" }}
                       _focus={{ outline: "none", bg: "white", border: "none" }}
                       value={item.description}
-                      disabled={!isEditable}
-                      required
+                      disabled={!isEditable || isFormLocked}
+                      isRequired
                       onChange={(e) => {
                         const wordCount = e.target.value
                           .split(/\s+/)
@@ -1074,7 +1094,7 @@ const AddInnovation: React.FC = () => {
                 mt={-3}
                 variant="outline"
                 leftIcon={<AddIcon />}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
                 onClick={() => {
                   // Validasi input terakhir sebelum menambahkan manfaat baru
                   const lastBenefit = benefit[benefit.length - 1];
@@ -1097,6 +1117,7 @@ const AddInnovation: React.FC = () => {
                 Tambah Manfaat Lain
               </Button>
 
+              {/* Persiapan Infrastruktur */}
               <Text fontWeight="700" fontSize="16px" mb="-2" mt="2">
                 Persiapan Infrastruktur{" "}
                 <span
@@ -1124,8 +1145,8 @@ const AddInnovation: React.FC = () => {
                           border: "none",
                         }}
                         value={requirement}
-                        disabled={!isEditable}
-                        required
+                        disabled={!isEditable || isFormLocked}
+                        //isRequired
                         onChange={(e) => {
                           const wordCount = e.target.value
                             .split(/\s+/)
@@ -1187,7 +1208,7 @@ const AddInnovation: React.FC = () => {
                     _focus={{ outline: "none", bg: "white", border: "none" }}
                     value={newRequirement}
                     disabled={!isEditable}
-                    required
+                    //isRequired
                     onChange={(e) => {
                       const wordCount = e.target.value
                         .split(/\s+/)
@@ -1222,7 +1243,7 @@ const AddInnovation: React.FC = () => {
                     onClick={() => {
                       // Validasi infrastruktur terakhir sebelum menambahkan yang baru
                       const lastRequirement = requirements[requirements.length - 1];
-                      if (!lastRequirement) {
+                      if (!lastRequirement || lastRequirement.trim() === "") {
                         toast({
                           title: "Persiapan infrasturuktur",
                           description: "Silakan isi sebelum menambahkan yang baru.",
@@ -1264,6 +1285,8 @@ const AddInnovation: React.FC = () => {
               width="100%"
               onClick={() => {
                 if (isFormValid()) {
+                  setIsModal1Open(true);
+                } else {
                   toast({
                     title: "Form belum lengkap!",
                     description: "Harap isi semua field wajib.",
@@ -1272,8 +1295,6 @@ const AddInnovation: React.FC = () => {
                     position: "top",
                     isClosable: true,
                     });
-                } else {
-                  setIsModal1Open(true);
                 }
               }}
             >
