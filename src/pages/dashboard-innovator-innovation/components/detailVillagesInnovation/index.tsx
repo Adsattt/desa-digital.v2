@@ -63,7 +63,10 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
           };
         });
 
-        setVillages(villagesData);
+        setVillages(
+          villagesData.sort((a, b) => a.namaDesa.localeCompare(b.namaDesa))
+        );
+
       } catch (error) {
         console.error('Error fetching villages:', error);
       }
@@ -142,9 +145,9 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={4}>
         <Text sx={titleStyle}>
-          Daftar Desa {namaInovasi}
+          {namaInovasi ? `Daftar Desa ${namaInovasi}` : "Daftar Desa"}
         </Text>
-            <Menu>
+          <Menu>
             <MenuButton
                 as={IconButton}
                 aria-label="Download options"
@@ -154,9 +157,15 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
             <MenuList>
                 <MenuItem onClick={exportToPDF}>Download PDF</MenuItem>
                 <MenuItem onClick={exportToExcel}>Download Excel</MenuItem>
-        </MenuList>
+            </MenuList>
         </Menu>    
       </Flex>
+
+      {!namaInovasi && (
+        <Text fontSize="sm" color="gray.500" mt={1}>
+          Pilih baris pada tabel Daftar Inovasi untuk melihat data
+        </Text>
+      )}
 
       <TableContainer sx={tableContainerStyle}>
         <Table variant="simple" size="sm">

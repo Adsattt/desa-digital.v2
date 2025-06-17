@@ -47,27 +47,156 @@ type BarValue = {
 
 type ChartGroup = {
   category: string;
-  values: BarValue[]; // [0] = count of docs (bar)
+  values: BarValue[];
 };
 
-const getYAxisLabels = (max: number, step: number): number[] => {
-  const roundedMax = Math.ceil(max / step) * step;
-  const labels: number[] = [];
-  for (let i = roundedMax; i >= 0; i -= step) {
-    labels.push(i);
+const truncateLabel = (label: string, maxLength = 3): string =>
+  label.length > maxLength ? label.slice(0, maxLength) + "..." : label;
+
+const exportToPDF = async (selectedYear: number) => {
+  const snapshot = await getDocs(collection(db, "profilInovator"));
+  const allData = snapshot.docs.map((doc) => doc.data());
+
+  const doc = new jsPDF({ orientation: "landscape" });
+  const downloadDate = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  doc.setFillColor(0, 128, 0);
+  doc.rect(0, 0, 1000, 30, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text("Dokumen Laporan Kementerian", 14, 13);
+  doc.text("KMS Inovasi Desa Digital", 280, 13, { align: "right" });
+
+  doc.setFontSize(12);
+  doc.text("Diambil dari: Grafik Jumlah Inovator per Kategori", 14, 22);
+  doc.text(`Diunduh pada: ${downloadDate}`, 280, 22, { align: "right" });
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+
+  let y = 42;
+  const labelX = 14;
+
+  const grouped = allData.reduce((acc: Record<string, any[]>, item) => {
+    const kategori = item.kategoriInovator || "Tidak Diketahui";
+    if (!acc[kategori]) acc[kategori] = [];
+    acc[kategori].push(item);
+    return acc;
+  }, {});
+
+  for (const [kategori, entries] of Object.entries(grouped)) {
+    doc.text(`Data Inovator Tahun ${selectedYear}, Kategori: ${kategori}`, labelX, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [
+        [
+          "No",
+          "Nama Inovator",
+          "Kategori Inovator",
+          "Jumlah Inovasi",
+          "Jumlah Desa Dampingan",
+          "Target Pengguna",
+          "Model Bisnis",
+        ],
+      ],
+      body: entries.map((item, i) => [
+        i + 1,
+        item.namaInovator || "-",
+        item.kategoriInovator || "-",
+        item.jumlahInovasi ?? 0,
+        item.jumlahDesaDampingan ?? 0,
+        item.targetPengguna || "-",
+        item.modelBisnis || "-",
+      ]),
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 10,
+      },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 25 },
+        4: { cellWidth: 30 },
+        5: { cellWidth: 50 },
+        6: { cellWidth: 80 },
+      },
+      margin: { top: 10 },
+    });
+
+    y = (doc as any).lastAutoTable.finalY + 15;
   }
-  return labels;
+
+  doc.save(`inovator_per_kategori_${selectedYear}.pdf`);
 };
 
-// Crop label to 3 letters + "..."
-const truncateLabel = (label: string, maxLength = 3): string => {
-  return label.length > maxLength ? label.slice(0, maxLength) + "..." : label;
+const exportToExcel = async (selectedYear: number) => {
+  const snapshot = await getDocs(collection(db, "profilInovator"));
+  const allData = snapshot.docs.map((doc) => doc.data());
+
+  const grouped = allData.reduce((acc: Record<string, any[]>, item) => {
+    const kategori = item.kategoriInovator || "Tidak Diketahui";
+    if (!acc[kategori]) acc[kategori] = [];
+    acc[kategori].push(item);
+    return acc;
+  }, {});
+
+  const worksheetData: any[] = [];
+
+  for (const [kategori, entries] of Object.entries(grouped)) {
+    worksheetData.push({ Kategori: `Data Inovator Tahun ${selectedYear}, Kategori: ${kategori}` });
+    worksheetData.push({
+      No: "No",
+      NamaInovator: "Nama Inovator",
+      KategoriInovator: "Kategori Inovator",
+      JumlahInovasi: "Jumlah Inovasi",
+      JumlahDesaDampingan: "Jumlah Desa Dampingan",
+      TargetPengguna: "Target Pengguna",
+      ModelBisnis: "Model Bisnis",
+    });
+
+    entries.forEach((item, i) => {
+      worksheetData.push({
+        No: i + 1,
+        NamaInovator: item.namaInovator || "-",
+        KategoriInovator: item.kategoriInovator || "-",
+        JumlahInovasi: item.jumlahInovasi ?? 0,
+        JumlahDesaDampingan: item.jumlahDesaDampingan ?? 0,
+        TargetPengguna: item.targetPengguna || "-",
+        ModelBisnis: item.modelBisnis || "-",
+      });
+    });
+
+    worksheetData.push({});
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(worksheetData, { skipHeader: true });
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Inovator");
+
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+
+  saveAs(blob, `inovator_per_kategori_${selectedYear}.xlsx`);
 };
 
 const ChartInnovator = () => {
   const [chartData, setChartData] = useState<ChartGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [maxValue, setMaxValue] = useState(10);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const chartBarRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +205,6 @@ const ChartInnovator = () => {
       setLoading(true);
       const snapshot = await getDocs(collection(db, "profilInovator"));
 
-      // Map kategoriInovator -> count of documents
       const categoryMap: Record<string, { count: number }> = {};
 
       snapshot.forEach((doc) => {
@@ -84,39 +212,20 @@ const ChartInnovator = () => {
         if (!data.kategoriInovator) return;
 
         const kategori = data.kategoriInovator;
-
         if (!categoryMap[kategori]) {
-          categoryMap[kategori] = {
-            count: 0,
-          };
+          categoryMap[kategori] = { count: 0 };
         }
-
         categoryMap[kategori].count += 1;
       });
 
       const formattedData: ChartGroup[] = Object.entries(categoryMap)
         .map(([category, { count }]) => ({
           category,
-          values: [
-            {
-              id: 1,
-              value: count, // bar: count of docs per category
-              color: "#568A73", // bar color
-            },
-          ],
+          values: [{ id: 1, value: count, color: "#568A73" }],
         }))
-        // Sort descending by count (bar value)
-        .sort((a, b) => {
-          const aCount = a.values.find((v) => v.id === 1)?.value || 0;
-          const bCount = b.values.find((v) => v.id === 1)?.value || 0;
-          return bCount - aCount;
-        });
+        .sort((a, b) => b.values[0].value - a.values[0].value);
 
-      // Find max bar value to scale Y-axis
-      const maxCount = Math.max(
-        ...formattedData.map((group) => group.values[0].value),
-        10
-      );
+      const maxCount = Math.max(...formattedData.map((g) => g.values[0].value), 10);
 
       setChartData(formattedData);
       setMaxValue(maxCount);
@@ -142,45 +251,8 @@ const ChartInnovator = () => {
               ml={2}
             />
             <MenuList fontSize="sm">
-              <MenuItem
-                onClick={() => {
-                  const doc = new jsPDF();
-                  doc.text(`Data Inovasi Desa`, 14, 10);
-                  const tableData = chartData.map((group) => [
-                    group.category,
-                    group.values[0].value,
-                  ]);
-                  autoTable(doc, {
-                    head: [["Kategori", "Jumlah Inovator"]],
-                    body: tableData,
-                  });
-                  doc.save(`inovasi_desa.pdf`);
-                }}
-              >
-                Download PDF
-              </MenuItem>
-              <MenuItem
-                onClick={() => {
-                  const worksheetData = chartData.map((group) => ({
-                    Kategori: group.category,
-                    JumlahDokumen: group.values[0].value,
-                  }));
-
-                  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-                  const workbook = XLSX.utils.book_new();
-                  XLSX.utils.book_append_sheet(workbook, worksheet, "Inovasi");
-
-                  const excelBuffer = XLSX.write(workbook, {
-                    bookType: "xlsx",
-                    type: "array",
-                  });
-
-                  const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-                  saveAs(blob, `inovasi_desa.xlsx`);
-                }}
-              >
-                Download Excel
-              </MenuItem>
+              <MenuItem onClick={() => exportToPDF(selectedYear)}>Download PDF</MenuItem>
+              <MenuItem onClick={() => exportToExcel(selectedYear)}>Download Excel</MenuItem>
             </MenuList>
           </Menu>
         </Flex>
@@ -223,7 +295,7 @@ const ChartInnovator = () => {
                       <Box key={i} {...barGroupStyle} position="relative">
                         {barValue && (
                           <Tooltip
-                            label={`${group.category}: ${barValue.value} dokumen`}
+                            label={`${group.category}: ${barValue.value} inovator`}
                             placement="top"
                             openDelay={300}
                             hasArrow

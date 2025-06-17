@@ -63,7 +63,10 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({
           };
         });
 
-        setInnovations(innovationsData);
+        setInnovations(
+          innovationsData.sort((a, b) => a.namaInovasi.localeCompare(b.namaInovasi))
+        );
+
       } catch (error) {
         console.error('Error fetching innovations:', error);
       }

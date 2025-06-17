@@ -29,7 +29,10 @@ interface Props {
 
 interface Implementation {
   namaDesa: string;
+  kecamatan: string;
+  kabupaten: string;
   provinsi: string;
+  potensi: string;
   idm: string;
 }
 
@@ -54,6 +57,9 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
           return {
             namaDesa: d.namaDesa,
             provinsi: d.provinsi,
+            kabupaten: d.kabupaten,
+            kecamatan: d.kecamatan,
+            potensi: d.potensi,
             idm: String(d.idm),
           };
         })
@@ -77,19 +83,68 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
   // PDF Download
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.text(`Daftar Desa - Kategori: ${selectedCategory}`, 14, 15);
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Green header
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Daftar Desa Menurut Kategori", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset text styles
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    doc.text(`Daftar Desa Berdasarkan Kategori: ${selectedCategory}`, 14, y);
+    y += 6;
+
+    const sortedData = [...data]; // Assuming it's already sorted externally or here
+
     autoTable(doc, {
-      startY: 20,
-      head: [['No', 'Nama Desa', 'Provinsi', 'IDM']],
+      startY: y,
+      head: [["No", "Nama Desa", "Kecamatan", "Kabupaten", "Provinsi", "Potensi Desa", "IDM"]],
       body: sortedData.map((item, i) => [
         i + 1,
         item.namaDesa,
+        item.kecamatan,
+        item.kabupaten,
         item.provinsi,
+        item.potensi,
         item.idm,
       ]),
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [22, 160, 133] },
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 11,
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },  // No
+        1: { cellWidth: 25 },  // Nama Desa
+        2: { cellWidth: 25 },  // Kecamatan
+        3: { cellWidth: 25 },  // Kabupaten
+        4: { cellWidth: 25 },  // Provinsi
+        5: { cellWidth: 40 },  // Potensi
+        6: { cellWidth: 25 },  // IDM
+      },
     });
+
     doc.save(`Daftar_Desa_${selectedCategory}.pdf`);
   };
 

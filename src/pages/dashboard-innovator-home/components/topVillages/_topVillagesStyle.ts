@@ -43,7 +43,7 @@ export const rankText = {
 
 export const RankLabel = styled.div`
   position: absolute;
-  top: 2px; /* Move closer to top */
+  top: 2px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 14pt;

@@ -116,28 +116,66 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
     if (!data.length) return;
 
     const doc = new jsPDF();
-    const title = kategoriInovator
-      ? `Daftar Inovator: Kategori "${kategoriInovator}"`
-      : "Daftar Inovator";
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
 
-    const headers = ["No", "Nama Inovator", "Jumlah Inovasi", "Jumlah Desa Dampingan"];
-    const rows = data.map((item, index) => [
+    // Green header
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Daftar Inovator Berdasarkan Kategori", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset text styles
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    const title = kategoriInovator
+      ? `Daftar Inovator Kategori: ${kategoriInovator}`
+      : "Daftar Inovator";
+    doc.text(title, 14, y);
+    y += 6;
+
+    const exportData = data.map((item, index) => [
       index + 1,
       item.namaInovator,
       item.jumlahInovasi,
       item.jumlahDesaDampingan,
     ]);
 
-    doc.text(title, 14, 15);
     autoTable(doc, {
-      head: [headers],
-      body: rows,
-      startY: 20,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [33, 150, 243] },
+      startY: y,
+      head: [["No", "Nama Inovator", "Jumlah Inovasi", "Jumlah Desa Dampingan"]],
+      body: exportData,
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 11,
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },  // No
+        1: { cellWidth: 70 },  // Nama Inovator
+        2: { cellWidth: 40 },  // Jumlah Inovasi
+        3: { cellWidth: 45 },  // Jumlah Desa Dampingan
+      },
     });
 
-    doc.save(`Inovator_${kategoriInovator || "semua"}.pdf`);
+    doc.save(`Daftar_Inovator_${kategoriInovator || "semua"}.pdf`);
   };
 
   const handleDownloadXLSX = () => {
@@ -193,11 +231,12 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>
-          {kategoriInovator
-            ? `Daftar Inovator: Kategori "${kategoriInovator}"`
-            : "Daftar Inovator"}
-        </Text>
+        <Text {...titleStyle}>Daftar Inovator {kategoriInovator || '...'}</Text>
+        {!kategoriInovator && (
+          <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
+            Pilih kategori pada diagram untuk melihat data tabel
+          </Text>
+        )}
         <Menu>
           <MenuButton as={Button} variant="ghost" size="sm" px={2} py={1}>
             <Image src={downloadIcon} alt="Download" boxSize="16px" />

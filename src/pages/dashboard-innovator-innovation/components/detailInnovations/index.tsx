@@ -176,7 +176,9 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
           })
         );
 
-        setImplementationData(result);
+        setImplementationData(
+          result.sort((a, b) => a.namaInovasi.localeCompare(b.namaInovasi))
+        );
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

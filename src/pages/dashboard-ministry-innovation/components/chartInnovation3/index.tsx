@@ -65,23 +65,26 @@ const ChartInnovation3 = () => {
   const [chartData, setChartData] = useState<ChartGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [maxValue, setMaxValue] = useState(0);
+  const [inovasiDetails, setInovasiDetails] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const snapshot = await getDocs(collection(db, "inovasi"));
       const countPerCategory: Record<string, number> = {};
+      const allData: any[] = [];
 
       snapshot.forEach((doc) => {
         const data = doc.data();
         if (!data.kategoriInovasi || !data.tahunDibuat) return;
-        if (data.tahunDibuat !== selectedYear) return;
+        if (data.tahunDibuat > selectedYear) return;
 
         const kategori = data.kategoriInovasi;
         countPerCategory[kategori] = (countPerCategory[kategori] || 0) + 1;
+
+        allData.push(data); // Save full data for export
       });
 
-      // Sort categories by count descending
       const sortedEntries = Object.entries(countPerCategory).sort(
         (a, b) => b[1] - a[1]
       );
@@ -103,6 +106,7 @@ const ChartInnovation3 = () => {
 
       setChartData(formattedData);
       setMaxValue(maxCount);
+      setInovasiDetails(allData); // Store full data for export
       setLoading(false);
     };
 
@@ -116,21 +120,77 @@ const ChartInnovation3 = () => {
     );
 
   // Export to PDF
-  const exportToPDF = () => {
+  const exportToPDF = (data: any[], selectedYear: number) => {
     const doc = new jsPDF();
-    doc.text(`Data Inovasi Desa - ${selectedYear}`, 14, 10);
-
-    const tableData = chartData.map((group) => [
-      group.category,
-      group.values[0].value,
-    ]);
-
-    autoTable(doc, {
-      head: [["Kategori", "Jumlah"]],
-      body: tableData,
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
-    doc.save(`inovasi_desa_${selectedYear}.pdf`);
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Grafik Jumlah Inovasi per Kategori", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    const labelX = 14;
+
+    const grouped: Record<string, any[]> = data.reduce((acc, curr) => {
+      const key = curr.kategoriInovasi || "Tidak Diketahui";
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(curr);
+      return acc;
+    }, {});
+
+    for (const [kategori, entries] of Object.entries(grouped)) {
+      doc.setFont("helvetica", "bold");
+      doc.text(`Data Inovasi Tahun ${selectedYear}, Kategori: ${kategori}`, labelX, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [
+          ["No", "Nama Inovasi", "Nama Inovator", "Tahun Dibuat"],
+        ],
+        body: entries.map((item, i) => [
+          i + 1,
+          item.namaInovasi || "-",
+          item.namaInovator || "-",
+          item.tahunDibuat || "-",
+        ]),
+        headStyles: {
+          fillColor: [0, 128, 0],
+          textColor: 255,
+          fontStyle: "bold",
+        },
+        styles: {
+          fontSize: 10,
+        },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 70 },
+          2: { cellWidth: 60 },
+          3: { cellWidth: 30 },
+        },
+        margin: { top: 10 },
+      });
+
+      y = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    doc.save(`inovasi_per_kategori_${selectedYear}.pdf`);
   };
 
   // Export to Excel
@@ -156,7 +216,7 @@ const ChartInnovation3 = () => {
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Perkembangan Inovasi Desa - {selectedYear}</Text>
+        <Text {...titleStyle}>Perkembangan Inovasi Tahun {selectedYear}</Text>
         <Flex justify="flex-end" align="center">
           <Image
             src={filterIcon}
@@ -175,7 +235,9 @@ const ChartInnovation3 = () => {
               ml={2}
             />
             <MenuList fontSize="sm">
-              <MenuItem onClick={exportToPDF}>Download PDF</MenuItem>
+              <MenuItem onClick={() => exportToPDF(inovasiDetails, selectedYear)}>
+                Download PDF
+              </MenuItem>
               <MenuItem onClick={exportToXLSX}>Download Excel</MenuItem>
             </MenuList>
           </Menu>
@@ -217,7 +279,7 @@ const ChartInnovation3 = () => {
                       {group.values.map((item: BarValue) => (
                         <Tooltip
                           key={item.id}
-                          label={`${group.category}: ${item.value}`}
+                          label={`${group.category}: ${item.value} inovasi`}
                           placement="top"
                           openDelay={300}
                           hasArrow

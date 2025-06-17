@@ -142,8 +142,10 @@ const MapVillages = () => {
       const profilInovatorSnap = await getDocs(
         query(collection(db, "profilInovator"), where("userId", "==", currentUID))
       );
-      const profilInovatorId = profilInovatorSnap.docs[0]?.id;
-      if (!profilInovatorId) return;
+      const profilInovatorDoc = profilInovatorSnap.docs[0];
+      const profilInovatorId = profilInovatorDoc?.id;
+      const profilInovatorData = profilInovatorDoc?.data();
+      if (!profilInovatorId || !profilInovatorData) return;
 
       // Get inovasi docs by inovatorId
       const inovasiSnap = await getDocs(
@@ -206,6 +208,11 @@ const MapVillages = () => {
             kabupaten: desaData.kabupaten ?? "-",
             provinsi: desaData.provinsi ?? "-",
             tanggalPengajuan: data.tanggalPengajuan ?? "-",
+            kategoriInovator: profilInovatorData.kategoriInovator ?? "-",
+            tahunDibentuk: profilInovatorData.tahunDibentuk ?? "-",
+            targetPengguna: profilInovatorData.targetPengguna ?? "-",
+            produk: profilInovatorData.produk ?? "-",
+            modelBisnis: profilInovatorData.modelBisnis ?? "-",
           });
         }
       }
@@ -220,21 +227,108 @@ const MapVillages = () => {
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-    doc.text("Data Sebaran Inovasi", 14, 10);
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    const inovatorProfile = exportData[0]; // Assuming exportData has at least one entry from the same inovator
+
+    // Header with green background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 210, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Inovator", 14, 13);
+    doc.text(inovatorProfile.namaInovator || "-", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("KMS Inovasi Desa Digital", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset styles for content
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+
+    // Inovator profile section
+    const profileStartY = 42;
+    let y = profileStartY;
+
+    const labelX = 14;
+    const valueX = 50;
+    const lineHeight = 8;
+
+    doc.text("Profil Inovator", 14, y);
+    y += lineHeight;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+
+    doc.text("Nama", labelX, y);
+    doc.text(`: ${inovatorProfile.namaInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Kategori", labelX, y);
+    doc.text(`: ${inovatorProfile.kategoriInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Tahun Dibentuk", labelX, y);
+    doc.text(`: ${inovatorProfile.tahunDibentuk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Target Pengguna", labelX, y);
+    doc.text(`: ${inovatorProfile.targetPengguna || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Produk", labelX, y);
+    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Model Bisnis", labelX, y);
+    doc.text(`: ${inovatorProfile.modelBisnis || "-"}`, valueX, y);
+    y += 10;
+
+    // Table starts after profile
+    y += 5;
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", "bold");
+    doc.text(`Data Sebaran Inovasi ${inovatorProfile.namaInovator || "-"}`, 14, y);
+    y += 6;
+
     autoTable(doc, {
-      head: [["Nama Desa", "Nama Inovasi", "Kategori Inovasi", "Nama Inovator", "Kecamatan", "Kabupaten", "Provinsi", "Tanggal Pengajuan"]],
+      startY: y,
+      head: [[
+        "Nama Inovator",
+        "Nama Inovasi",
+        "Kategori Inovasi",
+        "Nama Desa",
+        "Kecamatan",
+        "Kabupaten",
+        "Provinsi",
+        "Tanggal Pengajuan",
+      ]],
       body: exportData.map((row) => [
-        row.namaDesa,
+        row.namaInovator,
         row.namaInovasi,
         row.kategoriInovasi,
-        row.namaInovator,
+        row.namaDesa,
         row.kecamatan,
         row.kabupaten,
         row.provinsi,
         row.tanggalPengajuan,
       ]),
-      startY: 20,
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
     });
+
     doc.save("data_sebaran_inovasi.pdf");
   };
 

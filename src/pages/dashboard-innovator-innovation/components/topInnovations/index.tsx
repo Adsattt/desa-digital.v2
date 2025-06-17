@@ -51,7 +51,12 @@ const TopInnovations = () => {
         });
 
         const sortedByCount = Object.entries(countMap)
-          .sort((a, b) => b[1] - a[1])
+          .sort((a, b) => {
+            if (b[1] === a[1]) {
+              return a[0].localeCompare(b[0]);
+            }
+            return b[1] - a[1];
+          })
           .slice(0, 3)
           .map(([name, count]) => ({ name, count }));
 

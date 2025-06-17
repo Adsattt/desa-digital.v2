@@ -70,6 +70,7 @@ export const legendDotStyle = {
 export const titleStyle = {
   fontSize: 16,
   fontWeight: "bold",
+  marginBottom: "10px",
 };
 
 export const lineStyle = {

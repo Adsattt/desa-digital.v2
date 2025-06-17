@@ -76,10 +76,93 @@ const TableInnovator = () => {
     return pageNumbers;
   };
 
+  const [inovatorProfile, setInovatorProfile] = useState({
+    namaInovator: "-",
+    kategoriInovator: "-",
+    tahunDibentuk: "-",
+    targetPengguna: "-",
+    produk: "-",
+    modelBisnis: "-",
+  });
+
   const exportToPDF = () => {
     const doc = new jsPDF();
-    doc.text(`Daftar Inovasi ${userName}`, 14, 10);
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Assuming `userName` is defined and `implementationData` is the list of innovations
+    const userProfile = {
+      nama: userName || "-",
+    };
+
+    // Header with green background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 210, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Inovator", 14, 13);
+    doc.text(inovatorProfile.namaInovator, 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("KMS Inovasi Desa Digital", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset styles for content
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+
+    // Inovator profile section
+    const profileStartY = 42;
+    let y = profileStartY;
+
+    const labelX = 14;
+    const valueX = 50;
+    const lineHeight = 8;
+
+    doc.text("Profil Inovator", 14, y);
+    y += lineHeight;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+
+    doc.text("Nama", labelX, y);
+    doc.text(`: ${inovatorProfile.namaInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Kategori", labelX, y);
+    doc.text(`: ${inovatorProfile.kategoriInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Tahun Dibentuk", labelX, y);
+    doc.text(`: ${inovatorProfile.tahunDibentuk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Target Pengguna", labelX, y);
+    doc.text(`: ${inovatorProfile.targetPengguna || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Produk", labelX, y);
+    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Model Bisnis", labelX, y);
+    doc.text(`: ${inovatorProfile.modelBisnis || "-"}`, valueX, y);
+    y += 10;
+
+    // Table title
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Data Inovasi ${inovatorProfile.namaInovator}`, 14, y);
+    y += 6;
+
     autoTable(doc, {
+      startY: y,
       head: [["No", "Nama Inovasi", "Kategori Inovasi", "Tahun Dibuat"]],
       body: implementationData.map((item, idx) => [
         idx + 1,
@@ -87,8 +170,14 @@ const TableInnovator = () => {
         item.kategoriInovasi,
         item.tahunDibuat,
       ]),
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
     });
-    doc.save("daftar-inovasi.pdf");
+
+    doc.save("daftar_inovasi_pengguna.pdf");
   };
 
   const exportToExcel = () => {
@@ -123,9 +212,18 @@ const TableInnovator = () => {
         if (profilSnap.empty) return console.warn("No profilInovator found");
 
         const profilDoc = profilSnap.docs[0];
+        const profilData = profilDoc.data();
         const profilInovatorId = profilDoc.id;
-        // const profilData = profilDoc.data();
-        // setUserName(profilData.namaLengkap || "Anda");
+
+        // Store profile data
+        setInovatorProfile({
+          namaInovator: profilData.namaInovator || "-",
+          kategoriInovator: profilData.kategoriInovator || "-",
+          tahunDibentuk: profilData.tahunDibentuk || "-",
+          targetPengguna: profilData.targetPengguna || "-",
+          produk: profilData.produk || "-",
+          modelBisnis: profilData.modelBisnis || "-",
+        });
 
         const inovasiRef = collection(db, "inovasi");
         const qInovasi = query(inovasiRef, where("inovatorId", "==", profilInovatorId));
@@ -140,7 +238,9 @@ const TableInnovator = () => {
           };
         });
 
-        setImplementationData(fetched);
+        setImplementationData(
+          fetched.sort((a, b) => a.namaInovasi.localeCompare(b.namaInovasi))
+        );
       } catch (error) {
         console.error("Error fetching data:", error);
       }

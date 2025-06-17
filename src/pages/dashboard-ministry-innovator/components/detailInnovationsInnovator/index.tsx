@@ -93,10 +93,39 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
 
   const downloadPDF = () => {
     const doc = new jsPDF();
-    doc.setFontSize(12);
-    doc.text(`Daftar Desa Digital dari ${filterInnovator}`, 14, 16);
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
 
-    const tableData = filteredData.map(item => [
+    // Green header background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Daftar Desa Digital per Inovator", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset styles
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    doc.text(`Daftar Desa Digital dari Inovator: ${filterInnovator || ""}`, 14, y);
+    y += 6;
+
+    // Prepare table data
+    const tableColumn = ["No", "Nama Inovasi", "Nama Inovator", "Nama Desa", "Tahun"];
+    const tableRows = filteredData.map((item, index) => [
+      index + 1,
       item.namaInovasi,
       item.inovator,
       item.namaDesa,
@@ -104,13 +133,27 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
     ]);
 
     autoTable(doc, {
-      startY: 22,
-      head: [["Nama Inovasi", "Inovator", "Nama Desa", "Tahun"]],
-      body: tableData,
-      styles: { fontSize: 10 },
+      startY: y,
+      head: [tableColumn],
+      body: tableRows,
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 11,
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },  // No
+        1: { cellWidth: 45 },  // Nama Inovasi
+        2: { cellWidth: 50 },  // Nama Inovator
+        3: { cellWidth: 45 },  // Nama Desa
+        4: { cellWidth: 25 },  // Tahun
+      },
     });
 
-    doc.save(`data_inovasi_${filterInnovator}.pdf`);
+    doc.save(`Detail_Desa_Digital_${filterInnovator || "data"}.pdf`);
   };
 
   const getPageNumbers = () => {

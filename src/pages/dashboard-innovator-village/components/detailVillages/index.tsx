@@ -157,7 +157,9 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({ onSelectVillage }) => {
           };
         });
 
-        setImplementationData(result);
+        setImplementationData(
+          result.sort((a, b) => a.namaDesa.localeCompare(b.namaDesa))
+        );
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

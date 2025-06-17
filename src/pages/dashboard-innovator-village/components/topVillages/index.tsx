@@ -91,7 +91,12 @@ const TopVillages = () => {
 
         // Sort by count descending and pick top 3
         const sortedByCount = Object.entries(countMap)
-          .sort((a, b) => b[1] - a[1])
+          .sort((a, b) => {
+            if (b[1] === a[1]) {
+              return a[0].localeCompare(b[0]); // Alphabetical sort (ascending)
+            }
+            return b[1] - a[1]; // Sort by count (descending)
+          })
           .slice(0, 3)
           .map(([name, count]) => ({ name, count }));
 

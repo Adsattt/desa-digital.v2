@@ -102,7 +102,12 @@ const TopVillages = () => {
 
         // Sort and get top 3
         const sortedByFrequency = Object.entries(countMap)
-          .sort((a, b) => b[1] - a[1])
+          .sort((a, b) => {
+            if (b[1] === a[1]) {
+              return a[0].localeCompare(b[0]); // Alphabetical ascending
+            }
+            return b[1] - a[1]; // Descending by count
+          })
           .slice(0, 3)
           .map(([name, count], index) => ({
             name,
@@ -157,7 +162,7 @@ const TopVillages = () => {
                   align="center"
                   order={order}
                 >
-                  <Text fontWeight="semibold" mb={2} textAlign="center" fontSize="sm">
+                  <Text fontWeight="semibold" mb={2} textAlign="center" fontSize="15">
                     {item.name}
                   </Text>
                   <Box
@@ -166,10 +171,10 @@ const TopVillages = () => {
                     bg={bgColor}
                   >
                     <Text {...rankText}>
-                      <Box as="span" fontSize="xl" fontWeight="bold">
+                      <Box as="span" fontSize="25" fontWeight="bold">
                         {item.rank}
                       </Box>
-                      <Box as="span" fontSize="sm" fontWeight="bold" ml={1}>
+                      <Box as="span" fontSize="15" fontWeight="bold">
                         {item.label.slice(-2)}
                       </Box>
                     </Text>

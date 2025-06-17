@@ -142,24 +142,64 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
   // PDF download handler
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
 
-    const tableColumn = ["No", "Nama Desa", "Nama Inovasi", "Nama Inovator", "Tahun"];
-    const tableRows = data.map((item) => [
-      item.no,
+    // Green header background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Daftar Inovasi Desa", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset styles
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    doc.text(`Daftar Inovasi Desa ${selectedVillage || ""}`, 14, y);
+    y += 6;
+
+    // Prepare table data
+    const tableColumn = ["No", "Nama Desa", "Nama Inovasi", "Nama Inovator", "Tahun Pengajuan"];
+    const tableRows = data.map((item, index) => [
+      index + 1,
       item.namaDesa,
       item.namaInovasi,
       item.namaInovator,
       item.tahun,
     ]);
 
-    doc.text(`Daftar Inovasi Desa ${selectedVillage || ""}`, 14, 15);
-
     autoTable(doc, {
+      startY: y,
       head: [tableColumn],
       body: tableRows,
-      startY: 20,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [22, 160, 133] },
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 11,
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },  // No
+        1: { cellWidth: 30 },  // Nama Desa
+        2: { cellWidth: 50 },  // Nama Inovasi
+        3: { cellWidth: 60 },  // Nama Inovator
+        4: { cellWidth: 25 },  // Tahun
+      },
     });
 
     doc.save(`Inovasi_Desa_${selectedVillage || "data"}.pdf`);

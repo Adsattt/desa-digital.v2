@@ -103,20 +103,67 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
   // PDF export
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-    doc.text(`Data Desa Digital dari ${selectedInovasi}`, 14, 20);
-    const tableColumn = ["Nama Inovasi", "Inovator", "Nama Desa", "Tanggal Pengajuan"];
-    const tableRows = data.map(item => [
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Green header background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Daftar Desa Digital per Inovasi", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset styles
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    doc.text(`Daftar Desa Digital dari Inovasi: ${selectedInovasi || ""}`, 14, y);
+    y += 6;
+
+    // Prepare table data
+    const tableColumn = ["No", "Nama Inovasi", "Nama Inovator", "Nama Desa", "Tanggal Pengajuan"];
+    const tableRows = data.map((item, index) => [
+      index + 1,
       item.namaInovasi,
       item.namaInovator,
       item.namaDesa,
-      item.tanggalPengajuan
+      item.tanggalPengajuan,
     ]);
+
     autoTable(doc, {
+      startY: y,
       head: [tableColumn],
       body: tableRows,
-      startY: 30,
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 11,
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },  // No
+        1: { cellWidth: 45 },  // Nama Inovasi
+        2: { cellWidth: 50 },  // Nama Inovator
+        3: { cellWidth: 45 },  // Nama Desa
+        4: { cellWidth: 30 },  // Tanggal Pengajuan
+      },
     });
-    doc.save(`Detail_Desa_Digital_${selectedInovasi}.pdf`);
+
+    doc.save(`Detail_Desa_Digital_${selectedInovasi || "data"}.pdf`);
   };
 
   // XLSX export

@@ -118,8 +118,37 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
 
   const exportPDF = () => {
     if (!data.length) return;
+
     const doc = new jsPDF();
-    const headers = ['No', 'Nama Inovasi', 'Nama Inovator', 'Jumlah Desa'];
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Green header
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Daftar Inovasi Berdasarkan Kategori", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset text styles
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    doc.text(`Daftar Inovasi Berdasarkan Kategori: ${selectedCategory}`, 14, y);
+    y += 6;
+
     const exportData = data.map((item, index) => [
       index + 1,
       item.namaInovasi,
@@ -127,14 +156,26 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
       item.jumlahDesaDampingan,
     ]);
 
-    doc.text(`Daftar Inovasi oleh ${selectedCategory}`, 14, 15);
     autoTable(doc, {
-      head: [headers],
+      startY: y,
+      head: [["No", "Nama Inovasi", "Nama Inovator", "Jumlah Desa"]],
       body: exportData,
-      startY: 20,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [33, 150, 243] },
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      styles: {
+        fontSize: 11,
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },  // No
+        1: { cellWidth: 60 },  // Nama Inovasi
+        2: { cellWidth: 70 },  // Nama Inovator
+        3: { cellWidth: 30 },  // Jumlah Desa
+      },
     });
+
     doc.save(`Daftar_Inovasi_${selectedCategory || 'all'}.pdf`);
   };
 
@@ -162,7 +203,7 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
     <Box p={4}>
       <Flex justify="space-between" mb={2}>
         <Box>
-          <Text {...titleStyle}>Daftar Inovasi oleh {selectedCategory || '...'}</Text>
+          <Text {...titleStyle}>Daftar Inovasi {selectedCategory || '...'}</Text>
           {!selectedCategory && (
             <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
               Pilih kategori pada diagram untuk melihat data tabel

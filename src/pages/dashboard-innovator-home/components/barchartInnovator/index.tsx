@@ -70,6 +70,13 @@ const BarChartInovasi = () => {
         }
         const uid = currentUser.uid;
 
+        const exportRows: {
+          namaDesa: string;
+          namaInovasi: string;
+          namaInovator: string;
+          year: number;
+        }[] = [];
+
         // 1. Get profilInovator docs where userId == current UID
         const profilInovatorQ = query(
           collection(db, "profilInovator"),
@@ -77,6 +84,25 @@ const BarChartInovasi = () => {
         );
         const profilSnapshot = await getDocs(profilInovatorQ);
         const profilIds = profilSnapshot.docs.map((doc) => doc.id);
+
+        const profilMap: Record<string, string> = {};
+        profilSnapshot.docs.forEach((doc) => {
+          profilMap[doc.id] = doc.data().namaInovator || "-";
+        });
+
+        if (profilSnapshot.docs.length > 0) {
+          const firstProfilData = profilSnapshot.docs[0].data();
+          setProfil({
+            namaInovator: firstProfilData.namaInovator || "-",
+            kategoriInovator: firstProfilData.kategoriInovator || "-",
+            tahunDibentuk: firstProfilData.tahunDibentuk || "-",
+            targetPengguna: firstProfilData.targetPengguna || "-",
+            produk: firstProfilData.produk || "-",
+            modelBisnis: firstProfilData.modelBisnis || "-",
+          });
+        } else {
+          setProfil(null);
+        }
 
         if (profilIds.length === 0) {
           setDataByYear({});
@@ -86,7 +112,9 @@ const BarChartInovasi = () => {
 
         // 2. Get inovasi docs where inovatorId in profilIds (batch in 10)
         const inovasiIds: string[] = [];
+        const inovasiMap: Record<string, { namaInovasi: string; inovatorId: string }> = {};
         const batchSize = 10;
+
         for (let i = 0; i < profilIds.length; i += batchSize) {
           const batchIds = profilIds.slice(i, i + batchSize);
           const inovasiQ = query(
@@ -94,7 +122,14 @@ const BarChartInovasi = () => {
             where("inovatorId", "in", batchIds)
           );
           const inovasiSnapshot = await getDocs(inovasiQ);
-          inovasiSnapshot.forEach((doc) => inovasiIds.push(doc.id));
+          inovasiSnapshot.forEach((doc) => {
+            inovasiIds.push(doc.id);
+            const data = doc.data();
+            inovasiMap[doc.id] = {
+              namaInovasi: data.namaInovasi || "-",
+              inovatorId: data.inovatorId || "-",
+            };
+          });
         }
 
         if (inovasiIds.length === 0) {
@@ -119,17 +154,24 @@ const BarChartInovasi = () => {
             const year = Number(data.tanggalPengajuan);
             const desa = data.namaDesa;
 
-            if (
-              !isNaN(year) &&
-              desa &&
-              year >= yearRange[0] &&
-              year <= yearRange[1]
-            ) {
+            if (!isNaN(year) && desa && year >= yearRange[0] && year <= yearRange[1]) {
               counts[year] = (counts[year] || 0) + 1;
+
+              const inovasiData = inovasiMap[data.inovasiId] || {};
+              const namaInovasi = inovasiData.namaInovasi || "-";
+              const namaInovator = profilMap[inovasiData.inovatorId] || "-";
+
+              exportRows.push({
+                namaDesa: desa,
+                namaInovasi,
+                namaInovator,
+                year,
+              });
             }
           });
         }
 
+        setFormattedData(exportRows);
         setDataByYear(counts);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -144,10 +186,23 @@ const BarChartInovasi = () => {
   const maxValue = Math.max(...Object.values(dataByYear), 10);
   const rotateLabels = Object.keys(dataByYear).length > 8;
 
-  const formattedData = Object.entries(dataByYear).map(([year, count]) => ({
-    year: Number(year),
-    count,
-  }));
+  // const formattedData = Object.entries(dataByYear).map(([year, count]) => ({
+  //   year: Number(year),
+  //   count,
+  // }));
+
+  const [formattedData, setFormattedData] = useState<
+    { namaDesa: string; namaInovasi: string; namaInovator: string; year: number }[]
+  >([]);
+
+  const [profil, setProfil] = useState<{
+    namaInovator: string;
+    kategoriInovator: string;
+    tahunDibentuk: string | number;
+    targetPengguna: string;
+    produk: string;
+    modelBisnis: string;
+  } | null>(null);
 
   // Export Excel function
   const exportToExcel = (data: any[]) => {
@@ -162,19 +217,114 @@ const BarChartInovasi = () => {
     XLSX.writeFile(workbook, "data-perkembangan-inovasi.xlsx");
   };
 
-  // Export PDF function
-  const exportToPDF = (data: any[]) => {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("Data Perkembangan Inovasi", 14, 20);
-    autoTable(doc, {
-      startY: 30,
-      head: [["Tahun", "Jumlah Desa"]],
-      body: data.map((item) => [item.year, item.count]),
-      styles: { fontSize: 10 },
-    });
-    doc.save("data-perkembangan-inovasi.pdf");
-  };
+const exportToPDF = (
+  data: {
+    namaDesa: string;
+    namaInovasi: string;
+    namaInovator: string;
+    year: number;
+  }[],
+  profil: {
+    namaInovator: string;
+    kategoriInovator: string;
+    tahunDibentuk: string | number;
+    targetPengguna: string;
+    produk: string;
+    modelBisnis: string;
+  }
+) => {
+  const doc = new jsPDF();
+  const downloadDate = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  // Header background and text
+  doc.setFillColor(0, 128, 0);
+  doc.rect(0, 0, 210, 30, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+
+  doc.setFontSize(15);
+  doc.text("Dokumen Laporan Inovator", 14, 13);
+  doc.text(profil.namaInovator || "-", 190, 13, { align: "right" });
+
+  doc.setFontSize(12);
+  doc.text("KMS Inovasi Desa Digital", 14, 22);
+  doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+  // Reset styles for content
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(12);
+
+  // Inovator profile section
+  const profileStartY = 42;
+  let y = profileStartY;
+
+  const labelX = 14;
+  const valueX = 50;
+  const lineHeight = 8;
+
+  doc.text("Profil Inovator", 14, y);
+  y += lineHeight;
+
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+
+  doc.text("Nama", labelX, y);
+  doc.text(`: ${profil.namaInovator || "-"}`, valueX, y);
+  y += lineHeight;
+
+  doc.text("Kategori", labelX, y);
+  doc.text(`: ${profil.kategoriInovator || "-"}`, valueX, y);
+  y += lineHeight;
+
+  doc.text("Tahun Dibentuk", labelX, y);
+  doc.text(`: ${profil.tahunDibentuk || "-"}`, valueX, y);
+  y += lineHeight;
+
+  doc.text("Target Pengguna", labelX, y);
+  doc.text(`: ${profil.targetPengguna || "-"}`, valueX, y);
+  y += lineHeight;
+
+  doc.text("Produk", labelX, y);
+  doc.text(`: ${profil.produk || "-"}`, valueX, y);
+  y += lineHeight;
+
+  doc.text("Model Bisnis", labelX, y);
+  doc.text(`: ${profil.modelBisnis || "-"}`, valueX, y);
+  y += 10;
+
+  // Table title
+  y += 5;
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text(`Data Perkembangan Desa Dampingan ${profil.namaInovator || "-"}`, 14, y);
+  y += 5;
+
+  // Table with data
+  autoTable(doc, {
+    startY: y,
+    head: [["Nama Desa", "Nama Inovasi", "Nama Inovator", "Tahun"]],
+    body: data.map((item) => [
+      item.namaDesa,
+      item.namaInovasi,
+      item.namaInovator,
+      item.year,
+    ]),
+    headStyles: {
+      fillColor: [0, 128, 0],
+      textColor: 255,
+      fontStyle: "bold",
+    },
+    styles: { fontSize: 10 },
+  });
+
+  doc.save("data-perkembangan-inovasi.pdf");
+};
+
 
   return (
     <Box p={4}>
@@ -200,7 +350,7 @@ const BarChartInovasi = () => {
               <Image src={downloadIcon} alt="Download" boxSize="16px"/>
             </MenuButton>
             <MenuList>
-              <MenuItem onClick={() => exportToPDF(formattedData)}>
+              <MenuItem onClick={() => exportToPDF(formattedData, profil)}>
                 Download PDF
               </MenuItem>
               <MenuItem onClick={() => exportToExcel(formattedData)}>
@@ -221,13 +371,21 @@ const BarChartInovasi = () => {
 
         <Box {...chartWrapperStyle}>
           <Flex {...yAxisWrapperStyle}>
-            {[maxValue, ...[0.75, 0.5, 0.25].map((f) => Math.round(maxValue * f)), 0].map(
-              (label) => (
+            {(() => {
+              const stepSize = maxValue > 50 ? 10 : 5;
+              const niceMax = Math.ceil(maxValue / stepSize) * stepSize;
+              const steps = [];
+
+              for (let i = niceMax; i >= 0; i -= stepSize) {
+                steps.push(i);
+              }
+
+              return steps.map((label) => (
                 <Text key={label} {...yAxisLabelStyle}>
                   {label === 0 ? "" : label}
                 </Text>
-              )
-            )}
+              ));
+            })()}
           </Flex>
 
           <Flex {...chartBarContainerStyle}>

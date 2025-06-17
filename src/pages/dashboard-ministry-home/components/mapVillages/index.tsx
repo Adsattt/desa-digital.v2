@@ -172,6 +172,7 @@ const MapVillages = () => {
           idm: desaData.idm ?? "-",
           potensi: desaData.potensi ?? "-",
           namaInovasi: d.namaInovasi ?? "-",
+          tanggalPengajuan: d.tanggalPengajuan ?? "-",
           namaInovator: inovasiInfo.namaInovator,
           kategoriInovasi: inovasiInfo.kategoriInovasi,
         });
@@ -196,21 +197,93 @@ const MapVillages = () => {
   }, [db]);
 
   const handleDownloadPDF = () => {
-    const doc = new jsPDF();
-    doc.text("Data Sebaran Inovasi", 14, 10);
+    const doc = new jsPDF({ orientation: "landscape" });
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Header with green background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 280, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Peta Sebaran Desa Digital", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 280, 22, { align: "right" });
+
+    // Reset text styles for content
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
+
+    // Inovator profile section
+    let y = 42;
+    const labelX = 14;
+    const valueX = 50;
+    const lineHeight = 8;
+
+    // Title before table
+    doc.setFont("helvetica", "bold");
+    doc.text(`Data Sebaran Inovasi Desa Digital`, labelX, y);
+    y += 6;
+
     autoTable(doc, {
+      startY: y,
       head: [[
-        "Nama Desa", "Kecamatan", "Kabupaten", "Provinsi",
-        "Kategori Desa", "IDM", "Potensi",
-        "Nama Inovasi", "Kategori Inovasi", "Nama Inovator"
+        "Nama Desa",
+        "Kecamatan",
+        "Kabupaten",
+        "Provinsi",
+        "Kategori Desa",
+        "IDM",
+        "Potensi Desa",
+        "Nama Inovasi",
+        "Kategori Inovasi",
+        "Nama Inovator",
+        "Tanggal Pengajuan",
       ]],
       body: exportData.map((row) => [
-        row.namaDesa, row.kecamatan, row.kabupaten, row.provinsi,
-        row.kategoriDesa, row.idm, row.potensi,
-        row.namaInovasi, row.kategoriInovasi, row.namaInovator
+        row.namaDesa,
+        row.kecamatan,
+        row.kabupaten,
+        row.provinsi,
+        row.kategoriDesa,
+        row.idm,
+        row.potensi,
+        row.namaInovasi,
+        row.kategoriInovasi,
+        row.namaInovator,
+        row.tanggalPengajuan,
       ]),
-      startY: 20,
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+        minCellHeight: 12,
+      },
+      columnStyles: {
+        0: { cellWidth: 25 },  // Nama Desa
+        1: { cellWidth: 25 },  // Kecamatan
+        2: { cellWidth: 25 },  // Kabupaten
+        3: { cellWidth: 25 },  // Provinsi
+        4: { cellWidth: 25 },  // Kategori Desa
+        5: { cellWidth: 15 },  // IDM
+        6: { cellWidth: 35 },  // Potensi Desa
+        7: { cellWidth: 25 },  // Nama Inovasi
+        8: { cellWidth: 25 },  // Kategori Inovasi
+        9: { cellWidth: 25 },  // Nama Inovator
+        10: { cellWidth: 25 }, // Tanggal Pengajuan
+      }
     });
+
     doc.save("data_sebaran_inovasi.pdf");
   };
 
