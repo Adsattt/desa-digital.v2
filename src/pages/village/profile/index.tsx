@@ -13,6 +13,8 @@ import { paths } from "Consts/path";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import EnlargedImage from "../components/Image";
+import defaultHeader from "@public/images/default-header.svg";
+import defaultLogo from "@public/images/default-logo.svg";
 
 import {
   Accordion,
@@ -25,6 +27,7 @@ import {
   Text,
   Button,
   useDisclosure,
+  Image,
 } from "@chakra-ui/react";
 import {
   DocumentData,
@@ -104,9 +107,9 @@ export default function ProfileVillage() {
     onClose();
   };
 
-const toEditVillage = () => {
-  navigate(paths.VILLAGE_FORM);
-};
+  const toEditVillage = () => {
+    navigate(paths.VILLAGE_FORM);
+  };
 
   const handleReject = async () => {
     setLoading(true);
@@ -162,59 +165,67 @@ const toEditVillage = () => {
     fetchVillageData();
   });
 
-   useEffect(() => {
-     const fetchVillageAndInnovations = async () => {
-       if (!id) return;
+  useEffect(() => {
+    const fetchVillageAndInnovations = async () => {
+      if (!id) return;
 
-       // Fetch data dari collection villages berdasarkan id
-       const villageRef = doc(firestore, "villages", id);
-       const villageSnap = await getDoc(villageRef);
+      // Fetch data dari collection villages berdasarkan id
+      const villageRef = doc(firestore, "villages", id);
+      const villageSnap = await getDoc(villageRef);
 
-       if (villageSnap.exists()) {
-         const villageData = villageSnap.data();
-         const inovasiDiterapkan = villageData?.inovasiDiterapkan || [];
+      if (villageSnap.exists()) {
+        const villageData = villageSnap.data();
+        const inovasiDiterapkan = villageData?.inovasiDiterapkan || [];
 
-         // Ambil semua inovasiId dari field inovasiDiterapkan
-         const inovasiIds = inovasiDiterapkan.map(
-           (inovasi: any) => inovasi.inovasiId
-         );
-         if (inovasiIds.length > 0) {
-           // Fetch data dari collection innovations berdasarkan inovasiId
-           const innovationsRef = collection(firestore, "innovations");
-           const innovationsQuery = query(
-             innovationsRef,
-             where("__name__", "in", inovasiIds)
-           );
-           const innovationsSnapshot = await getDocs(innovationsQuery);
+        // Ambil semua inovasiId dari field inovasiDiterapkan
+        const inovasiIds = inovasiDiterapkan.map(
+          (inovasi: any) => inovasi.inovasiId
+        );
+        if (inovasiIds.length > 0) {
+          // Fetch data dari collection innovations berdasarkan inovasiId
+          const innovationsRef = collection(firestore, "innovations");
+          const innovationsQuery = query(
+            innovationsRef,
+            where("__name__", "in", inovasiIds)
+          );
+          const innovationsSnapshot = await getDocs(innovationsQuery);
 
-           const innovationsData = innovationsSnapshot.docs.map((doc) =>
-             doc.data()
-           );
-           setInnovations(innovationsData);
-         }
-       }
-     };
+          const innovationsData = innovationsSnapshot.docs.map((doc) =>
+            doc.data()
+          );
+          setInnovations(innovationsData);
+        }
+      }
+    };
 
-     fetchVillageAndInnovations();
-   }, [id]);
+    fetchVillageAndInnovations();
+  }, [id]);
 
   return (
-    <Box>
+    <>
       <TopBar title="Profil Desa" onBack={() => navigate(-1)} />
       <div style={{ position: "relative", width: "100%" }}>
-        <Background src={village?.header} alt="background" />
-        <Logo mx={16} my={-40} src={village?.logo} alt="logo" />
+        <Background src={village?.header || defaultHeader} alt="background" />
+        <Logo mx={16} my={-40} src={village?.logo || defaultLogo} alt="logo" />
       </div>
       <div>
         <ContentContainer>
           <Flex flexDirection="column" alignItems="flex-end" mb={owner ? 0 : 4}>
             {owner && (
-              <Button size="xs" onClick={() => navigate(`/village/pengajuan/${id}`)}>
-                <Icon src={Send} alt="send" />
+              <Button
+                size="xs"
+                onClick={() => navigate(`/village/pengajuan/${id}`)}
+                fontSize="12px"
+                fontWeight="500"
+                height="29px"
+                width="126px"
+                padding="6px 8px"
+                borderRadius="4px"
+                leftIcon={<Image src={Send} alt="send" />}
+              >
                 Pengajuan Klaim
               </Button>
             )}
-            
           </Flex>
 
           <Title> {village?.namaDesa} </Title>
@@ -250,7 +261,7 @@ const toEditVillage = () => {
               <Box color="#4B5563" fontSize="12px" minWidth="110px">
                 Link Instagram
               </Box>
-              <Description>{village?.website}</Description>
+              <Description>{village?.instagram || "-"}</Description>
             </Flex>
             <Flex
               width="100%"
@@ -262,7 +273,7 @@ const toEditVillage = () => {
               <Box color="#4B5563" fontSize="12px" minWidth="110px">
                 Link Website
               </Box>
-              <Description>{village?.instagram}</Description>
+              <Description>{village?.website || "-"}</Description>
             </Flex>
           </Flex>
           <div>
@@ -326,7 +337,22 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.infrastrukturDesa}
+                  <Box>
+                    <Text fontWeight="bold">Kondisi Jalan:</Text>
+                    <Text>{village?.kondisijalan || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Jaringan Internet:</Text>
+                    <Text>{village?.jaringan || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Ketersediaan Listrik:</Text>
+                    <Text>{village?.listrik || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Lain-lain:</Text>
+                    <Text>{village?.infrastrukturDesa || "Tidak tersedia"}</Text>
+                  </Box>
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem>
@@ -351,10 +377,21 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.kesiapanDigital}
+                  <Box>
+                    <Text fontWeight="bold">Perkembangan Teknologi Digital:</Text>
+                    <Text>{village?.teknologi || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Kemampuan Teknologi:</Text>
+                    <Text>{village?.kemampuan || "Tidak tersedia"}</Text>
+                  </Box>
+                  {/* <Box mt={2}>
+                    <Text fontWeight="bold">Deskripsi Kesiapan Digital:</Text>
+                    <Text>{village?.kesiapanDigital || "Tidak tersedia"}</Text>
+                  </Box> */}
                 </AccordionPanel>
               </AccordionItem>
-              <AccordionItem>
+              {/* <AccordionItem>
                 <h2>
                   <AccordionButton paddingLeft="4px" paddingRight="4px">
                     <Flex
@@ -376,7 +413,7 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.kesiapanTeknologi}
+                  {village?.kesiapanTeknologi || "Tidak tersedia"}
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem>
@@ -402,9 +439,9 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.pemantapanPelayanan}
+                  {village?.pemantapanPelayanan || "Tidak tersedia"}
                 </AccordionPanel>
-              </AccordionItem>
+              </AccordionItem> */}
               <AccordionItem>
                 <h2>
                   <AccordionButton paddingLeft="4px" paddingRight="4px">
@@ -427,7 +464,7 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.sosialBudaya}
+                  {village?.sosialBudaya || "Tidak tersedia"}
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem>
@@ -452,7 +489,7 @@ const toEditVillage = () => {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.sumberDaya}
+                  {village?.sumberDaya || "Tidak tersedia"}
                 </AccordionPanel>
               </AccordionItem>
             </Accordion>
@@ -462,11 +499,17 @@ const toEditVillage = () => {
             <CardContainer>
               <Horizontal>
                 {village?.images &&
+                (Object.values(village.images) as string[]).length > 0 ? (
                   (Object.values(village.images) as string[]).map(
                     (image: string, index: number) => (
                       <EnlargedImage key={index} src={image} />
                     )
-                  )}
+                  )
+                ) : (
+                  <Text fontSize={12} color="gray.400">
+                    Gambar tidak ada
+                  </Text>
+                )}
               </Horizontal>
             </CardContainer>
           </div>
@@ -492,79 +535,85 @@ const toEditVillage = () => {
             </Flex>
             <CardContainer>
               <Horizontal>
-                {innovations.map((innovation, idx) => (
-                  <CardInnovation
-                    key={idx}
-                    images={innovation.images}
-                    namaInovasi={innovation.namaInovasi}
-                    kategori={innovation.kategori}
-                    deskripsi={innovation.deskripsi}
-                    tahunDibuat={innovation.tahunDibuat}
-                    innovatorLogo={innovation.innovatorImgURL}
-                    innovatorName={innovation.namaInnovator}
-                    onClick={() =>
-                      navigate(
-                        generatePath(paths.DETAIL_INNOVATION_PAGE, {
-                          id: innovation.id,
-                        })
-                      )
-                    }
-                  />
-                ))}
+                {innovations.length === 0 ? (
+                  <Text color="gray.400" fontSize={12}>
+                    Belum ada inovasi yang diterapkan
+                  </Text>
+                ) : (
+                  innovations.map((innovation, idx) => (
+                    <CardInnovation
+                      key={idx}
+                      images={innovation.images}
+                      namaInovasi={innovation.namaInovasi}
+                      kategori={innovation.kategori}
+                      deskripsi={innovation.deskripsi}
+                      tahunDibuat={innovation.tahunDibuat}
+                      innovatorLogo={innovation.innovatorImgURL}
+                      innovatorName={innovation.namaInnovator}
+                      onClick={() =>
+                        navigate(
+                          generatePath(paths.DETAIL_INNOVATION_PAGE, {
+                            id: innovation.id,
+                          })
+                        )
+                      }
+                    />
+                  ))
+                )}
               </Horizontal>
             </CardContainer>
           </div>
         </ContentContainer>
       </div>
-      <Box>
-        {admin ? (
-          village?.status === "Terverifikasi" ||
-          village?.status === "Ditolak" ? (
-            <StatusCard
-              status={village?.status}
-              message={village?.catatanAdmin}
-            />
-          ) : (
-            <NavbarButton>
-              <Button width="100%" fontSize="14px" onClick={onOpen}>
-                Verifikasi Permohonan Akun
-              </Button>
-            </NavbarButton>
-          )
+
+
+      {admin ? (
+        village?.status === "Terverifikasi" || village?.status === "Ditolak" ? (
+          <StatusCard
+            status={village?.status}
+            message={village?.catatanAdmin}
+          />
         ) : (
           <NavbarButton>
-            <Button 
-              width="100%" 
-              onClick={() => {
-                if (owner) {
-                  toEditVillage();
-                 } else {
-                   onOpen();
-                 }
-              }}>
-              
-              {owner ? "Edit Profile" : " "}
+            <Button width="100%" fontSize="14px" onClick={onOpen}>
+              Verifikasi Permohonan Akun
             </Button>
           </NavbarButton>
-        )}
-        <RejectionModal
-          isOpen={openModal}
-          onClose={() => setOpenModal(false)}
-          onConfirm={handleReject}
-          loading={loading}
-          setMessage={setModalInput}
-          message={modalInput}
-        />
-        <ActionDrawer
-          isOpen={isOpen}
-          onClose={onClose}
-          onVerify={handleVerify}
-          isAdmin={admin}
-          role="Desa"
-          loading={loading}
-          setOpenModal={setOpenModal}
-        />
-      </Box>
-    </Box>
+        )
+      ) : (
+        <NavbarButton>
+
+          <Button
+            width="100%"
+            onClick={() => {
+              if (owner) {
+                toEditVillage();
+              } else {
+                onOpen();
+              }
+            }}
+          >
+            {owner ? "Edit Profile" : " "}
+          </Button>
+        </NavbarButton>
+      )}
+      <RejectionModal
+        isOpen={openModal}
+        onClose={() => setOpenModal(false)}
+        onConfirm={handleReject}
+        loading={loading}
+        setMessage={setModalInput}
+        message={modalInput}
+      />
+      <ActionDrawer
+        isOpen={isOpen}
+        onClose={onClose}
+        onVerify={handleVerify}
+        isAdmin={admin}
+        role="Desa"
+        loading={loading}
+        setOpenModal={setOpenModal}
+      />
+    </>
   );
 }

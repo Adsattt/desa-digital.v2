@@ -18,6 +18,8 @@ export const paths = {
   ADMIN_DASHBOARD_DESA: "/admin/dashboard-desa",
   ADMIN_DASHBOARD_INOVASI: "/admin/dashboard-inovasi",
   ADMIN_DASHBOARD_INOVATOR: "/admin/dashboard-inovator",
+  REPORT_ADMIN: "/admin/report",
+  PREVIEW_REPORT_ADMIN: "/admin/report/preview",
 
   // ! village
   VILLAGE_PAGE: "/village",
@@ -25,10 +27,12 @@ export const paths = {
   DETAIL_VILLAGE_PAGE: "/village/detail/:id",
   VILLAGE_PROFILE_PAGE: "/village/profile/:id",
   KLAIM_INOVASI_PAGE: "/village/klaimInovasi",
+  MANUAL_KLAIM_INOVASI: "/village/klaimInovasi/manual",
   DETAIL_KLAIM_INOVASI_PAGE: "/village/klaimInovasi/detail/:id",
   PENGAJUAN_KLAIM_PAGE: "/village/pengajuan/:id",
   VILLAGE_DASHBOARD: "/village/dashboard",
   VILLAGE_RECOMENDATION: "/village/dashboard/rekomendasi",
+  REPORT_VILLAGE: "/village/report",
 
   // ! innovator
   INNOVATOR_PAGE: "/innovator",
@@ -37,10 +41,12 @@ export const paths = {
   INNOVATOR_FORM: "/innovator/form",
   PRODUK_INOVASI_PAGE: "/innovator/detail/ProdukInovasi",
   PENGAJUAN_INOVASI_PAGE: "/innovator/profile/pengajuanInovasi",
+  REPORT_INNOVATOR: "/innovator/report",
 
   // ! innovation
   INNOVATION_PAGE: "/innovation",
   ADD_INNOVATION: "/innovation/add",
+  INNOVATION_DETAIL: "/innovation/detail/:id",
   INNOVATION_CATEGORY_PAGE: "/innovation/:category",
   DETAIL_INNOVATION_PAGE: "/innovation/detail/:id",
   EDIT_INNOVATION_PAGE: "/innovation/edit/:id",

@@ -15,6 +15,8 @@ import { paths } from "Consts/path";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import EnlargedImage from "../components/Image";
+import defaultHeader from "@public/images/default-header.svg";
+import defaultLogo from "@public/images/default-logo.svg";
 
 import {
   Accordion,
@@ -157,11 +159,16 @@ export default function DetailVillage() {
   useEffect(() => {
     const fetchInnovations = async () => {
       const innovationsSnapshot = await getDocs(innovationRef);
-      const innovationsData = innovationsSnapshot.docs.map((doc) => doc.data());
+      const innovationsData = innovationsSnapshot.docs.map((doc) => ({
+        id: doc.id, // Ambil id dokumen dari Firestore
+        ...doc.data(), // Ambil data lainnya
+      }));
       setInnovations(innovationsData);
     };
+  
     fetchInnovations();
   }, [innovationRef]);
+  
 
   useEffect(() => {
     const fetchVillageData = async () => {
@@ -191,8 +198,8 @@ export default function DetailVillage() {
     <Box>
       <TopBar title="Detail Desa" onBack={() => navigate(-1)} />
       <div style={{ position: "relative", width: "100%" }}>
-        <Background src={village?.header} alt="background" />
-        <Logo mx={16} my={-40} src={village?.logo} alt="logo" />
+        <Background src={village?.header || defaultHeader} alt="background" />
+        <Logo mx={16} my={-40} src={village?.logo || defaultLogo} alt="logo" />
       </div>
       <div>
         <ContentContainer>
@@ -266,7 +273,22 @@ export default function DetailVillage() {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.infrastrukturDesa}
+                  <Box>
+                    <Text fontWeight="bold">Kondisi Jalan:</Text>
+                    <Text>{village?.kondisijalan || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Jaringan Internet:</Text>
+                    <Text>{village?.jaringan || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Ketersediaan Listrik:</Text>
+                    <Text>{village?.listrik || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Lain-lain:</Text>
+                    <Text>{village?.infrastrukturDesa || "Tidak tersedia"}</Text>
+                  </Box>
                 </AccordionPanel>
               </AccordionItem>
               <AccordionItem>
@@ -291,10 +313,17 @@ export default function DetailVillage() {
                   paddingLeft="4px"
                   paddingRight="4px"
                 >
-                  {village?.kesiapanDigital}
+                  <Box>
+                    <Text fontWeight="bold">Perkembangan Teknologi Digital:</Text>
+                    <Text>{village?.teknologi || "Tidak tersedia"}</Text>
+                  </Box>
+                  <Box mt={2}>
+                    <Text fontWeight="bold">Kemampuan Teknologi:</Text>
+                    <Text>{village?.kemampuan || "Tidak tersedia"}</Text>
+                  </Box>
                 </AccordionPanel>
               </AccordionItem>
-              <AccordionItem>
+              {/* <AccordionItem>
                 <h2>
                   <AccordionButton paddingLeft="4px" paddingRight="4px">
                     <Flex
@@ -344,7 +373,7 @@ export default function DetailVillage() {
                 >
                   {village?.pemantapanPelayanan}
                 </AccordionPanel>
-              </AccordionItem>
+              </AccordionItem> */}
               <AccordionItem>
                 <h2>
                   <AccordionButton paddingLeft="4px" paddingRight="4px">
@@ -442,13 +471,11 @@ export default function DetailVillage() {
                     tahunDibuat={innovation.tahunDibuat}
                     innovatorLogo={innovation.innovatorImgURL}
                     innovatorName={innovation.namaInnovator}
-                    onClick={() =>
-                      navigate(
-                        generatePath(paths.DETAIL_INNOVATION_PAGE, {
-                          id: innovation.id,
-                        })
-                      )
-                    }
+                    onClick={() => {
+                      if (innovation.id) {
+                        navigate(generatePath(paths.DETAIL_INNOVATION_PAGE, { id: innovation.id }));
+                      }
+                    }}
                   />
                 ))}
               </Horizontal>

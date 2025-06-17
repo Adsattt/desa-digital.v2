@@ -7,7 +7,7 @@ import {
   Text,
   useToast,
 } from "@chakra-ui/react";
-import Container from "Components/container";
+import { NavbarButton } from "../../village/profile/_profileStyle";
 import LocationSelector from "Components/form/LocationSellector";
 import MultiSellect from "Components/form/MultiSellect";
 import TopBar from "Components/topBar";
@@ -60,6 +60,9 @@ const AddVillage: React.FC = () => {
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
   const [isEditable, setIsEditable] = useState(true);
+  const [isFormLocked, setIsFormLocked] = useState(false);
+  const [confirmedSubmit, setConfirmedSubmit] = useState(false);
+  const [submitEvent, setSubmitEvent] = useState<React.FormEvent<HTMLFormElement> | null>(null);
   const toast = useToast();
   const [textInputValue, setTextInputValue] = useState({
     name: "",
@@ -91,6 +94,22 @@ const AddVillage: React.FC = () => {
   const [selectedRegency, setSelectedRegency] = useState<Option | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<Option | null>(null);
   const [selectedVillage, setSelectedVillage] = useState<Option | null>(null);
+  
+   type DropdownValue = {
+    kondisijalan: string | null;
+    jaringan: string | null;
+    listrik: string | null;
+    teknologi: string | null;
+    kemampuan: string | null;
+  };
+
+  const [dropdownValue, setDropdownValue] = useState<DropdownValue>({
+    kondisijalan: null,
+    jaringan: null,
+    listrik: null,
+    teknologi: null,
+    kemampuan: null,
+  });
 
   const [selectedPotensi, setSelectedPotensi] = useState<
     { value: string; label: string }[]
@@ -114,10 +133,21 @@ const AddVillage: React.FC = () => {
   };
 
   const handleModal1Yes = () => {
-    setIsModal2Open(true);
-    setIsModal1Open(false); // Tutup modal pertama
-    // Di sini tidak membuka modal kedua
-  };
+  setIsModal1Open(false); //tutup modal pertama
+  setIsModal2Open(true);
+  setConfirmedSubmit(true);
+  if (submitEvent) {
+    onSubmitForm(submitEvent); // Kirim data form
+  }
+};
+
+useEffect(() => {
+  if (confirmedSubmit) {
+    setIsFormLocked(true);        
+    setIsModal2Open(true);        
+    setConfirmedSubmit(false);    
+  }
+}, [confirmedSubmit]);
 
   const isFormValid = () => {
     return (
@@ -127,17 +157,17 @@ const AddVillage: React.FC = () => {
       selectedDistrict !== null &&
       selectedVillage !== null &&
       selectedPotensi !== null &&
-      selectedLogo !== "" &&
+      selectedLogo.trim() !== "" &&
+      selectedHeader.trim() !== "" &&
       textInputValue.geografis.trim() !== "" &&
-      textInputValue.infrastruktur.trim() !== "" &&
-      textInputValue.kesiapan.trim() !== "" &&
-      textInputValue.teknologi.trim() !== "" &&
-      textInputValue.pelayanan.trim() !== "" &&
       textInputValue.sosial.trim() !== "" &&
       textInputValue.resource.trim() !== "" &&
       textInputValue.whatsapp.trim() !== "" &&
-      textInputValue.instagram.trim() !== "" &&
-      textInputValue.website.trim() !== ""
+      dropdownValue.kondisijalan !== null &&
+      dropdownValue.jaringan !== null &&
+      dropdownValue.listrik !== null &&
+      dropdownValue.teknologi !== null &&
+      dropdownValue.kemampuan !== null 
     );
   };
 
@@ -332,6 +362,8 @@ const AddVillage: React.FC = () => {
         website,
       } = textInputValue;
 
+      const {kondisijalan, jaringan, listrik, teknologi: teknologiDropdown, kemampuan} = dropdownValue;
+
       const userId = user.uid;
       const docRef = doc(firestore, "villages", userId);
       // Cek dan hapus foto lama jika ada yang dihapus
@@ -385,7 +417,6 @@ const AddVillage: React.FC = () => {
           );
         }
         const existingImages = existingData?.images || [];
-
         const imagesToDelete = existingImages.filter(
           (img: string) => !selectedFiles.includes(img)
         );
@@ -450,7 +481,13 @@ const AddVillage: React.FC = () => {
           },
           status: "Menunggu", // Set status menjadi "Menunggu" setelah dikirim ulang
           editedAt: serverTimestamp(), // Tandai waktu edit
+          kondisijalan: kondisijalan || "",
+          jaringan: jaringan || "",
+          listrik: listrik || "",
+          teknologi: teknologiDropdown || "",
+          kemampuan: kemampuan || "",
         });
+
         console.log("Document updated with ID: ", userId);
         setStatus("Menunggu");
       } else {
@@ -481,7 +518,13 @@ const AddVillage: React.FC = () => {
           catatanAdmin: "",
           createdAt: serverTimestamp(),
           editedAt: serverTimestamp(),
+          kondisijalan: kondisijalan || "",
+          jaringan: jaringan || "",
+          listrik: listrik || "",
+          teknologi: teknologiDropdown || "",
+          kemampuan: kemampuan || "",
         });
+
         if (selectedLogo) {
           const logoRef = ref(storage, `villages/${userId}/logo`);
           await uploadString(logoRef, selectedLogo, "data_url").then(
@@ -598,6 +641,14 @@ const AddVillage: React.FC = () => {
           website: data.website || "",
         });
 
+        setDropdownValue({
+          kondisijalan: data.kondisijalan || null,
+          jaringan: data.jaringan || null,
+          listrik: data.listrik || null,
+          teknologi: data.teknologi || null,
+          kemampuan: data.kemampuan || null,
+        });
+
         // console.log(data.logo)
         setSelectedPotensi(
           data.potensiDesa.map((potensi: string) => ({
@@ -638,12 +689,19 @@ const AddVillage: React.FC = () => {
   }, [user]);
 
   return (
-    <Container page pb={24}>
+    <>
       <TopBar title="Registrasi Profil Desa" onBack={() => navigate(-1)} />
-      <Box p="0 16px">
+      <Box p="48px 16px 20px 16px">
         <form 
-          onSubmit={onSubmitForm}
-          onKeyDown={handleKeyDown}>
+           onSubmit={(e) => {
+            e.preventDefault(); 
+            if (isFormValid()) {
+              setSubmitEvent(e); // Simpan event
+              setIsModal1Open(true); // Tampilkan modal
+            }
+          }}
+          onKeyDown={handleKeyDown}
+          id="VillageForm">
           <Flex direction="column" marginTop="24px">
             <Stack spacing="12px" width="100%">
               <Alert
@@ -661,7 +719,8 @@ const AddVillage: React.FC = () => {
                 placeholder="Nama Desa"
                 value={textInputValue.name}
                 onChange={onTextChange}
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
+                isRequired
               />
               <LocationSelector
                 label="Provinsi"
@@ -670,7 +729,7 @@ const AddVillage: React.FC = () => {
                 value={selectedProvince}
                 onChange={handleProvinceChange}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
 
               <LocationSelector
@@ -681,7 +740,7 @@ const AddVillage: React.FC = () => {
                 onChange={handleRegencyChange}
                 isDisabled={!selectedProvince}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
               <LocationSelector
                 label="Kecamatan"
@@ -691,7 +750,7 @@ const AddVillage: React.FC = () => {
                 onChange={handleDistrictChange}
                 isDisabled={!selectedRegency}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
               <LocationSelector
                 label="Desa/Kelurahan"
@@ -701,7 +760,7 @@ const AddVillage: React.FC = () => {
                 onChange={handleVillageChange}
                 isDisabled={!selectedDistrict}
                 isRequired
-                disabled={!isEditable}
+                disabled={!isEditable || isFormLocked}
               />
 
               <Box>
@@ -716,13 +775,13 @@ const AddVillage: React.FC = () => {
                   setSelectedLogo={setSelectedLogo}
                   selectFileRef={selectedLogoRef}
                   onSelectLogo={onSelectLogo}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
                 />
               </Box>
 
               <Box>
                 <Text fontWeight="400" fontSize="14px">
-                  Header Desa
+                  Header Desa <span style={{ color: "red" }}>*</span>
                 </Text>
                 <Text fontWeight="400" fontSize="10px" mb="6px" color="#9CA3AF">
                   Maks 1 foto. format: png, jpg.
@@ -732,7 +791,8 @@ const AddVillage: React.FC = () => {
                   setSelectedHeader={setSelectedHeader}
                   selectFileRef={selectedHeaderRef}
                   onSelectHeader={onSelectHeader}
-                  disabled={!isEditable}
+                  disabled={!isEditable || isFormLocked}
+                  
                 />
               </Box>
 
@@ -763,6 +823,7 @@ const AddVillage: React.FC = () => {
                 isTextArea
                 wordCount={currentWordCount(textInputValue.description)}
                 maxWords={100}
+                isRequired
               />
 
               <MultiSellect
@@ -776,7 +837,7 @@ const AddVillage: React.FC = () => {
                 disabled={!isEditable}
               /> 
 
-              <Box>
+              <Box> 
                 <Text fontWeight="700" fontSize="16px" mb="6px">
                   Karakteristik Desa
                 </Text>
@@ -789,10 +850,127 @@ const AddVillage: React.FC = () => {
                   onChange={onTextChange}
                   wordCount={currentWordCount(textInputValue.geografis)}
                   maxWords={30}
+                  isRequired  
                 />
               </Box>
+              
+              <Text fontWeight="400" fontSize="16px" mb="6px">
+                  Infrastruktur <Text as="span" color="red.500">*</Text>
+              </Text>
+              <LocationSelector
+                label="Kondisi Jalan"
+                placeholder="Pilih"
+                 value={
+                  dropdownValue.kondisijalan
+                    ? { value: dropdownValue.kondisijalan, label: dropdownValue.kondisijalan }
+                    : null
+                }
+                options={[
+                  { value: "Seluruh jalan beraspal", label: "Seluruh jalan beraspal" },
+                  { value: "Lebih dari 50% beraspal", label: "Lebih dari 50% beraspal" },
+                  { value: "Kurang dari 50% beraspal", label: "Kurang dari 50% beraspal" },
+                  { value: "Beraspal namun rusak", label: "Beraspal namun rusak" },
+                  { value: "Masih tanah dan bebatuan", label: "Masih tanah dan bebatuan" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({...prev ,kondisijalan: selected?.value ?? null}))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Jaringan Internet"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.jaringan
+                    ? { value: dropdownValue.jaringan, label: dropdownValue.jaringan }
+                    : null
+                }
+                options={[
+                  { value: "Jaringan Internet baik di seluruh tempat", label: "Jaringan Internet baik di seluruh tempat" },
+                  { value: "Jaringan Internet baik di beberapa tempat", label: "Jaringan Internet baik di beberapa tempat" },
+                  { value: "Jaringan internet lemah", label: "Jaringan internet lemah" },
+                  { value: "Ada sinyal, namun tidak ada jaringan internet", label: "Ada sinyal, namun tidak ada jaringan internet" },
+                  { value: "Sinyal lemah, namun ada internet (wifi)", label: "Sinyal lemah, namun ada internet (wifi)" },
+                  { value: "Sinyal lemah / tidak ada, dan tidak ada internet", label: "Sinyal lemah / tidak ada, dan tidak ada internet" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, jaringan: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Ketersediaan Listrik"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.listrik
+                    ? { value: dropdownValue.listrik, label: dropdownValue.listrik }
+                    : null
+                }
+                options={[
+                  { value: "Listrik tersedia di seluruh tempat", label: "Listrik tersedia di seluruh tempat" },
+                  { value: "Listrik tersedia di beberapa tempat", label: "Listrik tersedia di beberapa tempat" },
+                  { value: "Listrik 24 jam hanya di beberapa tempat", label: "Listrik 24 jam hanya di beberapa tempat" },
+                  { value: "Listrik tersedia, namun waktu terbatas", label: "Listrik tersedia, namun waktu terbatas" },
+                  { value: "Listrik tidak tersedia", label: "Listrik tidak tersedia" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, listrik: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
 
               <FormSection
+                title="Lain-lain"
+                name="infrastruktur"
+                placeholder="Masukkan hal lain terkait infrastruktur"
+                value={textInputValue.infrastruktur}
+                disabled={!isEditable}
+                onChange={onTextChange}
+                wordCount={currentWordCount(textInputValue.infrastruktur)}
+                maxWords={30}
+              />
+
+              <LocationSelector
+                label="Perkembangan Teknologi Digital"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.teknologi
+                    ? { value: dropdownValue.teknologi, label: dropdownValue.teknologi }
+                    : null
+                }
+                options={[
+                  { value: "Seluruhnya berkembang dengan baik", label: "Seluruhnya berkembang dengan baik" },
+                  { value: "Lebih dari 50% sudah dikembangkan", label: "Lebih dari 50% sudah dikembangkan" },
+                  { value: "Kurang dari 50% sudah dikembangkan", label: "Kurang dari 50% sudah dikembangkan" },
+                  { value: "Baru dimulai", label: "Baru dimulai" },
+                  { value: "Belum siap", label: "Belum siap" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, teknologi: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Kemampuan Teknologi"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.kemampuan
+                    ? { value: dropdownValue.kemampuan, label: dropdownValue.kemampuan }
+                    : null
+                }
+                options={[
+                  { value: "Kemampuan masyarakat sangat baik", label: "Kemampuan masyarakat sangat baik" },
+                  { value: "Kemampuan masyarakat cukup baik", label: "Kemampuan masyarakat cukup baik" },
+                  { value: "Hanya beberapa masyarakat yang cukup baik", label: "Hanya beberapa masyarakat yang cukup baik" },
+                  { value: "Kemampuan masyarakat terbatas", label: "Kemampuan masyarakat terbatas" },
+                  { value: "Masyarakat belum mampu memakai teknologi digital", label: "Masyarakat belum mampu memakai teknologi digital" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, kemampuan: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+
+              {/* <FormSection
                 title="Infrastruktur"
                 name="infrastruktur"
                 placeholder="Deskripsi infrastruktur desa"
@@ -834,8 +1012,7 @@ const AddVillage: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={currentWordCount(textInputValue.pelayanan)}
                 maxWords={30}
-              />
-
+              /> */}
               <FormSection
                 title="Sosial dan Budaya"
                 name="sosial"
@@ -845,6 +1022,7 @@ const AddVillage: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={currentWordCount(textInputValue.sosial)}
                 maxWords={30}
+                isRequired
               />
 
               <FormSection
@@ -856,6 +1034,7 @@ const AddVillage: React.FC = () => {
                 onChange={onTextChange}
                 wordCount={currentWordCount(textInputValue.resource)}
                 maxWords={30}
+                isRequired
               />
 
               <Text fontWeight="700" fontSize="16px">
@@ -869,6 +1048,7 @@ const AddVillage: React.FC = () => {
                 value={textInputValue.whatsapp}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired
               />
 
               <FormSection
@@ -891,54 +1071,55 @@ const AddVillage: React.FC = () => {
               />
             </Stack>
           </Flex>
-          {error && (
-            <Text color="red" fontSize="10pt" textAlign="center" mt={2}>
-              {error}
-            </Text>
-          )}
-          {status !== "Menunggu" && (
-            <div>
-              <Button
-                type="submit"
-                fontSize={14}
-                mt="20px"
-                width="100%"
-                height="44px"
-                isLoading={loading}
-                onClick={() => {
-                  if (isFormValid()) {
-                    setIsModal1Open(true);
-                  } else {
-                    toast({
-                      title: "Form belum lengkap!",
-                      description: "Harap isi semua field wajib.",
-                      status: "error",
-                      duration: 3000,
-                      isClosable: true,
-                    });
-                  }
-                }}
-              >
-                {status === "Ditolak" ? "Kirim Ulang" : "Kirim"}
-              </Button>
-              <ConfModal
-                isOpen={isModal1Open}
-                onClose={closeModal}
-                modalTitle=""
-                modalBody1={modalBody1} // Mengirimkan teks konten modal
-                onYes={handleModal1Yes}
-              />
-              <SecConfModal
-                isOpen={isModal2Open}
-                onClose={closeModal}
-                modalBody2={modalBody2} // Mengirimkan teks konten modal
-              />
-            </div>
-            
-          )}
         </form>
       </Box>
-    </Container>
+      {error && (
+        <Text color="red" fontSize="10pt" textAlign="center" mt={2}>
+          {error}
+        </Text>
+      )}
+      {status !== "Menunggu" && (
+      <>
+        <NavbarButton>
+          <Button
+            type="submit"
+            form="VillageForm"
+            fontSize={14}
+            width="100%"
+            isLoading={loading}
+            onClick={() => {
+              if (isFormValid()) {
+                setIsModal1Open(true);
+              } else {
+                toast({
+                  title: "Form belum lengkap!",
+                  description: "Harap isi semua field wajib.",
+                  status: "error",
+                  duration: 3000,
+                  isClosable: true,
+                  position: "top",
+                });
+              }
+            }}
+          >
+            {status === "Ditolak" ? "Kirim Ulang" : "Daftarkan Aku"}
+          </Button>
+          <ConfModal
+            isOpen={isModal1Open}
+            onClose={closeModal}
+            modalTitle=""
+            modalBody1={modalBody1} // Mengirimkan teks konten modal
+            onYes={handleModal1Yes}
+          />
+          <SecConfModal
+            isOpen={isModal2Open}
+            onClose={closeModal}
+            modalBody2={modalBody2} // Mengirimkan teks konten modal
+          />
+        </NavbarButton>
+      </>
+      )}
+    </>
   );
 };
 

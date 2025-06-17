@@ -90,7 +90,7 @@ const DetailKlaim: React.FC = () => {
 
       {renderStatusAlert()}
 
-      {/* ✅ Tambahan: Checkbox hasil input */}
+      {/* Tambahan: Checkbox hasil input */}
       <Box mb={4}>
         <Text fontWeight="bold" mb={2}>Jenis Dokumen Bukti Klaim:</Text>
         <CheckboxGroup value={claimData.jenisDokumen || []}>
