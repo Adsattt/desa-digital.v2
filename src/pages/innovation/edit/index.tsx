@@ -23,7 +23,7 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
-import { NavbarButton } from "../../village/profile/_profileStyle";
+import { NavbarButton } from "./_editStyle";
 import Container from "Components/container";
 import TopBar from "Components/topBar";
 import {
@@ -949,14 +949,17 @@ const EditInnovation: React.FC = () => {
         </Text>
       )}
       <NavbarButton>
-        <Button type="submit" form="UpdateInnovation" mt="20px" width="100%" isLoading={loading}>
+        <Button 
+          type="submit" 
+          form="UpdateInnovation" 
+          width="80%" 
+          isLoading={loading}>
           Update Inovasi
         </Button>
         <Button
           type="button"
           form="UpdateInnovation"
-          mt="4"
-          width="100%"
+          width="80%"
           bg="red.500"
           color="white"
           _hover={{ bg: "red.600" }}
