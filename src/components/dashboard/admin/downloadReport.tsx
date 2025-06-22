@@ -9,17 +9,15 @@ import autoTable from "jspdf-autotable";
 // Type Definitions
 interface Village {
   namaDesa: string;
-  lokasi?: {
-    kecamatan?: { label: string };
-    kabupatenKota?: { label: string };
-    provinsi?: { label: string };
-  };
+  jumlahInovasi?: number;
+  kecamatan?: string;
+  kabupatenKota?: string;
+  provinsi?: string;
   kontak?: {
     whatsapp?: string;
     instagram?: string;
     website?: string;
   };
-  createdAt?: { toDate: () => Date };
 }
 
 interface Innovator {
@@ -65,47 +63,32 @@ const DownloadReport: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleDownloadExcel = () => {
-    const workbook = XLSX.utils.book_new();
-
-    const generalInfo = [
-      ["Total Desa", villagesData.length],
-      ["Total Inovator", innovatorsData.length],
-      ["Total Inovasi", innovationsData.length],
-    ];
-    const generalSheet = XLSX.utils.aoa_to_sheet(generalInfo);
-    XLSX.utils.book_append_sheet(workbook, generalSheet, "Informasi Umum");
-
-    const innovatorSheet = XLSX.utils.json_to_sheet(innovatorsData);
-    XLSX.utils.book_append_sheet(workbook, innovatorSheet, "Daftar Inovator");
-
-    const innovationSheet = XLSX.utils.json_to_sheet(innovationsData);
-    XLSX.utils.book_append_sheet(workbook, innovationSheet, "Daftar Inovasi");
-
-    const digitalVillageSheet = XLSX.utils.json_to_sheet(
-      villagesData.map(v => ({
-        namaDesa: v.namaDesa,
-        provinsi: v.lokasi?.provinsi?.label || "",
-        kabupaten: v.lokasi?.kabupatenKota?.label || "",
-        kecamatan: v.lokasi?.kecamatan?.label || "",
-      }))
-    );
-    XLSX.utils.book_append_sheet(workbook, digitalVillageSheet, "Daftar Desa Digital");
-
-    const fullVillageSheet = XLSX.utils.json_to_sheet(villagesData);
-    XLSX.utils.book_append_sheet(workbook, fullVillageSheet, "Data Desa");
-
-    XLSX.writeFile(workbook, "Laporan_KMS_Desa.xlsx");
+  // Warna header untuk autotable
+  const headerStyles = {
+    fillColor: [52, 115, 87], // #347357
+    textColor: 255,
+    fontStyle: "bold",
   };
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-  
-    const totalVillage = villagesData.length;
+
+    const totalVillage = villagesData.filter(v => v.jumlahInovasi && v.jumlahInovasi > 0).length;
     const totalInnovators = innovatorsData.length;
     const totalInnovation = innovationsData.length;
-  
-    // === Halaman 1: Ringkasan ===
+
+    const desaPalingBanyak = [...villagesData].filter(v => typeof v.jumlahInovasi === "number").sort((a, b) => (b.jumlahInovasi ?? 0) - (a.jumlahInovasi ?? 0))[0];
+    const desaPalingSedikit = [...villagesData].filter(v => typeof v.jumlahInovasi === "number").sort((a, b) => (a.jumlahInovasi ?? 0) - (b.jumlahInovasi ?? 0))[0];
+
+    const desaPalingBanyakKlaim = desaPalingBanyak
+      ? `${desaPalingBanyak.namaDesa}, Kec. ${desaPalingBanyak.kecamatan ?? "-"}, Kab. ${desaPalingBanyak.kabupatenKota ?? "-"}, Prov. ${desaPalingBanyak.provinsi ?? "-"}`
+      : "-";
+
+    const desaPalingSedikitKlaim = desaPalingSedikit
+      ? `${desaPalingSedikit.namaDesa}, Kec. ${desaPalingSedikit.kecamatan ?? "-"}, Kab. ${desaPalingSedikit.kabupatenKota ?? "-"}, Prov. ${desaPalingSedikit.provinsi ?? "-"}`
+      : "-";
+
+    // === Page 1: Summary ===
     doc.setFontSize(18);
     doc.setTextColor(34, 102, 69);
     doc.text("Report Admin", 15, 15);
@@ -113,49 +96,40 @@ const DownloadReport: React.FC = () => {
     doc.text("KMS Inovasi Desa Digital", 15, 22);
     doc.setTextColor(0);
     doc.text(`Diunduh pada: ${new Date().toLocaleDateString("id-ID")}`, 160, 15, { align: "right" });
-  
+
     doc.setFontSize(14);
     doc.text("Ringkasan Data:", 15, 35);
-  
+
     autoTable(doc, {
       startY: 40,
-      head: [["Inovator", "Inovasi", "Desa Digital", "Kecamatan", "Kabupaten", "Provinsi"]],
-      body: [[
-        totalInnovators,
-        totalInnovation,
-        totalVillage,
-        new Set(villagesData.map(v => v.lokasi?.kecamatan?.label).filter(Boolean)).size,
-        new Set(villagesData.map(v => v.lokasi?.kabupatenKota?.label).filter(Boolean)).size,
-        new Set(villagesData.map(v => v.lokasi?.provinsi?.label).filter(Boolean)).size,
-      ]],
+      head: [["Inovator", "Inovasi", "Desa Digital"]],
+      body: [[totalInnovators, totalInnovation, totalVillage]],
       styles: { fontSize: 11 },
+      headStyles: headerStyles,
     });
-  
+
     const inovatorTerbanyak = [...innovatorsData].sort((a, b) => b.jumlahInovasi - a.jumlahInovasi)[0];
     const inovatorTersedikit = [...innovatorsData].sort((a, b) => a.jumlahInovasi - b.jumlahInovasi)[0];
     const inovasiTerbanyak = [...innovationsData].sort((a, b) => b.jumlahDesaKlaim - a.jumlahDesaKlaim)[0];
     const inovasiTersedikit = [...innovationsData].sort((a, b) => a.jumlahDesaKlaim - b.jumlahDesaKlaim)[0];
-  
-    const desaPalingBanyakKlaim = "Desa Sukamandi, Kec. xx, Kab. xx, Prov. xx";
-    const desaPalingSedikitKlaim = "Desa Cicurug, Kec. xx, Kab. xx, Prov. xx";
-  
+
     doc.setFontSize(12);
     const yStart = 65;
     const dataText = [
-      `Inovator yang paling banyak Inovasi : ${inovatorTerbanyak?.namaInovator || "-"}`,
-      `Inovasi yang paling banyak Diklaim : ${inovasiTerbanyak?.namaInovasi || "-"}`,
-      `Desa yang paling banyak Klaim Inovasi : ${desaPalingBanyakKlaim}`,
+      `Inovator terbanyak inovasi : ${inovatorTerbanyak?.namaInovator ?? "-"}`,
+      `Inovasi paling banyak diklaim : ${inovasiTerbanyak?.namaInovasi ?? "-"}`,
+      `Desa paling banyak klaim : ${desaPalingBanyakKlaim}`,
       ``,
-      `Inovator yang paling sedikit Inovasi : ${inovatorTersedikit?.namaInovator || "-"}`,
-      `Inovasi yang paling sedikit Diklaim : ${inovasiTersedikit?.namaInovasi || "-"}`,
-      `Desa yang paling sedikit Klaim Inovasi : ${desaPalingSedikitKlaim}`,
+      `Inovator tersedikit inovasi : ${inovatorTersedikit?.namaInovator ?? "-"}`,
+      `Inovasi paling sedikit diklaim : ${inovasiTersedikit?.namaInovasi ?? "-"}`,
+      `Desa paling sedikit klaim : ${desaPalingSedikitKlaim}`,
     ];
-  
+
     dataText.forEach((text, i) => {
       doc.text(text, 15, yStart + i * 8);
     });
-  
-    // === Halaman 2: Data Desa ===
+
+    // === Page 2: Village Data ===
     doc.addPage();
     doc.setFontSize(18);
     doc.setTextColor(34, 102, 69);
@@ -165,27 +139,25 @@ const DownloadReport: React.FC = () => {
     doc.text("KMS Inovasi Desa Digital", 15, 22);
     doc.text(`Total: ${villagesData.length} Desa`, 15, 30);
     doc.text(`Diunduh pada: ${new Date().toLocaleDateString("id-ID")}`, 160, 15, { align: "right" });
-  
+
     doc.setFontSize(14);
     doc.text("Data Desa:", 15, 40);
-  
+
     autoTable(doc, {
       startY: 45,
-      head: [["No", "Desa", "Kecamatan", "Kabupaten", "Provinsi", "WhatsApp", "Instagram", "Website"]],
+      head: [["No", "Desa", "Kecamatan", "Kabupaten", "Provinsi"]],
       body: villagesData.map((v, i) => [
         i + 1,
-        v.namaDesa || " ",
-        v.lokasi?.kecamatan?.label || " ",
-        v.lokasi?.kabupatenKota?.label || " ",
-        v.lokasi?.provinsi?.label || " ",
-        v.kontak?.whatsapp || " ",
-        v.kontak?.instagram || " ",
-        v.kontak?.website || " ",
+        v.namaDesa || "-",
+        v.kecamatan || "-",
+        v.kabupatenKota || "-",
+        v.provinsi || "-",
       ]),
       styles: { fontSize: 9 },
+      headStyles: headerStyles,
     });
-  
-    // === Halaman 3: Data Inovator ===
+
+    // === Page 3: Innovator Data ===
     doc.addPage();
     doc.setFontSize(18);
     doc.setTextColor(34, 102, 69);
@@ -195,10 +167,10 @@ const DownloadReport: React.FC = () => {
     doc.text("KMS Inovasi Desa Digital", 15, 22);
     doc.text(`Total: ${innovatorsData.length} Inovator`, 15, 30);
     doc.text(`Diunduh pada: ${new Date().toLocaleDateString("id-ID")}`, 160, 15, { align: "right" });
-  
+
     doc.setFontSize(14);
     doc.text("Data Inovator:", 15, 40);
-  
+
     autoTable(doc, {
       startY: 45,
       head: [["No", "Nama Inovator", "Kategori", "Jumlah Inovasi"]],
@@ -209,9 +181,10 @@ const DownloadReport: React.FC = () => {
         i.jumlahInovasi ?? 0,
       ]),
       styles: { fontSize: 9 },
+      headStyles: headerStyles,
     });
-  
-    // === Halaman 4: Data Inovasi ===
+
+    // === Page 4: Innovation Data ===
     doc.addPage();
     doc.setFontSize(18);
     doc.setTextColor(34, 102, 69);
@@ -221,10 +194,10 @@ const DownloadReport: React.FC = () => {
     doc.text("KMS Inovasi Desa Digital", 15, 22);
     doc.text(`Total: ${innovationsData.length} Inovasi`, 15, 30);
     doc.text(`Diunduh pada: ${new Date().toLocaleDateString("id-ID")}`, 160, 15, { align: "right" });
-  
+
     doc.setFontSize(14);
     doc.text("Data Inovasi:", 15, 40);
-  
+
     autoTable(doc, {
       startY: 45,
       head: [["No", "Nama Inovasi", "Kategori", "Jumlah Desa Klaim"]],
@@ -235,11 +208,71 @@ const DownloadReport: React.FC = () => {
         i.jumlahDesaKlaim ?? 0,
       ]),
       styles: { fontSize: 9 },
+      headStyles: headerStyles,
     });
-  
-    doc.save("Report_Dashboard_Admin.pdf");
+
+    doc.save("Report Dashboard Admin.pdf");
   };
-  
+
+  const handleDownloadExcel = () => {
+  const workbook = XLSX.utils.book_new();
+
+  // Hitung total desa digital
+  const totalDigitalVillages = villagesData.filter(v => v.jumlahInovasi && v.jumlahInovasi > 0).length;
+
+  // Cari data summary seperti di PDF
+  const inovatorTerbanyak = [...innovatorsData].sort((a, b) => b.jumlahInovasi - a.jumlahInovasi)[0];
+  const inovatorTersedikit = [...innovatorsData].sort((a, b) => a.jumlahInovasi - b.jumlahInovasi)[0];
+  const inovasiTerbanyak = [...innovationsData].sort((a, b) => b.jumlahDesaKlaim - a.jumlahDesaKlaim)[0];
+  const inovasiTersedikit = [...innovationsData].sort((a, b) => a.jumlahDesaKlaim - b.jumlahDesaKlaim)[0];
+
+  const desaPalingBanyak = [...villagesData].filter(v => typeof v.jumlahInovasi === "number").sort((a, b) => (b.jumlahInovasi ?? 0) - (a.jumlahInovasi ?? 0))[0];
+  const desaPalingSedikit = [...villagesData].filter(v => typeof v.jumlahInovasi === "number").sort((a, b) => (a.jumlahInovasi ?? 0) - (b.jumlahInovasi ?? 0))[0];
+
+  // Format lokasi desa paling banyak dan paling sedikit klaim
+  const desaPalingBanyakKlaim = desaPalingBanyak
+    ? `${desaPalingBanyak.namaDesa}, Kec. ${desaPalingBanyak.kecamatan ?? "-"}, Kab. ${desaPalingBanyak.kabupatenKota ?? "-"}, Prov. ${desaPalingBanyak.provinsi ?? "-"}`
+    : "-";
+
+  const desaPalingSedikitKlaim = desaPalingSedikit
+    ? `${desaPalingSedikit.namaDesa}, Kec. ${desaPalingSedikit.kecamatan ?? "-"}, Kab. ${desaPalingSedikit.kabupatenKota ?? "-"}, Prov. ${desaPalingSedikit.provinsi ?? "-"}`
+    : "-";
+
+  // Data summary baris demi baris untuk Excel
+  const summaryInfo = [
+    ["Total Desa Digital", totalDigitalVillages],
+    ["Total Inovator", innovatorsData.length],
+    ["Total Inovasi", innovationsData.length],
+    [],
+    ["Inovator terbanyak inovasi", inovatorTerbanyak?.namaInovator ?? "-"],
+    ["Inovasi paling banyak diklaim", inovasiTerbanyak?.namaInovasi ?? "-"],
+    ["Desa paling banyak klaim", desaPalingBanyakKlaim],
+    [],
+    ["Inovator tersedikit inovasi", inovatorTersedikit?.namaInovator ?? "-"],
+    ["Inovasi paling sedikit diklaim", inovasiTersedikit?.namaInovasi ?? "-"],
+    ["Desa paling sedikit klaim", desaPalingSedikitKlaim],
+  ];
+
+  // Fungsi untuk menghapus fields seperti createdAt, editedAt
+  const cleanFields = <T extends Record<string, any>>(data: T[]) =>
+    data.map(({ createdAt, editedAt, ...rest }) => rest);
+
+  // Buat sheet "Informasi Umum" dari summaryInfo
+  const generalSheet = XLSX.utils.aoa_to_sheet(summaryInfo);
+  XLSX.utils.book_append_sheet(workbook, generalSheet, "Informasi Umum");
+
+  // Sheet inovator, inovasi, desa seperti sebelumnya
+  const innovatorSheet = XLSX.utils.json_to_sheet(cleanFields(innovatorsData));
+  XLSX.utils.book_append_sheet(workbook, innovatorSheet, "Daftar Inovator");
+
+  const innovationSheet = XLSX.utils.json_to_sheet(cleanFields(innovationsData));
+  XLSX.utils.book_append_sheet(workbook, innovationSheet, "Daftar Inovasi");
+
+  const fullVillageSheet = XLSX.utils.json_to_sheet(cleanFields(villagesData));
+  XLSX.utils.book_append_sheet(workbook, fullVillageSheet, "Daftar Desa");
+
+  XLSX.writeFile(workbook, "Report Dashboard Admin.xlsx");
+};
 
   return (
     <Menu placement="bottom-end">
