@@ -30,7 +30,7 @@ interface MarkerItem {
     raw: any;
 }
 
-const Peta: React.FC = () => {
+const PetaLama: React.FC = () => {
     const [selectedCategory, setSelectedCategory] = useState<'desa' | 'inovator' | 'inovasi'>('desa');
     const [markers, setMarkers] = useState<MarkerItem[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -44,128 +44,61 @@ const Peta: React.FC = () => {
     const fetchData = async () => {
         setLoading(true);
         const db = getFirestore();
+        let colName = '';
+
+        switch (selectedCategory) {
+            case 'desa':
+                colName = 'villages';
+                break;
+            case 'inovator':
+                colName = 'innovators';
+                break;
+            case 'inovasi':
+                colName = 'innovations';
+                break;
+        }
 
         try {
+            const snapshot = await getDocs(collection(db, colName));
             const results: MarkerItem[] = [];
 
-            if (selectedCategory === 'inovator') {
-                const villageSnapshot = await getDocs(collection(db, 'villages'));
-                const villages = villageSnapshot.docs.map(doc => doc.data());
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const lat = parseFloat(data.latitude);
+                const lon = parseFloat(data.longitude);
 
-                const innovatorSnapshot = await getDocs(collection(db, 'innovators'));
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    let details: { label: string; value: string | number }[] = [];
 
-                innovatorSnapshot.forEach((doc) => {
-                    const data = doc.data();
-
-                    let desaList: string[] = [];
-                    if (Array.isArray(data.desaDampingan)) {
-                        desaList = data.desaDampingan;
-                    } else if (typeof data.desaDampingan === 'string' && data.desaDampingan.trim()) {
-                        desaList = [data.desaDampingan];
+                    if (selectedCategory === 'desa') {
+                        details = [
+                            { label: 'Nama Inovasi', value: data.namaInovasi || 'Tidak diketahui' },
+                            { label: 'Jumlah Inovasi', value: data.jumlahInovasi || 0 },
+                        ];
+                    } else if (selectedCategory === 'inovator') {
+                        details = [
+                            { label: 'Jumlah Inovasi', value: data.jumlahInovasi || 0 },
+                            { label: 'Jumlah Desa Dampingan', value: data.jumlahDesaDampingan || 0 },
+                        ];
+                    } else if (selectedCategory === 'inovasi') {
+                        details = [
+                            { label: 'Nama Inovator', value: data.namaInovator || 'Tidak diketahui' },
+                            { label: 'Tahun Dibuat', value: data.tahunDibuat || 'Tidak diketahui' },
+                        ];
                     }
 
-                    desaList.forEach((namaDesa) => {
-                        if (namaDesa === 'Tidak diketahui') return;
+                    let name = 'Tanpa Nama';
+                    if (selectedCategory === 'desa') {
+                        name = data.namaDesa || 'Tanpa Nama';
+                    } else if (selectedCategory === 'inovator') {
+                        name = data.namaInovator || 'Tanpa Nama';
+                    } else if (selectedCategory === 'inovasi') {
+                        name = data.namaInovasi || 'Tanpa Nama';
+                    }
 
-                        const matchedVillage = villages.find(v => v.namaDesa === namaDesa);
-                        if (matchedVillage) {
-                            const lat = parseFloat(matchedVillage.latitude);
-                            const lon = parseFloat(matchedVillage.longitude);
-
-                            if (!isNaN(lat) && !isNaN(lon)) {
-                                const details = [
-                                    { label: 'Nama Desa', value: matchedVillage.namaDesa || 'Tidak diketahui' },
-                                    { label: 'Jumlah Desa Dampingan', value: data.jumlahDesaDampingan || desaList.length },
-                                ];
-
-                                const name = data.namaInovator || 'Tanpa Nama';
-
-                                results.push({
-                                    name,
-                                    lat,
-                                    lon,
-                                    details,
-                                    raw: data,
-                                });
-                            }
-                        }
-                    });
-                });
-            }
-            else {
-                let colName = '';
-                switch (selectedCategory) {
-                    case 'desa':
-                        colName = 'villages';
-                        break;
-                    case 'inovasi':
-                        colName = 'innovations';
-                        break;
+                    results.push({ name, lat, lon, details, raw: data });
                 }
-
-                if (selectedCategory === 'inovasi') {
-                    const villageSnapshot = await getDocs(collection(db, 'villages'));
-                    const villages = villageSnapshot.docs.map(doc => doc.data());
-
-                    const innovationSnapshot = await getDocs(collection(db, 'innovations'));
-                    innovationSnapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const namaDesa = data.inputDesaMenerapkan;
-
-                        if (!namaDesa || namaDesa === 'Tidak diketahui') return;
-
-                        const matchedVillage = villages.find(v => v.namaDesa === namaDesa);
-
-                        if (matchedVillage) {
-                            const lat = parseFloat(matchedVillage.latitude);
-                            const lon = parseFloat(matchedVillage.longitude);
-
-                            if (!isNaN(lat) && !isNaN(lon)) {
-                                const details = [
-                                    { label: 'Nama Desa', value: matchedVillage.namaDesa || 'Tidak diketahui' },
-                                    { label: 'Nama Inovator', value: data.namaInovator || 'Tidak diketahui' },
-                                    { label: 'Tahun Dibuat', value: data.tahunDibuat || 'Tidak diketahui' },
-                                ];
-
-                                const name = data.namaInovasi || 'Tanpa Nama';
-
-                                results.push({
-                                    name,
-                                    lat,
-                                    lon,
-                                    details,
-                                    raw: data,
-                                });
-                            }
-                        }
-                    });
-                }
-
-                else if (colName) {
-                    const snapshot = await getDocs(collection(db, colName));
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        const lat = parseFloat(data.latitude);
-                        const lon = parseFloat(data.longitude);
-
-                        if (!isNaN(lat) && !isNaN(lon)) {
-                            let details: { label: string; value: string | number }[] = [];
-
-                            if (selectedCategory === 'desa') {
-                                details = [
-                                    { label: 'Nama Inovasi', value: data.namaInovasi || 'Tidak diketahui' },
-                                    { label: 'Jumlah Inovasi', value: data.jumlahInovasi || 0 },
-                                ];
-                            }
-
-                            let name = 'Tanpa Nama';
-                            if (selectedCategory === 'desa') name = data.namaDesa || 'Tanpa Nama';
-
-                            results.push({ name, lat, lon, details, raw: data });
-                        }
-                    });
-                }
-            }
+            });
 
             setMarkers(results);
         } catch (err) {
@@ -174,7 +107,6 @@ const Peta: React.FC = () => {
             setLoading(false);
         }
     };
-
 
     useEffect(() => {
         fetchData();
@@ -216,17 +148,12 @@ const Peta: React.FC = () => {
         // Selalu pakai allData untuk filter A (global)
         const filterAOptions = (() => {
             switch (selectedCategory) {
-                case 'desa':
-                    return extractUnique(allData, 'provinsi').sort((a, b) => a.localeCompare(b));
-                case 'inovator':
-                    return extractUnique(allData, 'kategoriInovator').sort((a, b) => a.localeCompare(b));
-                case 'inovasi':
-                    return extractUnique(allData, 'tahunDibuat').sort((a, b) => parseInt(b) - parseInt(a)); // DESC
-                default:
-                    return [];
+                case 'desa': return extractUnique(allData, 'provinsi');
+                case 'inovator': return extractUnique(allData, 'kategoriInovator');
+                case 'inovasi': return extractUnique(allData, 'tahunDibuat');
+                default: return [];
             }
         })();
-
 
         // Filtered subset (cascade) untuk B dan C
         let filtered = allData;
@@ -234,36 +161,29 @@ const Peta: React.FC = () => {
         if (filterA) {
             if (selectedCategory === 'desa') filtered = filtered.filter(item => item.provinsi === filterA);
             if (selectedCategory === 'inovator') filtered = filtered.filter(item => item.kategoriInovator === filterA);
-            if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.tahunDibuat === filterA); // now tahun dulu
+            if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.tahunDibuat === filterA);
         }
 
         if (filterB) {
             if (selectedCategory === 'desa') filtered = filtered.filter(item => item.namaDesa === filterB);
             if (selectedCategory === 'inovator') filtered = filtered.filter(item => item.namaInovator === filterB);
-            if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.kategori === filterB); // kategori kedua
+            if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.namaInovasi === filterB);
         }
 
         const filterBOptions = (() => {
             switch (selectedCategory) {
-                case 'desa':
-                    return extractUnique(filtered, 'namaDesa').sort((a, b) => a.localeCompare(b));
-                case 'inovator':
-                    return extractUnique(filtered, 'namaInovator').sort((a, b) => a.localeCompare(b));
-                case 'inovasi':
-                    return extractUnique(filtered, 'kategori').sort((a, b) => a.localeCompare(b)); // kategori
-                default:
-                    return [];
+                case 'desa': return extractUnique(filtered, 'namaDesa');
+                case 'inovator': return extractUnique(filtered, 'namaInovator');
+                case 'inovasi': return extractUnique(filtered, 'namaInovasi');
+                default: return [];
             }
         })();
 
         const filterCOptions = (() => {
             switch (selectedCategory) {
-                case 'desa':
-                    return extractUnique(filtered, 'kategoriInovasi').sort((a, b) => a.localeCompare(b));
-                case 'inovasi':
-                    return extractUnique(filtered, 'namaInovasi').sort((a, b) => a.localeCompare(b)); // nama inovasi terakhir
-                default:
-                    return [];
+                case 'desa': return extractUnique(filtered, 'kategoriInovasi');
+                case 'inovasi': return extractUnique(filtered, 'kategori');
+                default: return [];
             }
         })();
 
@@ -282,18 +202,17 @@ const Peta: React.FC = () => {
             if (filterA) {
                 if (selectedCategory === 'desa') conditions.push(data.provinsi === filterA);
                 if (selectedCategory === 'inovator') conditions.push(data.kategoriInovator === filterA);
-                if (selectedCategory === 'inovasi') conditions.push(String(data.tahunDibuat) === String(filterA)); // tahun = filter A
+                if (selectedCategory === 'inovasi') conditions.push(data.tahunDibuat === filterA);
             }
             if (filterB) {
                 if (selectedCategory === 'desa') conditions.push(data.namaDesa === filterB);
                 if (selectedCategory === 'inovator') conditions.push(data.namaInovator === filterB);
-                if (selectedCategory === 'inovasi') conditions.push(data.kategori === filterB); // kategori = filter B
+                if (selectedCategory === 'inovasi') conditions.push(data.namaInovasi === filterB);
             }
             if (filterC) {
                 if (selectedCategory === 'desa') conditions.push(data.kategoriInovasi === filterC);
-                if (selectedCategory === 'inovasi') conditions.push(data.namaInovasi === filterC); // namaInovasi = filter C
+                if (selectedCategory === 'inovasi') conditions.push(data.kategori === filterC);
             }
-
 
             return conditions.every(Boolean);
         });
@@ -394,10 +313,10 @@ const Peta: React.FC = () => {
                             {/* Filter A */}
                             {filterOptions.a && (
                                 <Select
-                                    fontSize="sm"
+                                    fontSize="sm" // label / tampilan luar tetap normal
                                     sx={{
                                         option: {
-                                            fontSize: '9px',
+                                            fontSize: '9px',           // perkecil hanya isi opsi
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
@@ -410,7 +329,7 @@ const Peta: React.FC = () => {
                                             : 'Tahun Dibuat'
                                         }`}
                                     value={filterA}
-                                    onChange={handleFilterChange(setFilterA)}
+                                    onChange={handleFilterChange(setFilterA, selectedCategory === 'inovasi')} // hanya konversi ke number untuk inovasi
                                 >
                                     {filterOptions.a.map((val) => (
                                         <option key={val} value={val}>{val}</option>
@@ -434,7 +353,7 @@ const Peta: React.FC = () => {
                                         ? 'Nama Desa'
                                         : selectedCategory === 'inovator'
                                             ? 'Nama Inovator'
-                                            : 'Kategori'
+                                            : 'Nama Inovasi'
                                         }`}
                                     value={filterB}
                                     onChange={handleFilterChange(setFilterB)}
@@ -448,10 +367,10 @@ const Peta: React.FC = () => {
                             {/* Filter C */}
                             {filterOptions.c && selectedCategory !== 'inovator' && (
                                 <Select
-                                    fontSize="sm"
+                                    fontSize="sm" // label / tampilan luar tetap normal
                                     sx={{
                                         option: {
-                                            fontSize: '9px',
+                                            fontSize: '9px',           // perkecil hanya isi opsi
                                             whiteSpace: 'nowrap',
                                             overflow: 'hidden',
                                             textOverflow: 'ellipsis',
@@ -459,10 +378,10 @@ const Peta: React.FC = () => {
                                     }}
                                     placeholder={`Pilih ${selectedCategory === 'desa'
                                         ? 'Kategori Inovasi'
-                                        : 'Nama Inovasi'
+                                        : 'Kategori'
                                         }`}
                                     value={filterC}
-                                    onChange={handleFilterChange(setFilterC, selectedCategory === 'inovasi')} // convert ke number jika perlu
+                                    onChange={handleFilterChange(setFilterC)}
                                 >
                                     {filterOptions.c.map((val) => (
                                         <option key={val} value={val}>{val}</option>
@@ -483,4 +402,4 @@ const Peta: React.FC = () => {
     );
 };
 
-export default Peta;
+export default PetaLama;
