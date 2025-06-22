@@ -10,12 +10,14 @@ type DocUploadProps = {
     setSelectedDoc: (value: string[]) => void;
     selectDocRef: React.RefObject<HTMLInputElement>;
     onSelectDoc?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    disabled?: boolean;
   };
   
   const DocUpload: React.FC<DocUploadProps> = ({
     selectedDoc,
     setSelectedDoc,
     selectDocRef,
+    disabled
 }) => {
     const [uploading, setUploading] = useState(false);
 
@@ -82,6 +84,16 @@ type DocUploadProps = {
                             whiteSpace="nowrap" /* Pastikan teks tidak membungkus */
                             textOverflow="ellipsis" /* Tambahkan ellipsis untuk teks terpotong */
                             overflow="hidden"
+                            as='a'
+                            cursor="pointer"
+                            onClick={() => {
+                                window.open(selectedDoc, "_blank");
+                            }}
+                            title="Klik untuk mengunduh dokumen"
+                            _hover={{
+                                textDecoration: "underline",
+                                color: "blue.500",
+                            }}
 
                         >
                             {decodeURIComponent(selectedDoc.split("/").pop() || "Dokumen")}
@@ -96,6 +108,7 @@ type DocUploadProps = {
                         variant="solid"
                         size="md"
                         onClick={() => handleDeleteDoc(index)}
+                        disabled={disabled}
                     >
                         <DeleteIcon />
                     </Button>

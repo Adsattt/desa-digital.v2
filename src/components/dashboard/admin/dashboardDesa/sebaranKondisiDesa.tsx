@@ -19,11 +19,12 @@ import {
   DrawerFooter,
   DrawerCloseButton,
   Select,
+  Icon
 } from "@chakra-ui/react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { Filter } from "lucide-react";
-import { DownloadIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "@chakra-ui/icons";
 import * as XLSX from "xlsx";
 
 const SebaranKondisiDesa: React.FC = () => {
@@ -74,32 +75,31 @@ const SebaranKondisiDesa: React.FC = () => {
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
 
-        const namaDesa = data.namaDesa?.trim() || "";
+        const namaDesa = data.desaKelurahan?.trim() || ""; // DULUNYA: namaDesa
         const status = data.kesiapanDigital?.trim() || "";
         const jalan = data.infrastrukturDesa?.trim() || "";
-        const provinsi = data.lokasi?.provinsi?.label?.trim() || "";
-        const kabupaten = data.lokasi?.kabupatenKota?.label?.trim() || "";
-        const kecamatan = data.lokasi?.kecamatan?.label?.trim() || "";
+        const provinsi = data.provinsi?.trim() || ""; // NEW FIELD jika tersedia
+        const kabupaten = data.kabupatenKota?.trim() || "";
+        const kecamatan = data.kecamatan?.trim() || "";
 
         if (
           !namaDesa || namaDesa.toLowerCase().includes("lorem ipsum") ||
           !status || status.toLowerCase().includes("lorem ipsum") ||
           !jalan || jalan.toLowerCase().includes("lorem ipsum") ||
-          !provinsi || provinsi.toLowerCase().includes("lorem ipsum") ||
           !kabupaten || kabupaten.toLowerCase().includes("lorem ipsum") ||
           !kecamatan || kecamatan.toLowerCase().includes("lorem ipsum")
         ) {
           return;
         }
 
-        const limitWords = (text: string) => text.split(" ").slice(0, 3).join(" ");
+        const limitWords = (text: string) => text.split(" ").slice(0, 2).join(" ");
 
         desaList.push({
           no: i++,
           desa: limitWords(namaDesa),
           status: limitWords(status),
           jalan: limitWords(jalan),
-          provinsi: limitWords(provinsi),
+          provinsi: limitWords(provinsi), // Tetap dipakai jika tersedia
           kabupaten: limitWords(kabupaten),
           kecamatan: limitWords(kecamatan),
         });
@@ -121,24 +121,35 @@ const SebaranKondisiDesa: React.FC = () => {
 
   useEffect(() => {
     if (selectedProvince) {
-      const filteredKabupaten = desaData.filter(d => d.provinsi === selectedProvince).map(d => d.kabupaten);
-      setFilteredKabupatenList([...new Set(filteredKabupaten)]);
-      setSelectedKabupaten("");
-      setFilteredKecamatanList([]);
+      const filteredKabupaten = desaData
+        .filter(d => d.provinsi === selectedProvince)
+        .map(d => d.kabupaten);
+
+      const uniqueKabupaten = [...new Set(filteredKabupaten)];
+
+      setFilteredKabupatenList(uniqueKabupaten);
+      setSelectedKabupaten(""); // <--- RESET nilai kabupaten
+      setFilteredKecamatanList([]); // <--- CLEAR kecamatan saat provinsi ganti
+      setSelectedKecamatan(""); // <--- RESET kecamatan juga
     } else {
-      setFilteredKabupatenList(kabupatenList);
+      setFilteredKabupatenList(kabupatenList); // default list
     }
-  }, [selectedProvince, desaData]);
+  }, [selectedProvince]);
+
 
   useEffect(() => {
     if (selectedKabupaten) {
-      const filteredKecamatan = desaData.filter(d => d.kabupaten === selectedKabupaten).map(d => d.kecamatan);
+      const filteredKecamatan = desaData
+        .filter(d => d.kabupaten === selectedKabupaten)
+        .map(d => d.kecamatan);
+
       setFilteredKecamatanList([...new Set(filteredKecamatan)]);
-      setSelectedKecamatan("");
+      setSelectedKecamatan(""); // <--- RESET kecamatan ketika kabupaten ganti
     } else {
-      setFilteredKecamatanList(kecamatanList);
+      setFilteredKecamatanList(kecamatanList); // default list
     }
-  }, [selectedKabupaten, desaData]);
+  }, [selectedKabupaten]);
+
 
   const useFilter = () => {
     if (!selectedProvince && !selectedKabupaten && !selectedKecamatan) {
@@ -287,7 +298,7 @@ const SebaranKondisiDesa: React.FC = () => {
               <Tr>
                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                 <Th p={1} fontSize="8px" textAlign="center">Desa</Th>
-                <Th p={1} fontSize="8px" textAlign="center">Status Desa</Th>
+                <Th p={1} fontSize="8px" textAlign="center">Kesiapan Digital</Th>
                 <Th p={1} fontSize="8px" textAlign="center">Infrastruktur Jalan</Th>
               </Tr>
             </Thead>
@@ -304,21 +315,60 @@ const SebaranKondisiDesa: React.FC = () => {
           </Table>
         </TableContainer>
 
-        {/* Pagination */}
+        {/* 🔹 Pagination */}
         <Flex justify="center" mt={3} gap={2}>
-          {[...Array(totalPages)].map((_, index) => (
-            <Button
-              key={index}
-              size="xs"
-              borderRadius="full"
-              bg={currentPage === index + 1 ? "gray.800" : "white"}
-              color={currentPage === index + 1 ? "white" : "gray.800"}
-              onClick={() => setCurrentPage(index + 1)}
-              _hover={{ bg: "gray.300" }}
-            >
-              {index + 1}
-            </Button>
-          ))}
+          {(() => {
+            const pagesPerBlock = 5;
+            const currentBlock = Math.floor((currentPage - 1) / pagesPerBlock);
+            const startPage = currentBlock * pagesPerBlock + 1;
+            const endPage = Math.min(startPage + pagesPerBlock - 1, totalPages);
+
+            return (
+              <>
+                {/* Prev icon button */}
+                {startPage > 1 && (
+                  <Button
+                    size="xs"
+                    onClick={() => setCurrentPage(startPage - 1)}
+                    variant="ghost"
+                    p={1}
+                  >
+                    <Icon as={ChevronLeftIcon} />
+                  </Button>
+                )}
+
+                {/* Page numbers */}
+                {[...Array(endPage - startPage + 1)].map((_, index) => {
+                  const page = startPage + index;
+                  return (
+                    <Button
+                      key={page}
+                      size="xs"
+                      borderRadius="full"
+                      bg={currentPage === page ? "gray.800" : "white"}
+                      color={currentPage === page ? "white" : "gray.800"}
+                      onClick={() => setCurrentPage(page)}
+                      _hover={{ bg: "gray.300" }}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+
+                {/* Next icon button */}
+                {endPage < totalPages && (
+                  <Button
+                    size="xs"
+                    onClick={() => setCurrentPage(endPage + 1)}
+                    variant="ghost"
+                    p={1}
+                  >
+                    <Icon as={ChevronRightIcon} />
+                  </Button>
+                )}
+              </>
+            );
+          })()}
         </Flex>
       </Box>
     </Box>

@@ -24,26 +24,57 @@ const ScoreCardDashboardDesa: React.FC = () => {
       const kabupatenSet = new Set();
       const kecamatanSet = new Set();
 
+      // ---------------------------  UNTUK FIREBASE PRODUCTION ----------------------------------------------------- 
+      // snapshot.docs.forEach((doc) => {
+      //   const data = doc.data();
+
+      //   if (typeof data.namaDesa === "string" && data.namaDesa.length > 1) {
+      //     villageSet.add(data.namaDesa);
+      //   } else if (
+      //     data.namaDesa?.label &&
+      //     typeof data.namaDesa.label === "string" &&
+      //     data.namaDesa.label.length > 1
+      //   ) {
+      //     villageSet.add(data.namaDesa.label);
+      //   }
+
+      //   if (data.lokasi) {
+      //     if (data.lokasi.provinsi?.label)
+      //       provinceSet.add(data.lokasi.provinsi.label);
+      //     if (data.lokasi.kabupatenKota?.label)
+      //       kabupatenSet.add(data.lokasi.kabupatenKota.label);
+      //     if (data.lokasi.kecamatan?.label)
+      //       kecamatanSet.add(data.lokasi.kecamatan.label);
+      //   }
+      // });
+
+      // ---------- UNTUK FIREBASE EMULATOR -------------------------------------------
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
 
-        if (typeof data.namaDesa === "string" && data.namaDesa.length > 1) {
-          villageSet.add(data.namaDesa);
-        } else if (
-          data.namaDesa?.label &&
-          typeof data.namaDesa.label === "string" &&
-          data.namaDesa.label.length > 1
-        ) {
-          villageSet.add(data.namaDesa.label);
+        if (typeof data.jumlahInovasi === "number" && data.jumlahInovasi > 0) {
+          if (typeof data.namaDesa === "string" && data.namaDesa.length > 1) {
+            villageSet.add(data.namaDesa);
+          } else if (
+            data.namaDesa?.label &&
+            typeof data.namaDesa.label === "string" &&
+            data.namaDesa.label.length > 1
+          ) {
+            villageSet.add(data.namaDesa.label);
+          }
         }
 
-        if (data.lokasi) {
-          if (data.lokasi.provinsi?.label)
-            provinceSet.add(data.lokasi.provinsi.label);
-          if (data.lokasi.kabupatenKota?.label)
-            kabupatenSet.add(data.lokasi.kabupatenKota.label);
-          if (data.lokasi.kecamatan?.label)
-            kecamatanSet.add(data.lokasi.kecamatan.label);
+        // Sesuai struktur tabel: string langsung, bukan .label
+        if (typeof data.provinsi === "string" && data.provinsi.length > 1) {
+          provinceSet.add(data.provinsi);
+        }
+
+        if (typeof data.kabupatenKota === "string" && data.kabupatenKota.length > 1) {
+          kabupatenSet.add(data.kabupatenKota);
+        }
+
+        if (typeof data.kecamatan === "string" && data.kecamatan.length > 1) {
+          kecamatanSet.add(data.kecamatan);
         }
       });
 
