@@ -8,7 +8,6 @@ import TopInnovations from "./components/topInnovations";
 import TableInnovator from "./components/categoryInnovation";
 import MapVillages from "./components/mapVillages";
 import BarChartInnovator from "./components/barchartInnovator";
-import PodiumChart from "./components/tesPodium";
 import { useNavigate } from "react-router-dom";
 import { getAuth } from "firebase/auth";
 
