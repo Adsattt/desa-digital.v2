@@ -55,6 +55,7 @@ const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
   const handleAddInnovationClick = () => {
     if (role === "innovator" && isInnovatorVerified) {
       navigate(paths.ADD_INNOVATION);
+      // navigate("innovation/form")
     } else {
       toast.warning(
         "Akun anda belum terdaftar atau terverifikasi sebagai inovator",

@@ -227,7 +227,6 @@ const KlaimInovasi: React.FC = () => {
       const inovRef = doc(firestore, "innovations", inovasiId);
       const inovSnap = await getDoc(inovRef);
       const dataInov = inovSnap.data();
-
       const docRef = await addDoc(collection(firestore, "claimInnovations"), {
         namaDesa: dataDesa?.namaDesa,
         desaId: userId,
@@ -291,6 +290,7 @@ const KlaimInovasi: React.FC = () => {
         console.log("Documents uploaded", docUrls);
       }
       setIsModal1Open(false);
+
       toast.success("Klaim inovasi berhasil diajukan", {
         position: "top-center",
         autoClose: 2000,
@@ -535,11 +535,11 @@ const KlaimInovasi: React.FC = () => {
               />
             </Field>
           </Collapse>
-          {/* <RecommendationDrawer
+          <RecommendationDrawer
             innovationId={inovasiId}
             isOpen={isRecOpen}
             onClose={() => onRecClose()}
-          /> */}
+          />
         </Container>
         <div>
           {isAdmin ? (

@@ -120,7 +120,7 @@ const DashboardAdminInovator: React.FC = () => {
     return (
         <Box>
             {/* Top Bar */}
-            <TopBar title="Dashboard Inovator" onBack={() => navigate(-1)} />
+            <TopBar title="Data Inovator" onBack={() => navigate(-1)} />
 
             <Stack gap="16px" paddingTop="55px" />
 

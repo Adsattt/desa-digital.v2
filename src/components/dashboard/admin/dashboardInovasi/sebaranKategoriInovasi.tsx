@@ -45,21 +45,25 @@ const SebaranKategoriInnovations: React.FC = () => {
         }
       });
 
-      const sortedData = Object.entries(kategoriCount)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([key, value], index) => ({
-          name: key,
-          value,
-          color: colors[index % colors.length],
-        }));
+      const sortedEntries = Object.entries(kategoriCount).sort((a, b) => b[1] - a[1]);
 
-      setKategoriData(sortedData);
-      setFilteredData(sortedData);
+      const fullData = sortedEntries.map(([key, value], index) => ({
+        name: key,
+        value,
+        color: colors[index % colors.length],
+      }));
+
+      setKategoriData(fullData); // semua data
+
+      // ambil 5 kategori acak untuk ditampilkan awal
+      const shuffled = [...fullData].sort(() => Math.random() - 0.5);
+      const initialFive = shuffled.slice(0, 4);
+
+      setFilteredData(initialFive);
       setAllCategories(Object.keys(kategoriCount));
-      setSelectedCategories(Object.keys(kategoriCount).slice(0, 5));
+      setSelectedCategories(initialFive.map(item => item.name)); // pilih 5 acak
     } catch (error) {
-      console.error("❌ Error fetching category data:", error);
+      console.error("Error fetching category data:", error);
     }
   };
 

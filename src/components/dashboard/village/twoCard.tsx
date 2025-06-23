@@ -89,55 +89,59 @@ const TwoCard: React.FC = () => {
       }
 
       try {
+        // Ambil data desa berdasarkan userId
         const desaQuery = query(
           collection(db, "villages"),
           where("userId", "==", user.uid)
         );
         const desaSnap = await getDocs(desaQuery);
 
-        let namaDesa = "Desa";
-        if (!desaSnap.empty) {
-          const desaData = desaSnap.docs[0].data();
-          namaDesa = desaData?.namaDesa || "Desa";
-          setUserDesa(namaDesa);
-        } else {
-          setUserDesa("Desa Tidak Diketahui");
+        if (desaSnap.empty) {
+          console.warn("Data desa tidak ditemukan.");
+          return;
         }
 
+        const desaData = desaSnap.docs[0].data();
+        const namaDesa = desaData.namaDesa || "Desa";
+        setUserDesa(namaDesa);
+
+        // Ambil semua data inovasi
         const inovasiSnap = await getDocs(collection(db, "innovations"));
         const totalAllInovasi = inovasiSnap.size;
 
-        const desaInovasi = inovasiSnap.docs.filter((doc) => {
-          const inputDesaMenerapkan = doc.data().inputDesaMenerapkan;
-          return Array.isArray(inputDesaMenerapkan) &&
-            inputDesaMenerapkan.some((nama: string) =>
-              nama?.toLowerCase().trim() === namaDesa.toLowerCase().trim()
-            );
-        });
+        const jumlahInovasi = typeof desaData.jumlahInovasi === "number" ? desaData.jumlahInovasi : 0;
 
         setTotalInovasi({
-          desa: desaInovasi.length,
+          desa: jumlahInovasi,
           total: totalAllInovasi,
         });
 
+        // Ambil semua data inovator
         const innovatorSnap = await getDocs(collection(db, "innovators"));
         const totalAllInnovators = innovatorSnap.size;
 
-        const innovatorIds = new Set(
-          desaInovasi.map((doc) => doc.data().innovatorId)
-        );
+        const namaInovator = desaData.namaInovator;
+        let jumlahInovator = 0;
+
+        if (Array.isArray(namaInovator)) {
+          jumlahInovator = namaInovator.length;
+        } else if (typeof namaInovator === "string" && namaInovator.trim() !== "") {
+          jumlahInovator = 1;
+        }
 
         setTotalInovator({
-          desa: innovatorIds.size,
+          desa: jumlahInovator,
           total: totalAllInnovators,
         });
+
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Gagal ambil data:", error);
       }
     };
 
     fetchData();
   }, []);
+
 
   const formatStyledText = (x: number, y: number) => (
     <Text as="span" display="flex" alignItems="baseline" fontWeight="bold">
@@ -151,7 +155,12 @@ const TwoCard: React.FC = () => {
   );
 
   return (
-    <Flex direction={{ base: "column", md: "row" }} gap={2}>
+    <Flex
+      direction="row"
+      flexWrap="nowrap"
+      gap={2}
+      overflowX="auto"
+    >
       <CardItem
         icon={<Image src={InnovationActive} alt="Innovation Icon" w={5} h={5} />}
         mainText={formatStyledText(totalInovasi.desa, totalInovasi.total)}

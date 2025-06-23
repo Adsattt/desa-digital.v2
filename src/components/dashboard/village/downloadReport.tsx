@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { IconButton } from "@chakra-ui/react";
 import { DownloadIcon } from "@chakra-ui/icons";
-import * as XLSX from "xlsx";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export type InovatorReportData = {
   no: number;
@@ -21,9 +22,10 @@ type DownloadReportProps = {
 };
 
 const DownloadReport: React.FC<DownloadReportProps> = ({
-  fileName = "Report Dashboard Desa.xlsx",
+  fileName = "Report Dashboard Desa.pdf",
 }) => {
   const [inovatorData, setInovatorData] = useState<InovatorReportData[]>([]);
+  const [desaMetadata, setDesaMetadata] = useState<any>(null);
 
   // Fungsi untuk mengambil data dari Firestore
   const fetchData = async () => {
@@ -37,7 +39,7 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
         return;
       }
 
-      // Ambil data desa berdasarkan ID user
+      // Ambil data desa berdasarkan userId
       const desaQuery = query(
         collection(db, "villages"),
         where("userId", "==", user.uid)
@@ -45,11 +47,27 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
       const desaSnap = await getDocs(desaQuery);
 
       let namaDesa = "";
-      let desaID = "";
+      let desaMeta: any = {};
+
       if (!desaSnap.empty) {
-        const desaData = desaSnap.docs[0].data() as { namaDesa: string, desaID: string };
+        const desaData = desaSnap.docs[0].data();
+
         namaDesa = desaData.namaDesa || "";
-        desaID = desaData.desaID || "";
+
+        desaMeta = {
+          namaDesa: desaData.namaDesa || "",
+          kecamatan: desaData.kecamatan || "",
+          kabupatenKota: desaData.kabupatenKota || "",
+          provinsi: desaData.provinsi || "",
+          potensiDesa: desaData.potensiDesa || [],
+          geografisDesa: desaData.geografisDesa || "",
+          infrastrukturDesa: desaData.infrastrukturDesa || "",
+          kesiapanDigital: desaData.kesiapanDigital || "",
+          literasiDigital: desaData.literasiDigital || "",
+          pemantapanPelayanan: desaData.pemantapanPelayanan || "",
+          sosialBudaya: desaData.sosialBudaya || "",
+          sumberDaya: desaData.sumberDaya || ""
+        };
       } else {
         console.warn("Desa tidak ditemukan untuk user ini");
         return;
@@ -58,93 +76,213 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
       // Ambil semua inovasi yang diterapkan di desa ini
       const innovationsSnap = await getDocs(collection(db, "innovations"));
       const desaInovasi = innovationsSnap.docs.filter((doc) => {
-        const inputDesaMenerapkan = doc.data().inputDesaMenerapkan;
-        return Array.isArray(inputDesaMenerapkan) &&
-          inputDesaMenerapkan.some((nama: string) =>
+        const input = doc.data().inputDesaMenerapkan;
+        if (Array.isArray(input)) {
+          return input.some((nama: string) =>
             nama?.toLowerCase().trim() === namaDesa.toLowerCase().trim()
           );
+        } else if (typeof input === "string") {
+          return input.toLowerCase().trim() === namaDesa.toLowerCase().trim();
+        }
+        return false;
       });
 
-      // Ambil semua inovator
-      const innovatorSnap = await getDocs(collection(db, "innovators"));
-      const inovators = innovatorSnap.docs.map((doc) => ({
-        id: doc.id,
-        name: doc.data().namaInovator as string,
-      }));
 
-      // Hitung jumlah inovasi per inovator hanya di desa ini
-      const inovatorStats: Record<string, { jumlahInovasi: number }> = {};
+      // Siapkan data inovator
       const inovatorData: InovatorReportData[] = [];
 
-      // Proses inovasi dan hitung kontribusi per inovator
-      desaInovasi.forEach((doc) => {
+      desaInovasi.forEach((doc, index) => {
         const data = doc.data();
-        const inputDesaMenerapkan = data.inputDesaMenerapkan || [];
-        const inovatorId = data.innovatorId;
 
-        if (inovatorId) {
-          if (!inovatorStats[inovatorId]) {
-            inovatorStats[inovatorId] = { jumlahInovasi: 0 };
-          }
+        const namaInovator = data.namaInovator || "Tidak Ada Nama";
+        const namaInovasi = data.namaInovasi || "-";
+        const kategori = data.kategori || "-";
+        const tahun = data.tahunDibuat || "Tidak Ada Tahun";
+        const input = data.inputDesaMenerapkan || [];
+        const namaDesaLain = Array.isArray(input)
+          ? input
+            .filter((nama: string) => nama?.toLowerCase().trim() !== namaDesa.toLowerCase().trim())
+            .join(", ")
+          : "-";
 
-          inovatorStats[inovatorId].jumlahInovasi += 1;
-
-          const namaDesa = inputDesaMenerapkan.join(", ");
-          const jumlahDesaDampingan = inputDesaMenerapkan.length;
-
-          const inovatorDoc = inovators.find((inovator) => inovator.id === inovatorId);
-          const namaInovator = inovatorDoc ? inovatorDoc.name : "Tidak Ada Nama Inovator";
-
-          // Ambil nama inovasi, kategori, dan tahun dari createdAt
-          const namaInovasi = data.namaInovasi || "Tidak Ada Nama Inovasi";  
-          const kategori = data.kategori || "Tidak Ada Kategori";  
-
-          // Ekstrak tahun dari createdAt
-          const tahun = data.createdAt ? new Date(data.createdAt.toDate()).getFullYear().toString() : "Tidak Ada Tahun";
-
-          inovatorData.push({
-            no: inovatorData.length + 1,
-            namaInovator,
-            namaInovasi,
-            kategori,
-            jumlahInovasi: inovatorStats[inovatorId].jumlahInovasi,
-            namaDesa,
-            jumlahDesaDampingan,
-            tahun, // Menambahkan kolom tahun
-          });
-        }
+        inovatorData.push({
+          no: index + 1,
+          namaInovator,
+          namaInovasi,
+          kategori,
+          tahun,
+          namaDesa: namaDesaLain || "-",
+          jumlahInovasi: 1,
+          jumlahDesaDampingan: input.length - 1
+        });
       });
 
-      // Urutkan berdasarkan jumlah inovasi yang diterapkan
-      inovatorData.sort((a, b) => b.jumlahInovasi - a.jumlahInovasi);
+      setInovatorData(inovatorData.sort((a, b) => b.jumlahInovasi - a.jumlahInovasi));
 
-      setInovatorData(inovatorData);  // Simpan data inovator ke state
+      // Set meta data desa agar bisa dipakai untuk PDF
+      setDesaMetadata(desaMeta); // Pastikan kamu punya state ini
+
     } catch (error) {
       console.error("❌ Error fetching innovator data:", error);
     }
   };
 
   useEffect(() => {
-    fetchData();  // Ambil data saat komponen pertama kali dimuat
+    fetchData();
   }, []);
 
-  // Fungsi untuk download report ke Excel
-  const handleDownload = () => {
-    const excelData = inovatorData.map((item) => ({
-      No: item.no,
-      "Nama Inovator": item.namaInovator,
-      "Nama Inovasi": item.namaInovasi,
-      "Kategori Inovasi": item.kategori,
-      "Tahun": item.tahun, 
-      "Jumlah Desa Dampingan Inovator": item.jumlahDesaDampingan,
-      "Desa Dampingan Lainnya": item.namaDesa,
-    }));
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    const marginLeft = 13;
+    let currentY = 25;
+    const lineHeight = 6;
 
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    // Set default font
+    doc.setFont("helvetica");
+    doc.setFontSize(10);
 
-    XLSX.writeFile(workbook, fileName);
+    // Header background
+    doc.setFillColor(52, 115, 87); // ✅ Ini benar
+    doc.rect(0, 0, 210, 45, "F");
+
+    // Header kiri
+    doc.setTextColor(255, 255, 255);
+
+    // Buat judul bold
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Report Desa", marginLeft, 20);
+    // Subjudul normal
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "normal");
+    doc.text("KMS Inovasi Desa Digital", marginLeft, 28);
+
+
+    // Header kanan (pakai koordinat tetap dan align right)
+    if (desaMetadata) {
+      doc.setFontSize(18);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Desa ${desaMetadata.namaDesa || "-"}`, 195, 20, { align: "right" });
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Kec. ${desaMetadata.kecamatan}, Kab. ${desaMetadata.kabupatenKota}, ${desaMetadata.provinsi}`,
+        195,
+        28,
+        { align: "right" }
+      );
+    }
+
+    // Body
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    currentY = 40;
+    const today = new Intl.DateTimeFormat("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date());
+
+    doc.text(`Diunduh pada: ${today}`, marginLeft, currentY);
+
+    // Potensi Desa
+    doc.setTextColor(0,0,0);
+    currentY += lineHeight * 2 + 5;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Potensi Desa:", marginLeft, currentY);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    const potensiText = (desaMetadata?.potensiDesa || []).join(", ") || "-";
+    currentY += lineHeight;
+    doc.text(potensiText, marginLeft, currentY);
+
+    // Karakteristik Desa
+    currentY += lineHeight * 2;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Karakteristik Desa:", marginLeft, currentY);
+    currentY += lineHeight;
+
+    const characteristics = [
+      ["Geografis", desaMetadata?.geografisDesa || "-"],
+      ["Infrastruktur", desaMetadata?.infrastrukturDesa || "-"],
+      ["Kesiapan Digital", desaMetadata?.kesiapanDigital || "-"],
+      ["Literasi Digital", desaMetadata?.literasiDigital || "-"],
+      ["Pemantapan Pelayanan", desaMetadata?.pemantapanPelayanan || "-"],
+      ["Sosial dan Budaya", desaMetadata?.sosialBudaya || "-"],
+      ["Sumber Daya Alam", desaMetadata?.sumberDaya || "-"]
+    ];
+
+    characteristics.forEach(([label, value]) => {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`${label}`, marginLeft, currentY);
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`: ${value}`, marginLeft + 40, currentY);
+      currentY += lineHeight;
+    });
+
+    // Tabel Inovasi Yang Diterapkan
+    currentY += lineHeight;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Inovasi Yang Diterapkan:", marginLeft, currentY);
+    currentY += lineHeight;
+
+    // Hitung tinggi awal tabel dan posisi margin
+    const tableY = currentY;
+
+    // Simulasikan background rounded
+    doc.setFillColor(255, 255, 255); // background putih
+
+    // AutoTable
+    autoTable(doc, {
+      startY: tableY,
+      head: [[
+        "No", "Nama Inovator", "Nama Inovasi", "Kategori Inovasi", "Tahun", "Desa Dampingan Lainnya"
+      ]],
+      body: inovatorData.map((item) => [
+        item.no,
+        item.namaInovator,
+        item.namaInovasi,
+        item.kategori,
+        item.tahun,
+        item.namaDesa,
+      ]),
+      styles: {
+        fontSize: 8,
+        font: "helvetica",
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [52, 115, 87],         // ✅ Header hijau (52,115,87)
+        textColor: [255, 255, 255],
+        fontStyle: "bold",
+        halign: "center",
+        valign: "middle",
+      },
+      bodyStyles: {
+        textColor: [0, 0, 0],
+        valign: "top",
+      },
+      alternateRowStyles: {
+        fillColor: [240, 248, 245],
+      },
+      margin: { left: marginLeft, right: marginLeft },
+      tableLineColor: [200, 200, 200],
+      tableLineWidth: 0.1,
+      didDrawPage: (data: any) => {
+        const pageNumber = (doc as any).internal.getNumberOfPages?.() || 1;
+        doc.setFontSize(8);
+        doc.text(`Page ${data.pageNumber} of ${pageNumber}`, doc.internal.pageSize.getWidth() - 15, 285, {
+          align: "right",
+        });
+      },
+    } as any);
+
+    doc.save("Report Dashboard Desa.pdf");
   };
 
   return (
@@ -154,7 +292,7 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
       variant="ghost"
       height="40px"
       padding={1}
-      onClick={handleDownload}
+      onClick={handleDownloadPDF}
       _hover={{ bg: "whiteAlpha.300" }}
       _active={{ bg: "whiteAlpha.400" }}
     />
