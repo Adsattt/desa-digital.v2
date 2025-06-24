@@ -56,6 +56,7 @@ type OptionType = {
 const categoryOptions = [
   { value: "E-Government", label: "E-Government" },
   { value: "E-Tourism", label: "E-Tourism" },
+  { value: "Infrastuktur Lokal", label: "Infrastuktur Lokal" },
   { value: "Layanan Keuangan", label: "Layanan Keuangan" },
   { value: "Layanan Sosial", label: "Layanan Sosial" },
   {
@@ -68,8 +69,7 @@ const categoryOptions = [
   },
   { value: "Pengelolaan Sumber Daya", label: "Pengelolaan Sumber Daya" },
   { value: "Pertanian Cerdas", label: "Pertanian Cerdas" },
-  { value: "Sistem Informasi", label: "Sistem Informasi" },
-  { value: "UMKM", label: "UMKM" },
+  { value: "Sistem Informasi", label: "Sistem Informasi" }
 ];
 
 const predefinedModels = [
