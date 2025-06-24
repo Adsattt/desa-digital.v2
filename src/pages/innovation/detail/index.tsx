@@ -129,7 +129,6 @@ function DetailInnovation() {
 
       if (innovationSnap.exists()) {
         const innovationData = innovationSnap.data();
-        console.log("Innovation Data:", innovationData);
         const inputDesaMenerapkan = innovationData?.inputDesaMenerapkan || [];
 
         if (inputDesaMenerapkan.length > 0) {
@@ -507,7 +506,7 @@ function DetailInnovation() {
             <Description>No specific needs listed.</Description>
           )}
         </div>
-        <Flex flexDirection="column" paddingBottom="70px" gap="8px">
+        {/* <Flex flexDirection="column" paddingBottom="70px" gap="8px">
           <Flex justifyContent="space-between" alignItems="flex-end" align-self="stretch">
             <SubText>Desa yang Menerapkan</SubText>
             <Text
@@ -545,7 +544,7 @@ function DetailInnovation() {
               </ActionContainer>
             );
           })}
-          </Flex>
+          </Flex> */}
           
         {owner && ( // Conditionally render the Edit button
           <Button

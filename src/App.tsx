@@ -47,7 +47,8 @@ import KlaimInovasiManual from "./pages/village/klaimInovasi/manual";
 import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
-import { Bounce, ToastContainer } from "react-toastify";
+import SearchPage from "./pages/home/components/search/SearchPage";
+import { Bounce, ToastContainer } from "react-toastify"; 
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,7 @@ const routes = [
   {
     path: paths.ADD_INNOVATION,
     element: <AddInnovation />,
+    // element: <InovationForm />
   },
   {
     path: paths.INNOVATION_CATEGORY_PAGE,
@@ -135,10 +137,11 @@ const routes = [
   },
   {
     path: paths.DETAIL_KLAIM_INOVASI_PAGE,
-    element: <DetailKlaim />,
-  }, 
+    // element: <DetailKlaim />,
+    element: <KlaimInovasi />,
+  },
   {
-    path: paths. MANUAL_KLAIM_INOVASI,
+    path: paths.MANUAL_KLAIM_INOVASI,
     element: <KlaimInovasiManual />,
   },
   {
@@ -258,7 +261,7 @@ const routes = [
     element: <RekomendasiInovasi />,
   },
   {
-    path: '/search',
+    path: "/search",
     element: <SearchPage />,
   },
 ];

@@ -9,6 +9,7 @@ import {
     Tr,
     Th,
     Td,
+    Icon,
     TableContainer,
 } from "@chakra-ui/react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
@@ -24,6 +25,7 @@ import {
     Cell,
 } from "recharts";
 import { DownloadIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 
 type ChartData = {
     valueAsli: any;
@@ -78,6 +80,13 @@ const CustomTooltip = ({
     return null;
 };
 
+function toTitleCase(str: string): string {
+    return str.toLowerCase().split(' ').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
+
 const SebaranPotensiDesa: React.FC = () => {
     const [barData, setBarData] = useState<ChartData[]>([]);
     const [allPotensiData, setAllPotensiData] = useState<Record<string, number>>({});
@@ -96,10 +105,13 @@ const SebaranPotensiDesa: React.FC = () => {
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 if (Array.isArray(data.potensiDesa)) {
-                    data.potensiDesa.forEach((potensi: string) => {
-                        const formattedPotensi =
-                            potensi.charAt(0).toUpperCase() + potensi.slice(1).toLowerCase();
-                        potensiCount[formattedPotensi] = (potensiCount[formattedPotensi] || 0) + 1;
+                    data.potensiDesa.forEach((potensiItem: string) => {
+                        const potensiSplit = potensiItem.split(',').map(p => p.trim());
+
+                        potensiSplit.forEach((potensi: string) => {
+                            const formattedPotensi = toTitleCase(potensi);
+                            potensiCount[formattedPotensi] = (potensiCount[formattedPotensi] || 0) + 1;
+                        });
                     });
                 }
             });
@@ -243,7 +255,7 @@ const SebaranPotensiDesa: React.FC = () => {
                             <Tr>
                                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
                                 <Th p={1} fontSize="8px" textAlign="center">Kategori Potensi</Th>
-                                <Th p={1} fontSize="8px" textAlign="center">Jumlah</Th>
+                                <Th p={1} fontSize="8px" textAlign="center">Total Desa</Th>
                             </Tr>
                         </Thead>
                         <Tbody>
@@ -264,19 +276,58 @@ const SebaranPotensiDesa: React.FC = () => {
 
                 {/* 🔹 Pagination */}
                 <Flex justify="center" mt={3} gap={2}>
-                    {[...Array(totalPages)].map((_, index) => (
-                        <Button
-                            key={index}
-                            size="xs"
-                            borderRadius="full"
-                            bg={currentPage === index + 1 ? "gray.800" : "white"}
-                            color={currentPage === index + 1 ? "white" : "gray.800"}
-                            onClick={() => setCurrentPage(index + 1)}
-                            _hover={{ bg: "gray.300" }}
-                        >
-                            {index + 1}
-                        </Button>
-                    ))}
+                    {(() => {
+                        const pagesPerBlock = 5;
+                        const currentBlock = Math.floor((currentPage - 1) / pagesPerBlock);
+                        const startPage = currentBlock * pagesPerBlock + 1;
+                        const endPage = Math.min(startPage + pagesPerBlock - 1, totalPages);
+
+                        return (
+                            <>
+                                {/* Prev icon button */}
+                                {startPage > 1 && (
+                                    <Button
+                                        size="xs"
+                                        onClick={() => setCurrentPage(startPage - 1)}
+                                        variant="ghost"
+                                        p={1}
+                                    >
+                                        <Icon as={ChevronLeftIcon} />
+                                    </Button>
+                                )}
+
+                                {/* Page numbers */}
+                                {[...Array(endPage - startPage + 1)].map((_, index) => {
+                                    const page = startPage + index;
+                                    return (
+                                        <Button
+                                            key={page}
+                                            size="xs"
+                                            borderRadius="full"
+                                            bg={currentPage === page ? "gray.800" : "white"}
+                                            color={currentPage === page ? "white" : "gray.800"}
+                                            onClick={() => setCurrentPage(page)}
+                                            _hover={{ bg: "gray.300" }}
+                                        >
+                                            {page}
+                                        </Button>
+                                    );
+                                })}
+
+                                {/* Next icon button */}
+                                {endPage < totalPages && (
+                                    <Button
+                                        size="xs"
+                                        onClick={() => setCurrentPage(endPage + 1)}
+                                        variant="ghost"
+                                        p={1}
+                                    >
+                                        <Icon as={ChevronRightIcon} />
+                                    </Button>
+                                )}
+                            </>
+                        );
+                    })()}
                 </Flex>
             </Box>
         </Box>

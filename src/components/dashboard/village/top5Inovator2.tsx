@@ -47,7 +47,7 @@ const Top5InovatorVillage: React.FC = () => {
 
     // 🔹 Ambil Data Inovator Unggulan dari Firestore
     useEffect(() => {
-        const fetchTopInovator = async () => {
+        const fetchTopInovatorTanpaId = async () => {
             try {
                 const db = getFirestore();
                 const auth = getAuth();
@@ -68,7 +68,7 @@ const Top5InovatorVillage: React.FC = () => {
                 let namaDesa = "";
                 if (!desaSnap.empty) {
                     const desaData = desaSnap.docs[0].data() as { namaDesa: string };
-                    namaDesa = desaData.namaDesa || "";
+                    namaDesa = desaData.namaDesa?.toLowerCase().trim() || "";
                 } else {
                     console.warn("Desa tidak ditemukan untuk user ini");
                     return;
@@ -76,39 +76,43 @@ const Top5InovatorVillage: React.FC = () => {
 
                 // Ambil semua inovasi
                 const innovationsSnap = await getDocs(collection(db, "innovations"));
-                const desaInovasi = innovationsSnap.docs.filter((doc) => {
-                    const inputDesaMenerapkan = doc.data().inputDesaMenerapkan;
-                    return Array.isArray(inputDesaMenerapkan) &&
-                        inputDesaMenerapkan.some((nama: string) =>
-                            nama?.toLowerCase().trim() === namaDesa.toLowerCase().trim()
-                        );
-                });
 
-                // Hitung jumlah inovasi dari setiap inovator di desa ini
+                // Hitung jumlah inovasi berdasarkan namaInovator
                 const inovatorCount: Record<string, number> = {};
-                desaInovasi.forEach((doc) => {
-                    const inovatorId = doc.data().innovatorId;
-                    if (inovatorId) {
-                        inovatorCount[inovatorId] = (inovatorCount[inovatorId] || 0) + 1;
+
+                innovationsSnap.docs.forEach((doc) => {
+                    const data = doc.data();
+                    const input = data.inputDesaMenerapkan;
+                    const namaInovator = data.namaInovator;
+
+                    let cocok = false;
+
+                    if (Array.isArray(input)) {
+                        cocok = input.some(
+                            (nama: string) =>
+                                nama?.toLowerCase().trim() === namaDesa
+                        );
+                    } else if (typeof input === "string") {
+                        cocok = input.toLowerCase().trim() === namaDesa;
+                    }
+
+                    if (cocok && typeof namaInovator === "string") {
+                        const key = namaInovator.trim();
+                        inovatorCount[key] = (inovatorCount[key] || 0) + 1;
                     }
                 });
 
-                // Ambil semua inovator
-                const innovatorSnap = await getDocs(collection(db, "innovators"));
-                const inovators = innovatorSnap.docs
-                    .map((doc) => ({
-                        id: doc.id,
-                        name: doc.data().namaInovator as string,
-                    }))
-                    .filter((inovator) => inovatorCount[inovator.id]) // hanya yang ada kontribusinya ke desa
-                    .map((inovator) => ({
-                        name: inovator.name,
-                        value: inovatorCount[inovator.id],
-                    }))
-                    .sort((a, b) => b.value - a.value)
-                    .slice(0, 5);
+                // Konversi ke array dan sort
+                const inovators = Object.entries(inovatorCount)
+                    .map(([name, value]) => ({ name, value }))
+                    .sort((a, b) => b.value - a.value);
 
-                // Ranking & tinggi batang tetap seperti sebelumnya
+                // Tambah dummy jika kurang dari 5
+                while (inovators.length < 5) {
+                    inovators.push({ name: "-", value: 0 });
+                }
+
+                // Custom bar layout
                 const customOrder = [3, 1, 0, 2, 4];
                 const customHeights = [20, 40, 50, 35, 15];
                 const customRanks = ["4th", "2nd", "1st", "3rd", "5th"];
@@ -117,20 +121,21 @@ const Top5InovatorVillage: React.FC = () => {
                     const item = inovators[index];
                     return {
                         name: item?.name || "",
-                        value: customHeights[rankIndex],     // custom tinggi batang
-                        valueAsli: item?.value || 0,         // jumlah inovasi asli
+                        value: customHeights[rankIndex],
+                        valueAsli: item?.value || 0,
                         rank: customRanks[rankIndex],
                     };
                 });
 
+                console.log("✅ Ranked Top Inovators:", rankedInovators);
                 setChartData(rankedInovators);
-
             } catch (error) {
-                console.error("❌ Error fetching top innovators:", error);
+                console.error("❌ Error:", error);
             }
         };
 
-        fetchTopInovator();
+        // PANGGIL dengan nama yang BENAR
+        fetchTopInovatorTanpaId();
     }, []);
 
 
@@ -164,8 +169,8 @@ const Top5InovatorVillage: React.FC = () => {
     const [inovatorData, setInovatorData] = useState<
         {
             namaDesaDampingan: any;
-            namaInovasi: any; no: number; namaInovator: string; jumlahInovasi: number; jumlahDesaDampingan: number 
-}[]
+            namaInovasi: any; no: number; namaInovator: string; jumlahInovasi: number; jumlahDesaDampingan: number
+        }[]
     >([]);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -182,7 +187,7 @@ const Top5InovatorVillage: React.FC = () => {
                     return;
                 }
 
-                // Ambil namaDesa berdasarkan userId
+                // Ambil namaDesa dari collection villages
                 const desaQuery = query(
                     collection(db, "villages"),
                     where("userId", "==", user.uid)
@@ -192,58 +197,73 @@ const Top5InovatorVillage: React.FC = () => {
                 let namaDesa = "";
                 if (!desaSnap.empty) {
                     const desaData = desaSnap.docs[0].data() as { namaDesa: string };
-                    namaDesa = desaData.namaDesa || "";
+                    namaDesa = desaData.namaDesa?.toLowerCase().trim() || "";
                 } else {
-                    console.warn("Desa tidak ditemukan untuk user ini");
+                    console.warn("Desa tidak ditemukan");
                     return;
                 }
 
                 // Ambil semua inovasi
                 const innovationsSnap = await getDocs(collection(db, "innovations"));
-                const desaInovasi = innovationsSnap.docs.filter((doc) => {
-                    const inputDesaMenerapkan = doc.data().inputDesaMenerapkan;
-                    return Array.isArray(inputDesaMenerapkan) &&
-                        inputDesaMenerapkan.some((nama: string) =>
-                            nama?.toLowerCase().trim() === namaDesa.toLowerCase().trim()
-                        );
-                });
 
-                // Hitung jumlah inovasi per inovator hanya di desa ini
-                const inovatorStats: Record<string, { jumlahInovasi: number }> = {};
-                desaInovasi.forEach((doc) => {
-                    const inovatorId = doc.data().innovatorId;
-                    if (inovatorId) {
-                        inovatorStats[inovatorId] = {
-                            jumlahInovasi: (inovatorStats[inovatorId]?.jumlahInovasi || 0) + 1,
-                        };
+                type InovatorRow = {
+                    namaInovator: string;
+                    namaInovasi: string;
+                    namaDesaDampingan: string;
+                    jumlahDesaDampingan: number;
+                    jumlahInovasi: number;
+                    no: number;
+                };
+
+                const countMap: Record<string, InovatorRow> = {};
+
+                innovationsSnap.docs.forEach((doc) => {
+                    const data = doc.data();
+                    const input = data.inputDesaMenerapkan;
+                    const namaInovator = data.namaInovator;
+                    const namaInovasi = data.namaInovasi;
+                    const jumlahDesaDampingan = data.jumlahDesaKlaim || 0;
+
+                    let cocok = false;
+                    if (Array.isArray(input)) {
+                        cocok = input.some(
+                            (nama: string) =>
+                                nama?.toLowerCase().trim() === namaDesa
+                        );
+                    } else if (typeof input === "string") {
+                        cocok = input.toLowerCase().trim() === namaDesa;
+                    }
+
+                    if (
+                        cocok &&
+                        typeof namaInovator === "string" &&
+                        typeof namaInovasi === "string"
+                    ) {
+                        const key = namaInovator.trim();
+                        if (!countMap[key]) {
+                            countMap[key] = {
+                                namaInovator: key,
+                                namaInovasi: namaInovasi,
+                                namaDesaDampingan: namaDesa,
+                                jumlahDesaDampingan: jumlahDesaDampingan,
+                                jumlahInovasi: 1,
+                                no: 0,
+                            };
+                        } else {
+                            countMap[key].jumlahInovasi += 1;
+                        }
                     }
                 });
 
-                // Ambil data inovator
-                const innovatorsSnap = await getDocs(collection(db, "innovators"));
-
-                // Fungsi bantu untuk batasi nama jadi 3 kata
-                const limitWords = (text: string) => text.split(" ").slice(0, 3).join(" ");
-
-                // Ambil data inovator yang relevan dan susun
-                const fetchedData = innovatorsSnap.docs
-                    .filter((doc) => inovatorStats[doc.id]) // hanya inovator yang kontribusi ke desa
-                    .map((doc) => {
-                        const data = doc.data();
-                        const stats = inovatorStats[doc.id];
-
-                        return {
-                            namaInovator: data.namaInovator ? limitWords(data.namaInovator) : "Tidak Ada Nama",
-                            namaInovasi: data.Inovasi,
-                            jumlahInovasi: stats.jumlahInovasi,
-                            namaDesaDampingan: data.DesaDampingan,
-                            jumlahDesaDampingan: data.jumlahDesaDampingan || 0,
-                        };
-                    })
+                // Ubah ke array, urutkan, beri nomor urut
+                const result = Object.values(countMap)
                     .sort((a, b) => b.jumlahInovasi - a.jumlahInovasi)
-                    .map((item, index) => ({ ...item, no: index + 1 }));
+                    .map((item, index) => ({
+                        ...item,
+                        no: index + 1,
+                    }));
 
-                setInovatorData(fetchedData);
+                setInovatorData(result);
             } catch (error) {
                 console.error("❌ Error fetching innovator data:", error);
             }
@@ -251,7 +271,6 @@ const Top5InovatorVillage: React.FC = () => {
 
         fetchInovatorData();
     }, []);
-
 
     const handleDownload = () => {
         const excelData = inovatorData.map((item) => ({

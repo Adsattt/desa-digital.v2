@@ -88,7 +88,7 @@ const Rekomendasi = () => {
                     sx={{
                         borderTopRadius: "3xl",
                         width: "360px",
-                        h: "770px",
+                        h: "550px",
                         my: "auto",
                         mx: "auto",
                     }}
