@@ -44,8 +44,8 @@ const SebaranKategoriInovator: React.FC = () => {
 
         snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.kategoriInovator) {
-            const kategori = data.kategoriInovator.trim(); // Ganti dari 'kategori' ke 'kategoriInovator'
+          if (data.kategori) {
+            const kategori = data.kategori.trim();
             kategoriCount[kategori] = (kategoriCount[kategori] || 0) + 1;
           }
         });

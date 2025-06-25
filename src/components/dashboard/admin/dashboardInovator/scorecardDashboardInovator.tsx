@@ -33,30 +33,25 @@ const ScoreCardDashboardInovator: React.FC = () => {
       const villagesRef = collection(db, "villages");
       const villagesSnapshot = await getDocs(villagesRef);
 
-      const villageSet = new Set<string>();
+      const villageSet = new Set();
 
       villagesSnapshot.docs.forEach((doc) => {
         const data = doc.data();
+        const namaDesa =
+          typeof data.namaDesa === "string"
+            ? data.namaDesa
+            : typeof data.namaDesa?.label === "string"
+              ? data.namaDesa.label
+              : null;
 
-        if (
-          typeof data.jumlahInovasi === "number" &&
-          data.jumlahInovasi > 0
-        ) {
-          if (typeof data.namaDesa === "string" && data.namaDesa.length > 1) {
-            villageSet.add(data.namaDesa);
-          } else if (
-            data.namaDesa?.label &&
-            typeof data.namaDesa.label === "string" &&
-            data.namaDesa.label.length > 1
-          ) {
-            villageSet.add(data.namaDesa.label);
-          }
+        if (namaDesa && namaDesa.length > 1) {
+          villageSet.add(namaDesa);
         }
       });
 
-      // ✅ Set ke state
+      // Set ke state
       setTotalInovators(inovatorCount);
-      setTotalDesaDampingan(villageSet.size); // dari koleksi villages
+      setTotalDesaDampingan(villageSet.size);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
