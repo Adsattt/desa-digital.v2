@@ -121,10 +121,10 @@ export const SubText = styled.p`
 
 export const NavbarButton = styled.div`
   display: flex;
-  width: 100%
+  width: 100%;
   max-width: 360px;
   padding: 12px 16px;
-  position: sticky;
+  position: fixed;
   bottom: 0;
   justify-content: center;
   align-items: center;
