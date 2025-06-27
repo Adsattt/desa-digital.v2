@@ -6,13 +6,14 @@ export const ContentContainer = styled.div`
   flex-direction: column;
   gap: 16px;
   margin: 16px;
-  heigh: 100%;
+  height: 100%;
 `;
 
 export const CardContainer = styled.div`
   overflow: auto;
   width: 100%;
   white-space: nowrap;
+  height: 100%;
 `
 
 export const Horizontal = styled.div`
