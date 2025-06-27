@@ -4,7 +4,7 @@ export const Container = styled.div`
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.06), 0px 1px 3px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  min-width: 120px;
+  min-width: 130px;
   overflow: hidden;
   cursor: pointer;
 `
@@ -33,7 +33,6 @@ export const CardContent = styled.div`
   flex: 1 0 0;
   align-self: stretch;
   height: 115px;
-  
 `
 export const ContBadge = styled.div`
   display: flex;

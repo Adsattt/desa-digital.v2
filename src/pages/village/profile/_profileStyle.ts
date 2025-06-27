@@ -18,6 +18,14 @@ export const CardContainer = styled.div`
 export const Horizontal = styled.div`
   display: flex;
   gap: 16px;
+    overflow-x: auto;
+  scroll-behavior: smooth;
+  -ms-overflow-style: none;  /* IE dan Edge lama */
+  scrollbar-width: none;     /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;            /* Chrome, Safari, Edge */
+  }
+padding-bottom: 4px;
 `
 
 
@@ -76,7 +84,7 @@ export const Description = styled.div`
   line-height: 140%;
   color: #4b5563;
   gap: 6px;
-  text-align: justify;
+  text-align: left;
   width: 100%;
   word-break: break-word;
   overflow-wrap: anywhere;

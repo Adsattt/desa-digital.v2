@@ -193,7 +193,7 @@ export default function DetailVillage() {
   }, [id]); // Tambahkan id sebagai dependensi
 
   return (
-    <Box paddingBottom={4}>
+    <Box paddingBottom={16}>
       <TopBar title="Detail Desa" onBack={() => navigate(-1)} />
       <div style={{ position: "relative", width: "100%" }}>
         <Background src={village?.header || defaultHeader} alt="background" />
@@ -468,7 +468,12 @@ export default function DetailVillage() {
             </Flex>
             <CardContainer>
               <Horizontal>
-                {innovations.map((innovation, idx) => (
+                {innovations.length === 0 ? (
+                  <Text color="gray.400" fontSize={12}>
+                    Belum ada inovasi yang diterapkan
+                  </Text>
+                ) : (
+                innovations.slice(0,5).map((innovation, idx) => (
                   <CardInnovation
                     key={idx}
                     images={innovation.images}
@@ -478,17 +483,17 @@ export default function DetailVillage() {
                     tahunDibuat={innovation.tahunDibuat}
                     innovatorLogo={innovation.innovatorImgURL}
                     innovatorName={innovation.namaInnovator}
-                    onClick={() => {
-                      if (innovation.id) {
+                   onClick={() =>
                         navigate(
                           generatePath(paths.DETAIL_INNOVATION_PAGE, {
                             id: innovation.id,
                           })
-                        );
+                        )
                       }
-                    }}
+                    
                   />
-                ))}
+                ))
+              )}
               </Horizontal>
             </CardContainer>
           </div>

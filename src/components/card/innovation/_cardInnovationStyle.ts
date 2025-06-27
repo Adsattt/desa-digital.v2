@@ -4,9 +4,10 @@ export const Container = styled.div`
   border: 1px solid #e5e7eb;
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.06), 0px 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
-  max-width: 156px;
+  min-width: 138px;
   overflow: hidden;
   cursor: pointer;
+  height: 100%;
 `
 
 export const Background = styled.img`
