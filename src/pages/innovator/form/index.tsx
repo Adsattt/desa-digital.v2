@@ -445,7 +445,7 @@ useEffect(() => {
       <TopBar
         title={owner ? "Edit Profil Inovator" : "Register Inovator"} 
         onBack={() => navigate(-1)} />
-      <Box p="0 16px">
+      <Box p="16px">
       <form
       id="InnovatorForm"
           onSubmit={(e) => {
@@ -570,6 +570,7 @@ useEffect(() => {
                 value={textInputsValue.instagram}
                 disabled={!isEditable || isFormLocked}
                 onChange={onTextChange}
+                isRequired={false}
               />
               <FormSection
                 title="Website"
@@ -579,6 +580,7 @@ useEffect(() => {
                 value={textInputsValue.website}
                 disabled={!isEditable || isFormLocked}
                 onChange={onTextChange}
+                isRequired={false}
               />
             </Stack>
           </Flex>

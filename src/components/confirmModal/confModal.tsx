@@ -33,7 +33,7 @@ const ConfModal: React.FC<ClaimModalProps> = ({
       <ModalOverlay />
       <ModalContent>
         <ModalBody paddingTop={4}>
-          <Flex direction={"column"} alignItems={"center"} fontSize="12px">
+          <Flex direction={"column"} alignItems={"center"} fontSize="12px" textAlign={"center"}>
             <Image
               src={QuestionRobot}
               alt="question robot"
@@ -42,7 +42,7 @@ const ConfModal: React.FC<ClaimModalProps> = ({
             />
             {modalBody1}
           </Flex>
-          <Flex alignItems={"center"} fontSize="10px" justifyContent={"center"}>
+          <Flex alignItems={"center"} fontSize="11px" justifyContent={"center"}>
             Pastikan data yang anda masukkan sudah benar
           </Flex>
         </ModalBody>
@@ -55,7 +55,7 @@ const ConfModal: React.FC<ClaimModalProps> = ({
             size={"xs"}
             paddingInline={4}
             fontWeight={500}
-            fontSize="10px"
+            fontSize="11px"
           >
             Tidak
           </Button>
@@ -65,7 +65,7 @@ const ConfModal: React.FC<ClaimModalProps> = ({
             size={"xs"}
             paddingInline={6}
             fontWeight={500}
-            fontSize="10px"
+            fontSize="11px"
             type="submit"
             isLoading={isLoading}
           >
