@@ -31,7 +31,7 @@ const FormSection: React.FC<FormSectionProps> = ({
   isRequired = true,
 }) => {
   return (
-    <Box >
+    <Box>
       <Text fontWeight="400" fontSize="14px" mb="4px">
         {title} {isRequired && <span style={{ color: "red" }}>*</span>}
       </Text>
