@@ -43,7 +43,9 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { generatePath, useNavigate } from "react-router-dom";
@@ -70,10 +72,8 @@ import ActionDrawer from "Components/drawer/ActionDrawer.tsx";
 export default function DetailVillage() {
   const navigate = useNavigate();
   const [userLogin] = useAuthState(auth);
-  const innovationRef = collection(firestore, "innovations");
   const [innovations, setInnovations] = useState<DocumentData[]>([]);
   const [village, setVillage] = useState<DocumentData | undefined>();
-  const [user, setUser] = useState<DocumentData | undefined>();
   const { id } = useParams();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [admin, setAdmin] = useState(false);
@@ -155,18 +155,6 @@ export default function DetailVillage() {
     // console.log("User:", user);
   }, [userLogin, id]);
 
-  useEffect(() => {
-    const fetchInnovations = async () => {
-      const innovationsSnapshot = await getDocs(innovationRef);
-      const innovationsData = innovationsSnapshot.docs.map((doc) => ({
-        id: doc.id, // Ambil id dokumen dari Firestore
-        ...doc.data(), // Ambil data lainnya
-      }));
-      setInnovations(innovationsData);
-    };
-
-    fetchInnovations();
-  }, [innovationRef]);
 
   useEffect(() => {
     const fetchVillageData = async () => {
@@ -175,6 +163,15 @@ export default function DetailVillage() {
           const docRef = doc(firestore, "villages", id);
           const docSnap = await getDoc(docRef);
 
+          const inovationRef = collection(firestore, "innovations");
+          const q = query(inovationRef, where("desaId", "array-contains", id));
+          const innovationsSnapshot = await getDocs(q);
+          const innovationsData = innovationsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(), 
+          }));
+          setInnovations(innovationsData);
+          console.log("Inovasi:", innovationsData);
           if (docSnap.exists()) {
             // console.log("Village Data:", docSnap.data());
             setVillage(docSnap.data());
