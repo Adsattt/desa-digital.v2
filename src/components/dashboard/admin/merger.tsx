@@ -94,7 +94,7 @@ const Leaderboard: React.FC = () => {
                 case 'desa':
                     collectionName = 'villages';
                     nameField = 'namaDesa';
-                    valueField = 'jumlahInovasi';
+                    valueField = 'inovasiDiTerapkan';
                     break;
                 case 'inovator':
                     collectionName = 'innovators';
@@ -104,7 +104,7 @@ const Leaderboard: React.FC = () => {
                 case 'inovasi':
                     collectionName = 'innovations';
                     nameField = 'namaInovasi';
-                    valueField = 'jumlahDesaKlaim';
+                    valueField = 'jumlahKlaim';
                     break;
             }
 
@@ -117,7 +117,12 @@ const Leaderboard: React.FC = () => {
                         valueAsli: doc.data()[valueField] || 0,
                         rank: ""
                     }))
-                    .sort((a, b) => b.value - a.value)
+                    .sort((a, b) => {
+                        if (b.value === a.value) {
+                            return a.name.localeCompare(b.name);
+                        }
+                        return b.value - a.value;
+                        })
                     .slice(0, 5);
 
                 const customOrder = [3, 1, 0, 2, 4];
