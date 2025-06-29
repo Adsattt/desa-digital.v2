@@ -360,7 +360,6 @@ const KlaimInovasi: React.FC = () => {
     }
   }, [id]);
 
-  // console.log("Claim Data:", JSON.stringify(claimData, null, 2));
 
   const handleVerify = async () => {
     setLoading(true);
@@ -385,9 +384,10 @@ const KlaimInovasi: React.FC = () => {
 
         const desaRef = doc(firestore, "villages", claimData.desaId);
         await updateDoc(desaRef, {
-          inovasiDiTerapkan: increment(1),
+          jumlahInovasiDiterapkan: increment(1),
           inovasiId: [claimData.inovasiId],
         });
+
       }
       console.log("Claim verified successfully");
     } catch (error) {
