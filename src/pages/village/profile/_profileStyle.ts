@@ -6,18 +6,27 @@ export const ContentContainer = styled.div`
   flex-direction: column;
   gap: 16px;
   margin: 16px;
-  heigh: 100%;
+  height: 100%;
 `;
 
 export const CardContainer = styled.div`
   overflow: auto;
   width: 100%;
   white-space: nowrap;
+  height: 100%;
 `
 
 export const Horizontal = styled.div`
   display: flex;
   gap: 16px;
+    overflow-x: auto;
+  scroll-behavior: smooth;
+  -ms-overflow-style: none;  /* IE dan Edge lama */
+  scrollbar-width: none;     /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;            /* Chrome, Safari, Edge */
+  }
+padding-bottom: 4px;
 `
 
 
@@ -76,7 +85,7 @@ export const Description = styled.div`
   line-height: 140%;
   color: #4b5563;
   gap: 6px;
-  text-align: justify;
+  text-align: left;
   width: 100%;
   word-break: break-word;
   overflow-wrap: anywhere;
@@ -112,10 +121,10 @@ export const SubText = styled.p`
 
 export const NavbarButton = styled.div`
   display: flex;
-  width: 100%
+  width: 100%;
   max-width: 360px;
   padding: 12px 16px;
-  position: sticky;
+  position: fixed;
   bottom: 0;
   justify-content: center;
   align-items: center;
