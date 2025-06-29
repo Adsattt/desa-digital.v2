@@ -19,7 +19,6 @@ import { TooltipProps } from "recharts";
 import { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 
 
-
 const ITEMS_PER_PAGE = 5; // Jumlah data per halaman
 
 const CustomTooltip = ({
