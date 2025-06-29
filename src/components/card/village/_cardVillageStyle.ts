@@ -5,7 +5,7 @@ export const Container = styled.div<{ isHome?: boolean }>`
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   display: flex;
-  width: ${(props) => (props.isHome ? '36%' : '100%')};
+  width: ${(props) => (props.isHome ? '38%' : '100%')};
   flex-shrink: 0;
   height: 197px;
   flex-direction: column;

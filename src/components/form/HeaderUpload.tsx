@@ -79,6 +79,7 @@ const HeaderUpload: React.FC<HeaderUploadProps> = ({
             accept="image/png,image/jpeg,image/jpg"
             ref={selectFileRef}
             onChange={onSelectHeader}
+
           />
         </Flex>
       )}

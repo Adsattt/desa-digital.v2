@@ -56,9 +56,11 @@ import {
   SubText,
 } from "./_detailStyle.ts";
 
+import defaultLogo from "@public/images/default-logo.svg";
+
 function DetailInnovation() {
   const navigate = useNavigate();
-  const { role, isVillageVerified } = useUser()
+  const { role, isVillageVerified } = useUser();
   const [isExpanded, setIsExpanded] = useState(false);
   const { id } = useParams();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -76,7 +78,6 @@ function DetailInnovation() {
     villageSafe.map((v) => [v.namaDesa, { userId: v.userId, logo: v.logo }])
   );
 
- 
   useEffect(() => {
     const fetchUser = async () => {
       if (user?.uid) {
@@ -116,7 +117,7 @@ function DetailInnovation() {
         });
     }
   }, [data.innovatorId]);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
@@ -137,7 +138,7 @@ function DetailInnovation() {
             const villagesRef = collection(firestore, "villages");
             const villagesQuery = query(
               villagesRef,
-              where("namaDesa", "in" , inputDesaMenerapkan)
+              where("namaDesa", "in", inputDesaMenerapkan)
             );
             const villagesSnapshot = await getDocs(villagesQuery);
 
@@ -157,14 +158,12 @@ function DetailInnovation() {
     fetchData();
   }, [id]);
 
-
   type Village = {
     namaDesa: string;
     logo: string;
-    userId: string
+    userId: string;
   };
-  
-  
+
   const handleVerify = async () => {
     setLoading(true);
     try {
@@ -219,23 +218,23 @@ function DetailInnovation() {
   };
 
   const handleVillageonClick = () => {
-      if (role === "village" && isVillageVerified) {
-        navigate(paths.KLAIM_INOVASI_PAGE);
-      } else {
-        toast.warning(
-          "Akun anda belum terdaftar atau terverifikasi sebagai desa",
-          {
-            position: "top-center",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          }
-        );
-      }
-    };
+    if (role === "village" && isVillageVerified) {
+      navigate(paths.KLAIM_INOVASI_PAGE);
+    } else {
+      toast.warning(
+        "Akun anda belum terdaftar atau terverifikasi sebagai desa",
+        {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+    }
+  };
 
   const year = new Date(data.tahunDibuat).getFullYear();
 
@@ -340,7 +339,7 @@ function DetailInnovation() {
             )
           }
         >
-          <Logo src={innovatorData.logo} alt="logo" />
+          <Logo src={innovatorData.logo || defaultLogo} alt="logo" />
           <div>
             <Text2>Inovator</Text2>
             <Text1>{innovatorData.namaInovator}</Text1>
@@ -348,7 +347,7 @@ function DetailInnovation() {
         </ActionContainer>
         <Stack spacing="8px">
           <div>
-            <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="16px">
+            <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="12px">
               Deskripsi
             </Text>
             <Box fontSize="12px" fontWeight="400" color="#4B5563">
@@ -416,19 +415,22 @@ function DetailInnovation() {
             </Text>
             <Text fontSize="12px" fontWeight="400" color="#4B5563">
               {data.hargaMinimal
-                ? `Rp. ${new Intl.NumberFormat("id-ID").format(data.hargaMinimal)}${
+                ? `Rp. ${new Intl.NumberFormat("id-ID").format(
+                    data.hargaMinimal
+                  )}${
                     data.hargaMaksimal
-                      ? ` - Rp. ${new Intl.NumberFormat("id-ID").format(data.hargaMaksimal)}`
+                      ? ` - Rp. ${new Intl.NumberFormat("id-ID").format(
+                          data.hargaMaksimal
+                        )}`
                       : ""
                   }`
                 : "Harga tidak tersedia"}
             </Text>
-
           </div>
         </Stack>
 
         <div>
-          <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="16px">
+          <Text fontSize="16px" fontWeight="700" lineHeight="140%">
             Manfaat
           </Text>
           <Flex>
@@ -441,7 +443,7 @@ function DetailInnovation() {
                   ) => (
                     <Flex
                       key={index}
-                      mb="12px"
+                      mt="12px"
                       border="1px solid var(--Gray-30, #E5E7EB);"
                       borderRadius="8px"
                     >
@@ -463,10 +465,14 @@ function DetailInnovation() {
                                   size={12}
                                   color="#568A73"
                                   style={{
-                                    overflow: "visible"
+                                    overflow: "visible",
                                   }}
                                 />
-                                <Text fontSize="12px" fontWeight="700" textAlign="start">
+                                <Text
+                                  fontSize="12px"
+                                  fontWeight="700"
+                                  textAlign="start"
+                                >
                                   {item.judul}
                                 </Text>
                               </Flex>
@@ -490,12 +496,12 @@ function DetailInnovation() {
           </Flex>
         </div>
 
-        <div>
-          <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="16px">
+        <Flex direction="column" mb={14}>
+          <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="12px">
             Perlu Disiapkan
           </Text>
           {Array.isArray(data.infrastruktur) &&
-            data.infrastruktur.length > 0 ? (
+          data.infrastruktur.length > 0 ? (
             data.infrastruktur.map((item, index) => (
               <BenefitContainer key={index}>
                 <Icon src={Check} alt="check" />
@@ -505,7 +511,7 @@ function DetailInnovation() {
           ) : (
             <Description>No specific needs listed.</Description>
           )}
-        </div>
+        </Flex>
         {/* <Flex flexDirection="column" paddingBottom="70px" gap="8px">
           <Flex justifyContent="space-between" alignItems="flex-end" align-self="stretch">
             <SubText>Desa yang Menerapkan</SubText>
@@ -545,49 +551,60 @@ function DetailInnovation() {
             );
           })}
           </Flex> */}
-          
+
         {owner && ( // Conditionally render the Edit button
-          <Button
+          <Box
+            position="fixed"
+            bottom="0"
+            left="50%"
+            transform="translateX(-50%)"
             width="100%"
-            fontSize="16px"
-            onClick={() =>
-              navigate(
-                generatePath(paths.EDIT_INNOVATION_PAGE, {
-                  id: data.id,
-                })
-              )
-            }
+            maxWidth="360px"
+            bg="white"
+            p="3.5"
+            boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
           >
-            Edit
-          </Button>
+            <Button
+              width="100%"
+              fontSize="16px"
+              onClick={() =>
+                navigate(
+                  generatePath(paths.EDIT_INNOVATION_PAGE, {
+                    id: data.id,
+                  })
+                )
+              }
+            >
+              Edit
+            </Button>
+          </Box>
         )}
         {!owner && (
-        <Box
-          position="fixed"
-          bottom="0"
-          left="50%"
-          transform="translateX(-50%)" 
-          width="100%"
-          maxWidth="360px" 
-          bg="white"
-          p="3.5"
-          boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
-        >
-          {admin ? (
-            data.status === "Terverifikasi" || data.status === "Ditolak" ? (
-              <StatusCard message={data.catatanAdmin} status={data.status} />
+          <Box
+            position="fixed"
+            bottom="0"
+            left="50%"
+            transform="translateX(-50%)"
+            width="100%"
+            maxWidth="360px"
+            bg="white"
+            p="3.5"
+            boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
+          >
+            {admin ? (
+              data.status === "Terverifikasi" || data.status === "Ditolak" ? (
+                <StatusCard message={data.catatanAdmin} status={data.status} />
+              ) : (
+                <Button width="100%" fontSize="14px" onClick={onOpen}>
+                  Verifikasi Permohonan Inovasi
+                </Button>
+              )
             ) : (
-              <Button width="100%" fontSize="14px" onClick={onOpen}>
-                Verifikasi Permohonan Inovasi
+              <Button width="100%" fontSize="16px" onClick={onOpen}>
+                Ketahui lebih lanjut
               </Button>
-            )
-          ) : (
-            <Button width="100%" fontSize="16px" onClick={onOpen}>
-              Ketahui lebih lanjut
-            </Button>
-          )}
-        </Box>
-
+            )}
+          </Box>
         )}
         <RejectionModal
           isOpen={openModal}
@@ -606,9 +623,9 @@ function DetailInnovation() {
           setOpenModal={setOpenModal}
           role="Inovator"
           contactData={{
-            whatsapp: innovatorData?.whatsapp || "", 
+            whatsapp: innovatorData?.whatsapp || "",
             instagram: innovatorData?.instagram || "",
-            website: innovatorData?.website || ""
+            website: innovatorData?.website || "",
           }}
         />
       </ContentContainer>
