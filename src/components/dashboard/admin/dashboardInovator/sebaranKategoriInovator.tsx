@@ -31,7 +31,7 @@ const SebaranKategoriInovator: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const colors: string[] = ["#A7C7A5", "#1E5631", "#779e74", "#4d7161"];
+  const colors: string[] = ["#A7C7A5", "#1E5631", "#779e74", "#448f5e"];
 
   useEffect(() => {
     const fetchKategoriData = async () => {
