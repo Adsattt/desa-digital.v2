@@ -4,6 +4,7 @@ export const CardContainer = styled.div`
   overflow: auto;
   width: 100%;
   white-space: nowrap;
+  height: 194px;
 `
 
 export const Horizontal = styled.div`

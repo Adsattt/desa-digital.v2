@@ -45,7 +45,7 @@ const BestBanner: React.FC = () => {
   }, []);
 
   return (
-    <Box padding="0 14px" pos="relative">
+    <Box padding="0 14px" pos="relative" >
       <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="16px" color="#1F2937">
         Inovator dan Desa Unggulan
       </Text>
@@ -56,7 +56,7 @@ const BestBanner: React.FC = () => {
               backgroundImage={banner}
               backgroundSize="100%"
               width="332px"
-              height="140px"
+              height="142px"
               padding="23px 23px 14px 23px"
               position="absolute"
             >
@@ -112,7 +112,7 @@ const BestBanner: React.FC = () => {
             backgroundImage={banner}
             backgroundSize="100%"
             width="332px"
-            height="140px"
+            height="142px"
             padding="23px 23px 15px 23px"
             position="absolute"
           >
