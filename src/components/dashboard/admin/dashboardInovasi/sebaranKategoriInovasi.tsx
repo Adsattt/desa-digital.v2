@@ -27,7 +27,7 @@ const SebaranKategoriInnovations: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const colors: string[] = ["#A7C7A5", "#1E5631", "#174E3B", "#4A7C59", "#7B9E89"];
+  const colors: string[] = ["#A7C7A5", "#448f5e", "#174E3B", "#4A7C59", "#7B9E89"];
 
   const fetchKategoriData = async () => {
     try {
