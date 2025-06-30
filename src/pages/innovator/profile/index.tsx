@@ -466,7 +466,7 @@ const ProfileInnovator: React.FC = () => {
               </Box>
             ))
           ) : (
-            <Text fontSize="12px" color="#9CA3AF" textAlign="center" mt={2}>
+            <Text fontSize="12px" color="#9CA3AF" textAlign="left" mt={2}>
               Belum memiliki desa dampingan
             </Text>
           )}
