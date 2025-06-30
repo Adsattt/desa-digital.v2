@@ -174,7 +174,7 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
         2: { cellWidth: 70 },  // Nama Inovator
         3: { cellWidth: 30 },  // Jumlah Desa
       },
-    });
+    } as any);
 
     doc.save(`Daftar_Inovasi_${selectedCategory || 'all'}.pdf`);
   };

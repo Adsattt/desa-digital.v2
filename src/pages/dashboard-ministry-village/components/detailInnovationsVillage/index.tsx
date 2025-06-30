@@ -200,7 +200,7 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
         3: { cellWidth: 60 },  // Nama Inovator
         4: { cellWidth: 25 },  // Tahun
       },
-    });
+    } as any);
 
     doc.save(`Inovasi_Desa_${selectedVillage || "data"}.pdf`);
   };

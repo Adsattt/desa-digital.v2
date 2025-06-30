@@ -350,7 +350,13 @@ const exportToPDF = (
               <Image src={downloadIcon} alt="Download" boxSize="16px"/>
             </MenuButton>
             <MenuList>
-              <MenuItem onClick={() => exportToPDF(formattedData, profil)}>
+              <MenuItem
+                onClick={() => {
+                  if (profil) {
+                    exportToPDF(formattedData, profil);
+                  }
+                }}
+              >
                 Download PDF
               </MenuItem>
               <MenuItem onClick={() => exportToExcel(formattedData)}>

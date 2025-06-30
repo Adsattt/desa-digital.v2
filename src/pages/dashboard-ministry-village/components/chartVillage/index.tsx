@@ -187,7 +187,7 @@ const ChartVillage = () => {
           6: { cellWidth: 20 },
         },
         margin: { top: 10 },
-      });
+      } as any);
 
       y = (doc as any).lastAutoTable.finalY + 15;
     }

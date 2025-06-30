@@ -185,7 +185,7 @@ const ChartInnovation3 = () => {
           3: { cellWidth: 30 },
         },
         margin: { top: 10 },
-      });
+      } as any);
 
       y = (doc as any).lastAutoTable.finalY + 15;
     }

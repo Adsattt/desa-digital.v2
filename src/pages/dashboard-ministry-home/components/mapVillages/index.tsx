@@ -282,7 +282,7 @@ const MapVillages = () => {
         9: { cellWidth: 25 },  // Nama Inovator
         10: { cellWidth: 25 }, // Tanggal Pengajuan
       }
-    });
+    } as any);
 
     doc.save("data_sebaran_inovasi.pdf");
   };

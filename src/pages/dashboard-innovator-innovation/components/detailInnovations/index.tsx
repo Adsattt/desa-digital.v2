@@ -31,7 +31,7 @@ import {
 } from "./_detailInnovationsStyle";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
-import { jsPDF } from "jspdf";
+import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
@@ -260,15 +260,13 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
       styles: { fontSize: 12 },
       headStyles: { fillColor: [22, 160, 133] }, // header background color
       columnStyles: {
-        0: { cellWidth: 10 },  // No
-        1: { cellWidth: 60 },  // Nama Inovasi
-        2: { cellWidth: 50 },  // Inovator
-        3: { cellWidth: 30 },  // Jumlah Desa
+        0: { cellWidth: 10 }, // No
+        1: { cellWidth: 60 }, // Nama Inovasi
+        2: { cellWidth: 50 }, // Inovator
+        3: { cellWidth: 30 }, // Jumlah Desa
       },
-      didDrawPage: (data) => {
-        // You can add page numbers or custom header/footer here if needed
-      },
-    });
+      didDrawPage: () => {},
+    } as any); // <= bypass TS
 
     doc.save("inovasi_data.pdf");
   };

@@ -173,7 +173,7 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
         2: { cellWidth: 40 },  // Jumlah Inovasi
         3: { cellWidth: 45 },  // Jumlah Desa Dampingan
       },
-    });
+    } as any);
 
     doc.save(`Daftar_Inovator_${kategoriInovator || "semua"}.pdf`);
   };

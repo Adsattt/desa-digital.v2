@@ -143,7 +143,7 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
         5: { cellWidth: 40 },  // Potensi
         6: { cellWidth: 25 },  // IDM
       },
-    });
+    } as any);
 
     doc.save(`Daftar_Desa_${selectedCategory}.pdf`);
   };

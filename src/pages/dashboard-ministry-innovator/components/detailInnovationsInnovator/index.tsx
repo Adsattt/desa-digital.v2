@@ -151,7 +151,7 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
         3: { cellWidth: 45 },  // Nama Desa
         4: { cellWidth: 25 },  // Tahun
       },
-    });
+    } as any);
 
     doc.save(`Detail_Desa_Digital_${filterInnovator || "data"}.pdf`);
   };

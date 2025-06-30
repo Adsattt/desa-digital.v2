@@ -161,7 +161,7 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
         3: { cellWidth: 45 },  // Nama Desa
         4: { cellWidth: 30 },  // Tanggal Pengajuan
       },
-    });
+    } as any);
 
     doc.save(`Detail_Desa_Digital_${selectedInovasi || "data"}.pdf`);
   };

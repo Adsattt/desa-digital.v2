@@ -128,78 +128,79 @@ const BarChartInovasi = () => {
     XLSX.writeFile(workbook, "data-perkembangan-desa-digital.xlsx");
   };
 
-    const exportToPDF = (data: any[]) => {
-        const doc = new jsPDF;
-        const downloadDate = new Date().toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-        });
+  const exportToPDF = (data: any[]) => {
+      const doc = new jsPDF;
+      const downloadDate = new Date().toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+      });
 
-        // Green header background
-        doc.setFillColor(0, 128, 0);
-        doc.rect(0, 0, 1000, 30, "F");
+      // Green header background
+      doc.setFillColor(0, 128, 0);
+      doc.rect(0, 0, 1000, 30, "F");
 
-        doc.setTextColor(255, 255, 255);
-        doc.setFont("helvetica", "bold");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
 
-        doc.setFontSize(15);
-        doc.text("Dokumen Laporan Kementerian", 14, 13);
-        doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+      doc.setFontSize(15);
+      doc.text("Dokumen Laporan Kementerian", 14, 13);
+      doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
 
-        doc.setFontSize(12);
-        doc.text("Diambil dari: Grafik Perkembangan Desa Digital", 14, 22);
-        doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+      doc.setFontSize(12);
+      doc.text("Diambil dari: Grafik Perkembangan Desa Digital", 14, 22);
+      doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
 
-        // Reset text styles for table content
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(14);
-        doc.setFont("helvetica", "normal");
+      // Reset text styles for table content
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "normal");
 
-        // Add section title
-        let y = 42;
-        const labelX = 14;
-        doc.setFont("helvetica", "bold");
-        doc.text(`Data Perkembangan Desa Digital`, labelX, y);
-        y += 6;
+      // Add section title
+      let y = 42;
+      const labelX = 14;
+      doc.setFont("helvetica", "bold");
+      doc.text(`Data Perkembangan Desa Digital`, labelX, y);
+      y += 6;
 
-        // Sort data by year
-        const sortedData = [...data].sort((a, b) => a.year - b.year);
+      // Sort data by year
+      const sortedData = [...data].sort((a, b) => a.year - b.year);
 
-        autoTable(doc, {
-            startY: y,
-            head: [[
-                "No",
-                "Nama Desa",
-                "Nama Inovasi",
-                "Nama Inovator",
-                "Tahun Pendataan",
-            ]],
-            body: sortedData.map((item, index) => [
-                index + 1,
-                item.namaDesa,
-                item.namaInovasi,
-                item.namaInovator,
-                item.year,
-            ]),
-            headStyles: {
-                fillColor: [0, 128, 0],
-                textColor: 255,
-                fontStyle: "bold",
-            },
-            columnStyles: {
-                0: { cellWidth: 15 },   // No
-                1: { cellWidth: 40 },   // Nama Desa
-                2: { cellWidth: 40 },   // Nama Inovasi
-                3: { cellWidth: 40 },   // Nama Inovator
-            },
-            styles: {
-                fontSize: 12,
-            },
-        });
+      // @ts-ignore
+      autoTable(doc, {
+        startY: y,
+        head: [[
+          "No",
+          "Nama Desa",
+          "Nama Inovasi",
+          "Nama Inovator",
+          "Tahun Pendataan",
+        ]],
+        body: sortedData.map((item, index) => [
+          index + 1,
+          item.namaDesa,
+          item.namaInovasi,
+          item.namaInovator,
+          item.year,
+        ]),
+        headStyles: {
+          fillColor: [0, 128, 0],
+          textColor: 255,
+          fontStyle: "bold",
+        },
+        columnStyles: {
+          0: { cellWidth: 15 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 40 },
+        },
+        styles: {
+          fontSize: 12,
+        },
+      } as any);
 
-        doc.save("data-perkembangan-desa-digital.pdf");
-    };
+      doc.save("data-perkembangan-desa-digital.pdf");
+  };
 
   return (
     <Box p={4} maxW="100%" mx="auto">

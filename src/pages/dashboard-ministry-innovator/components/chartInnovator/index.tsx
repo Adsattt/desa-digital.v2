@@ -134,7 +134,7 @@ const exportToPDF = async (selectedYear: number) => {
         6: { cellWidth: 80 },
       },
       margin: { top: 10 },
-    });
+    } as any);
 
     y = (doc as any).lastAutoTable.finalY + 15;
   }
