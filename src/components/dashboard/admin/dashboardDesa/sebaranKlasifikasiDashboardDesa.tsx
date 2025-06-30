@@ -19,7 +19,7 @@ const SebaranKlasifikasiDashboardDesa: React.FC = () => {
     const colors2: Record<string, string> = {
         "Dataran Tinggi": "#A7C7A5",
         "Dataran Rendah": "#1E5631",
-        "Dataran Sedang": "#174E3B"
+        "Dataran Sedang": "#448f5e"
     };
 
     const fetchGeoData = async () => {
