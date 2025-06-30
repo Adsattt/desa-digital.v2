@@ -94,7 +94,7 @@ const Leaderboard: React.FC = () => {
                 case 'desa':
                     collectionName = 'villages';
                     nameField = 'namaDesa';
-                    valueField = 'inovasiDiTerapkan';
+                    valueField = 'jumlahInovasiDiterapkan';
                     break;
                 case 'inovator':
                     collectionName = 'innovators';
