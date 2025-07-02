@@ -78,7 +78,7 @@ function Detail() {
               <Skeleton circle width={50} height={50} />
             ) : (
               innovators[item.innovatorId]?.logo || (
-                <Image src={defaultLogo} alt="logo" width='40px' height='40px' objectFit='cover' />
+                <Image src={defaultLogo} alt="logo" width='20px' height='20px' objectFit='cover' borderRadius="50%"/>
               )
             )
           }

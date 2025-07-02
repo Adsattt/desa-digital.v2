@@ -99,7 +99,7 @@ const handleSearchSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
         <Box mt="120px">
           <Innovator />
         </Box>
-        <Box mt="-10px">
+        <Box mt="-32px">
           <Villages />
         </Box>
       </Stack>

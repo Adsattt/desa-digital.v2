@@ -49,7 +49,7 @@ const Top5Innovations: React.FC = () => {
               typeof rawName === "object" && rawName !== null && "text" in rawName
                 ? rawName.text
                 : String(rawName),
-            count: doc.data().jumlahDesaKlaim ?? 0,
+            count: doc.data().jumlahKlaim ?? 0,
           };
         });
 
@@ -61,16 +61,17 @@ const Top5Innovations: React.FC = () => {
           }
         });
 
-        // 📋 Format untuk tabel — tidak perlu pengecekan ulang
-        const tableFormatted = sortedInnovations.map((item, index) => ({
+        // 🗂 Format for table
+        const innovationsSorted = [...sortedInnovations].sort((a, b) => {
+            if (b.count !== a.count) return b.count - a.count;
+            return a.name.localeCompare(b.name);
+          });
+        const tableFormatted = innovationsSorted.map((item, index) => ({
           no: index + 1,
-          name: item.name, // Sudah string
+          name: item.name,
           count: item.count,
         }));
-
         setTableData(tableFormatted);
-
-        // 👑 Setup chartData seperti sebelumnya
         const top5 = tableFormatted.slice(0, 5);
         const customOrder = [3, 1, 0, 2, 4];
         const customHeights = [20, 40, 50, 35, 15];

@@ -31,7 +31,7 @@ const SebaranKategoriInovator: React.FC = () => {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  const colors: string[] = ["#A7C7A5", "#1E5631", "#779e74", "#4d7161"];
+  const colors: string[] = ["#A7C7A5", "#1E5631", "#779e74", "#448f5e"];
 
   useEffect(() => {
     const fetchKategoriData = async () => {
@@ -44,8 +44,8 @@ const SebaranKategoriInovator: React.FC = () => {
 
         snapshot.forEach((doc) => {
           const data = doc.data();
-          if (data.kategoriInovator) {
-            const kategori = data.kategoriInovator.trim(); // Ganti dari 'kategori' ke 'kategoriInovator'
+          if (data.kategori) {
+            const kategori = data.kategori.trim();
             kategoriCount[kategori] = (kategoriCount[kategori] || 0) + 1;
           }
         });

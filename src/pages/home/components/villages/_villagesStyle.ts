@@ -9,6 +9,14 @@ export const CardContainer = styled.div`
 export const Horizontal = styled.div`
   display: flex;
   gap: 16px;
+    overflow-x: auto;
+  scroll-behavior: smooth;
+  -ms-overflow-style: none;  /* IE dan Edge lama */
+  scrollbar-width: none;     /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;            /* Chrome, Safari, Edge */
+  }
+  padding-bottom: 8px;
 `
 
 export const Title = styled.p`

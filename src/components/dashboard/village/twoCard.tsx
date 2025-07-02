@@ -105,33 +105,42 @@ const TwoCard: React.FC = () => {
         const namaDesa = desaData.namaDesa || "Desa";
         setUserDesa(namaDesa);
 
-        // Ambil semua data inovasi
-        const inovasiSnap = await getDocs(collection(db, "innovations"));
-        const totalAllInovasi = inovasiSnap.size;
+        // Ambil data claimInnovations yang terverifikasi terkait dengan desa
+        const claimQuery = query(
+          collection(db, "claimInnovations"),
+          where("desaId", "==", user.uid)
+        );
+        const claimSnap = await getDocs(claimQuery);
 
-        const jumlahInovasi = typeof desaData.jumlahInovasi === "number" ? desaData.jumlahInovasi : 0;
+        // Ambil semua inovasiId terkait dengan klaim desa ini
+        const inovasiIds = claimSnap.docs.map(doc => doc.data().inovasiId); // Ambil inovasiId dari klaim
+
+        // Hitung jumlah klaim inovasi yang terverifikasi untuk desa ini
+        const totalInovasiDesa = inovasiIds.length; // Jumlah inovasi yang diklaim oleh desa ini
+
+        // Ambil total seluruh inovasi yang ada di database (tidak ada relasi)
+        const allInovasiSnap = await getDocs(collection(db, "innovations"));
+        const totalAllInovasi = allInovasiSnap.size; // Jumlah total inovasi yang ada di database
 
         setTotalInovasi({
-          desa: jumlahInovasi,
-          total: totalAllInovasi,
+          desa: totalInovasiDesa, // jumlah inovasi yang diklaim oleh desa ini
+          total: totalAllInovasi, // jumlah seluruh inovasi yang ada di database
         });
 
-        // Ambil semua data inovator
-        const innovatorSnap = await getDocs(collection(db, "innovators"));
-        const totalAllInnovators = innovatorSnap.size;
+        // Ambil data inovator yang relevan dengan klaim inovasi
+        const inovatorIds = claimSnap.docs.map(doc => doc.data().inovatorId); // Ambil inovatorId dari klaim
+        console.log('inovator',inovatorIds);
 
-        const namaInovator = desaData.namaInovator;
-        let jumlahInovator = 0;
+        const  totalInovatorDesa = inovasiIds.length;
+        
 
-        if (Array.isArray(namaInovator)) {
-          jumlahInovator = namaInovator.length;
-        } else if (typeof namaInovator === "string" && namaInovator.trim() !== "") {
-          jumlahInovator = 1;
-        }
+        // Ambil total seluruh inovasi yang ada di database (tidak ada relasi)
+        const allInovatorSnap = await getDocs(collection(db, "innovators"));
+        const totalAllInovator = allInovatorSnap.size; // Jumlah total inovasi yang ada di database
 
         setTotalInovator({
-          desa: jumlahInovator,
-          total: totalAllInnovators,
+          desa: totalInovatorDesa, // jumlah inovator yang terkait dengan desa ini
+          total: totalAllInovator, // jumlah total inovator yang ada di database
         });
 
       } catch (error) {
@@ -141,7 +150,7 @@ const TwoCard: React.FC = () => {
 
     fetchData();
   }, []);
-
+  // Pastikan effect ini hanya dipanggil sekali ketika komponen di-mount
 
   const formatStyledText = (x: number, y: number) => (
     <Text as="span" display="flex" alignItems="baseline" fontWeight="bold">
