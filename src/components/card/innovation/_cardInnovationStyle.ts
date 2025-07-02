@@ -4,11 +4,12 @@ export const Container = styled.div`
   border: 1px solid #e5e7eb;
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.06), 0px 1px 3px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
-  min-width: 146px;
-  max-width: 146px;
+  min-width: 156px;
+  max-width: 156px;
   overflow: hidden;
   cursor: pointer;
   height: 100%;
+  min-height: 244px;
 `
 
 export const Background = styled.img`
@@ -19,6 +20,11 @@ export const Background = styled.img`
 
 export const Content = styled.div`
   padding: 8px;
+  height: 100%;
+  max-height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 `
 
 export const Title = styled.p`
@@ -42,11 +48,13 @@ export const Description = styled.p`
   font-size: 10px;
   font-weight: 400;
   color: #9ca3af;
-  text-overflow: ellipsis;
-  display: -webkit-box;
+  white-space: wrap;
   overflow: hidden;
-  -webkit-line-clamp: 3; /* Limit the content to three lines */
+  display: -webkit-box;
   -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  align-self: stretch;
+  text-overflow: ellipsis;
 `
 
 export const Icon = styled.img`
@@ -69,7 +77,6 @@ export const Applied = styled.p`
 `
 export const CompanyContainer = styled.div`
   display: flex;
-  align-items: center;
   margin-top: 10px;
   margin-bottom: 4px;
   gap: 8px;
