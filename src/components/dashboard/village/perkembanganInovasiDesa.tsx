@@ -62,43 +62,39 @@ const PerkembanganInovasiDesa: React.FC = () => {
         return;
       }
 
-      const innovationsRef = collection(db, "innovations");
-      const snapshot = await getDocs(innovationsRef);
+      // Ambil data klaim inovasi terkait desa ini
+      const claimQuery = query(
+        collection(db, "claimInnovations"),
+        where("desaId", "==", user.uid)
+      );
+      const claimSnap = await getDocs(claimQuery);
 
+      // Menghitung jumlah klaim per tahun berdasarkan createdAt
       const yearCount: Record<string, number> = {};
 
-      snapshot.forEach((doc) => {
+      claimSnap.forEach((doc) => {
         const data = doc.data();
-        const input = data.inputDesaMenerapkan;
-        const tahun = data.tahunDibuat;
+        const createdAt = data?.createdAt?.toDate(); // Pastikan createdAt adalah Timestamp yang bisa diubah ke Date
 
-        let cocok = false;
+        if (createdAt) {
+          const year = createdAt.getFullYear().toString(); // Ambil tahun dari createdAt
 
-        if (Array.isArray(input)) {
-          cocok = input.some(
-            (nama: string) => nama?.toLowerCase().trim() === namaDesa
-          );
-        } else if (typeof input === "string") {
-          cocok = input.toLowerCase().trim() === namaDesa;
-        }
-
-        if (cocok && (typeof tahun === "number" || typeof tahun === "string")) {
-          const year = tahun.toString().trim();
-          if (/^\d{4}$/.test(year)) { // validasi tahun 4 digit
-            yearCount[year] = (yearCount[year] || 0) + 1;
-          }
+          // Tambahkan jumlah klaim per tahun
+          yearCount[year] = (yearCount[year] || 0) + 1;
         }
       });
 
+      // Mengambil semua tahun yang tersedia dan mengurutkannya
       const allYearsList = Object.keys(yearCount).sort();
       setAllYears(allYearsList);
 
-      const filteredYears =
-        selectedYears.length > 0 ? selectedYears : allYearsList;
+      // Filter berdasarkan tahun yang dipilih (selectedYears) atau tampilkan semua tahun
+      const filteredYears = selectedYears.length > 0 ? selectedYears : allYearsList;
 
+      // Siapkan data untuk chart
       const chartData = filteredYears.map((year) => ({
         name: year,
-        value: yearCount[year] || 0,
+        value: yearCount[year] || 0, // Jika tidak ada klaim untuk tahun ini, nilai = 0
       }));
 
       console.log("✅ yearCount:", yearCount);
@@ -110,10 +106,10 @@ const PerkembanganInovasiDesa: React.FC = () => {
     }
   };
 
-
   useEffect(() => {
     fetchInovasiData();
   }, [selectedYears]);
+
 
   const handleCheckboxChange = (year: string) => {
     setSelectedYears((prev) =>
