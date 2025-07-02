@@ -56,7 +56,6 @@ type OptionType = {
 const categoryOptions = [
   { value: "E-Government", label: "E-Government" },
   { value: "E-Tourism", label: "E-Tourism" },
-  { value: "Infrastuktur Lokal", label: "Infrastuktur Lokal" },
   { value: "Layanan Keuangan", label: "Layanan Keuangan" },
   { value: "Layanan Sosial", label: "Layanan Sosial" },
   {
@@ -69,7 +68,8 @@ const categoryOptions = [
   },
   { value: "Pengelolaan Sumber Daya", label: "Pengelolaan Sumber Daya" },
   { value: "Pertanian Cerdas", label: "Pertanian Cerdas" },
-  { value: "Sistem Informasi", label: "Sistem Informasi" }
+  { value: "Sistem Informasi", label: "Sistem Informasi" },
+  { value: "UMKM", label: "UMKM" },
 ];
 
 const predefinedModels = [
@@ -485,31 +485,31 @@ const AddInnovation: React.FC = () => {
     setAlertStatus("info");
   };
 
-  // useEffect(() => {
-  //   const checkExistingInnovation = async () => {
-  //     if (!user?.uid) return;
+  useEffect(() => {
+    const checkExistingInnovation = async () => {
+      if (!user?.uid) return;
 
-  //     // Query untuk mengecek apakah pengguna sudah mengajukan inovasi sebelumnya
-  //     const innovationsQuery = query(
-  //       collection(firestore, "innovations"),
-  //       where("innovatorId", "==", user.uid),
-  //       where("status", "in", ["Menunggu", "Ditolak"])
-  //     );
+      // Query untuk mengecek apakah pengguna sudah mengajukan inovasi sebelumnya
+      const innovationsQuery = query(
+        collection(firestore, "innovations"),
+        where("innovatorId", "==", user.uid),
+        where("status", "in", ["Menunggu", "Ditolak"])
+      );
 
-  //     const querySnapshot = await getDocs(innovationsQuery);
-  //     if (!querySnapshot.empty) {
-  //       // Jika sudah ada inovasi, set ID inovasi dan statusnya
-  //       const existingDoc = querySnapshot.docs[0].data();
-  //       setInnovationId(querySnapshot.docs[0].id); // Menyimpan ID inovasi
-  //       setStatus(existingDoc.status); // Menyimpan status inovasi
-  //       console.log("Data Inovasi: ", existingDoc);
-  //     } else {
-  //       setInnovationId(""); // Tidak ada inovasi, reset ID
-  //     }
-  //   };
+      const querySnapshot = await getDocs(innovationsQuery);
+      if (!querySnapshot.empty) {
+        // Jika sudah ada inovasi, set ID inovasi dan statusnya
+        const existingDoc = querySnapshot.docs[0].data();
+        setInnovationId(querySnapshot.docs[0].id); // Menyimpan ID inovasi
+        setStatus(existingDoc.status); // Menyimpan status inovasi
+        console.log("Data Inovasi: ", existingDoc);
+      } else {
+        setInnovationId(""); // Tidak ada inovasi, reset ID
+      }
+    };
 
-  //   checkExistingInnovation();
-  // }, [user?.uid]);
+    checkExistingInnovation();
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!innovationId) return;
@@ -595,16 +595,16 @@ const AddInnovation: React.FC = () => {
 
   const isFormValid = () => {
     return (
-      // selectedStatus !== "" &&
-      // textInputsValue.name.trim() !== "" &&
-      // category.trim() !== "" &&
-      // textInputsValue.year.trim() !== "" &&
-      // textInputsValue.description.trim() !== "" &&
-      // selectedModels.length > 0 && // array harus ada isinya
-      // textInputsValue.villages.trim() !== "" &&
-      // selectedFiles.length > 0 && // cek foto inovasi
-      // benefit.length > 0
-      true
+      selectedStatus !== "" &&
+      textInputsValue.name.trim() !== "" &&
+      category.trim() !== "" &&
+      textInputsValue.year.trim() !== "" &&
+      textInputsValue.description.trim() !== "" &&
+      selectedModels.length > 0 && // array harus ada isinya
+      textInputsValue.villages.trim() !== "" &&
+      selectedFiles.length > 0 && // cek foto inovasi
+      benefit.length > 0 && // cek manfaat inovasi
+      requirements.length > 0 // cek persiapan infrastruktur
     );
   };
   
@@ -1300,19 +1300,19 @@ const AddInnovation: React.FC = () => {
             >
               {status === "Ditolak" ? "Ajukan Ulang" : "Ajukan Inovasi"}
             </Button>
+            <ConfModal
+              isOpen={isModal1Open}
+              onClose={closeModal}
+              modalTitle=""
+              modalBody1={modalBody1} // Mengirimkan teks konten modal
+              onYes={handleModal1Yes}
+            />
+            <SecConfModal
+              isOpen={isModal2Open}
+              onClose={closeModal}
+              modalBody2={modalBody2} // Mengirimkan teks konten modal
+            />
           </NavbarButton>
-          <ConfModal
-            isOpen={isModal1Open}
-            onClose={closeModal}
-            modalTitle=""
-            modalBody1={modalBody1} // Mengirimkan teks konten modal
-            onYes={handleModal1Yes}
-          />
-          <SecConfModal
-            isOpen={isModal2Open}
-            onClose={closeModal}
-            modalBody2={modalBody2} // Mengirimkan teks konten modal
-          />
         </>
       )}
     </>

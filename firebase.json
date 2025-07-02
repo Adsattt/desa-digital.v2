@@ -26,7 +26,7 @@
       "dataDir": "./emulator-data"
     },
     "firestore": {
-      "port": 8080,
+      "port": 8082,
       "dataDir": "./emulator-data"
     },
     "storage": {
