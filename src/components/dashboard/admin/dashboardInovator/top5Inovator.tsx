@@ -10,7 +10,7 @@ import {
   Th,
   Td,
   TableContainer,
-  Icon
+  Icon,
 } from "@chakra-ui/react";
 import {
   BarChart,
@@ -23,78 +23,91 @@ import {
 } from "recharts";
 import { useEffect, useState } from "react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
-import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "@chakra-ui/icons";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+} from "@chakra-ui/icons";
 import * as XLSX from "xlsx";
 
 const ITEMS_PER_PAGE = 5;
 
 const Top5Inovator: React.FC = () => {
-  const [chartData, setChartData] = useState<{ name: string; value: number; rank: string; valueAsli: number }[]>([]);
+  const [chartData, setChartData] = useState<
+    { name: string; value: number; rank: string; valueAsli: number }[]
+  >([]);
   const [inovatorData, setInovatorData] = useState<
-    { no: number; namaInovator: string; jumlahInovasi: number; jumlahDesaDampingan: number }[]
+    {
+      no: number;
+      namaInovator: string;
+      jumlahInovasi: number;
+      jumlahDesaDampingan: number;
+    }[]
   >([]);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const fetchTopInovator = async () => {
-      try {
-        const db = getFirestore();
-        const inovatorRef = collection(db, "innovators");
-        const snapshot = await getDocs(inovatorRef);
-
-        const inovators = snapshot.docs
-          .map((doc) => ({
-            name: doc.data().namaInovator as string,
-            value: doc.data().jumlahInovasi as number || 0,
-          }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 5);
-
-        // Urutan ranking dan tinggi batang sesuai peringkat
-        const customOrder = [3, 1, 0, 2, 4]; // Ranking custom
-        const customHeights = [20, 40, 50, 35, 15]; // Custom tinggi batang chart
-        const customRanks = ["4th", "2nd", "1st", "3rd", "5th"];
-
-        const rankedInovators = customOrder.map((index, rankIndex) => ({
-          name: inovators[index]?.name || "",
-          value: customHeights[rankIndex],
-          valueAsli: inovators[index]?.value || 0,
-          rank: customRanks[rankIndex],
-        }));
-
-        setChartData(rankedInovators);
-      } catch (error) {
-        console.error("❌ Error fetching top innovators:", error);
-      }
-    };
-
-    const fetchInovatorData = async () => {
+    const fetchData = async () => {
       try {
         const db = getFirestore();
         const innovatorsRef = collection(db, "innovators");
         const snapshot = await getDocs(innovatorsRef);
 
-        const limitWords = (text: string) => text.split(" ").slice(0, 3).join(" ");
-        const fetchedData = snapshot.docs
+        const limitWords = (text: string) =>
+          text.split(" ").slice(0, 3).join(" ");
+
+        // Ambil semua data + sorting benar
+        let allData = snapshot.docs
           .map((doc) => {
             const data = doc.data();
             return {
-              namaInovator: data.namaInovator ? limitWords(data.namaInovator) : "Tidak Ada Nama",
+              namaInovator: data.namaInovator
+                ? limitWords(data.namaInovator)
+                : "Tidak Ada Nama",
+              namaInovatorFull: data.namaInovator || "Tidak Ada Nama",
               jumlahInovasi: data.jumlahInovasi || 0,
               jumlahDesaDampingan: data.jumlahDesaDampingan || 0,
             };
           })
-          .sort((a, b) => b.jumlahInovasi - a.jumlahInovasi)
-          .map((item, index) => ({ ...item, no: index + 1 }));
+          .sort((a, b) => {
+            if (b.jumlahInovasi !== a.jumlahInovasi) {
+              return b.jumlahInovasi - a.jumlahInovasi;
+            }
+            return a.namaInovatorFull.localeCompare(b.namaInovatorFull);
+          });
 
-        setInovatorData(fetchedData);
+        // ✅ Untuk tabel (semua data)
+        setInovatorData(
+          allData.map((item, index) => ({
+            no: index + 1,
+            namaInovator: item.namaInovator,
+            jumlahInovasi: item.jumlahInovasi,
+            jumlahDesaDampingan: item.jumlahDesaDampingan,
+          }))
+        );
+
+        // ✅ Untuk chart (top 5 sesuai sorting sama dengan tabel)
+        const top5 = allData.slice(0, 5);
+
+        // 🔥 Tetap pertahankan custom order & tinggi batang
+        const customOrder = [3, 1, 0, 2, 4];
+        const customHeights = [20, 40, 50, 35, 15];
+        const customRanks = ["4th", "2nd", "1st", "3rd", "5th"];
+
+        const rankedChartData = customOrder.map((index, rankIndex) => ({
+          name: top5[index]?.namaInovator || "",
+          value: customHeights[rankIndex],
+          valueAsli: top5[index]?.jumlahInovasi || 0,
+          rank: customRanks[rankIndex],
+        }));
+
+        setChartData(rankedChartData);
       } catch (error) {
-        console.error("Error fetching innovator data:", error);
+        console.error("Error fetching data:", error);
       }
     };
 
-    fetchTopInovator();
-    fetchInovatorData();
+    fetchData();
   }, []);
 
   const totalPages = Math.ceil(inovatorData.length / ITEMS_PER_PAGE);
@@ -118,7 +131,17 @@ const Top5Inovator: React.FC = () => {
     XLSX.writeFile(workbook, "top_inovator.xlsx");
   };
 
-  const CustomLabel = ({ x, y, width, value }: { x: number; y: number; width: number; value: string }) => {
+  const CustomLabel = ({
+    x,
+    y,
+    width,
+    value,
+  }: {
+    x: number;
+    y: number;
+    width: number;
+    value: string;
+  }) => {
     return (
       <text
         x={x + width / 2}
@@ -147,9 +170,16 @@ const Top5Inovator: React.FC = () => {
       const data = payload[0].payload;
 
       return (
-        <div style={{ background: "white", padding: "10px", border: "1px solid #ccc" }}>
+        <div
+          style={{
+            background: "white",
+            padding: "10px",
+            border: "1px solid #ccc",
+          }}
+        >
           <p style={{ margin: 0, fontWeight: "bold" }}>{data.name}</p>
-          <p style={{ margin: 0 }}>Total Inovasi: {data.valueAsli}</p> {/* Menampilkan Total Inovasi */}
+          <p style={{ margin: 0 }}>Total Inovasi: {data.valueAsli}</p>{" "}
+          {/* Menampilkan Total Inovasi */}
         </div>
       );
     }
@@ -196,12 +226,21 @@ const Top5Inovator: React.FC = () => {
         overflow="visible"
       >
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={chartData} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
+          <BarChart
+            data={chartData}
+            margin={{ top: 20, right: 20, left: 20, bottom: 0 }}
+          >
             <XAxis dataKey="name" axisLine={false} tickLine={false} hide />
-            <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ fill: "transparent" }}
+            />
             <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#1E5631">
               <LabelList dataKey="name" position="top" fontSize="10px" />
-              <LabelList dataKey="rank" content={<CustomLabel x={0} y={0} width={0} value={""} />} />
+              <LabelList
+                dataKey="rank"
+                content={<CustomLabel x={0} y={0} width={0} value={""} />}
+              />
               {chartData.map((_, index) => (
                 <Cell key={`cell-${index}`} />
               ))}
@@ -226,19 +265,35 @@ const Top5Inovator: React.FC = () => {
           <Table variant="simple" size="sm">
             <Thead bg="#C6D8D0">
               <Tr>
-                <Th p={3} fontSize="8px" textAlign="center">No</Th>
-                <Th p={1} fontSize="8px" textAlign="center">Nama Inovator</Th>
-                <Th p={1} fontSize="8px" textAlign="center">Jumlah Inovasi</Th>
-                <Th p={1} fontSize="8px" textAlign="center">Jumlah Desa Dampingan</Th>
+                <Th p={3} fontSize="8px" textAlign="center">
+                  No
+                </Th>
+                <Th p={1} fontSize="8px" textAlign="center">
+                  Nama Inovator
+                </Th>
+                <Th p={1} fontSize="8px" textAlign="center">
+                  Jumlah Inovasi
+                </Th>
+                <Th p={1} fontSize="8px" textAlign="center">
+                  Jumlah Desa Dampingan
+                </Th>
               </Tr>
             </Thead>
             <Tbody>
               {currentData.map((row) => (
                 <Tr key={row.no}>
-                  <Td p={1} fontSize="8px" textAlign="center" fontWeight="bold">{row.no}</Td>
-                  <Td p={1} fontSize="8px" textAlign="center">{row.namaInovator}</Td>
-                  <Td p={1} fontSize="8px" textAlign="center">{row.jumlahInovasi}</Td>
-                  <Td p={1} fontSize="8px" textAlign="center">{row.jumlahDesaDampingan}</Td>
+                  <Td p={1} fontSize="8px" textAlign="center" fontWeight="bold">
+                    {row.no}
+                  </Td>
+                  <Td p={1} fontSize="8px" textAlign="center">
+                    {row.namaInovator}
+                  </Td>
+                  <Td p={1} fontSize="8px" textAlign="center">
+                    {row.jumlahInovasi}
+                  </Td>
+                  <Td p={1} fontSize="8px" textAlign="center">
+                    {row.jumlahDesaDampingan}
+                  </Td>
                 </Tr>
               ))}
             </Tbody>

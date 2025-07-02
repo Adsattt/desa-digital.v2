@@ -40,6 +40,7 @@ const PetaLama: React.FC = () => {
     const [filterA, setFilterA] = useState<string>('');
     const [filterB, setFilterB] = useState<string>('');
     const [filterC, setFilterC] = useState<string>('');
+    const [filterD, setFilterD] = useState<string>('');
 
     const fetchData = async () => {
         setLoading(true);
@@ -59,47 +60,194 @@ const PetaLama: React.FC = () => {
         }
 
         try {
-            const snapshot = await getDocs(collection(db, colName));
             const results: MarkerItem[] = [];
 
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const lat = parseFloat(data.latitude);
-                const lon = parseFloat(data.longitude);
+            // Untuk kategori desa
+            if (selectedCategory === 'desa') {
+                const villageSnapshot = await getDocs(collection(db, 'villages'));
+                const claimSnapshot = await getDocs(collection(db, 'claimInnovations'));
 
-                if (!isNaN(lat) && !isNaN(lon)) {
-                    let details: { label: string; value: string | number }[] = [];
+                // Filter klaim yang sudah terverifikasi saja
+                const claims = claimSnapshot.docs
+                    .map(doc => doc.data())
+                    .filter(c => c.status === 'Terverifikasi');
 
-                    if (selectedCategory === 'desa') {
-                        details = [
-                            { label: 'Nama Inovasi', value: data.namaInovasi || 'Tidak diketahui' },
-                            { label: 'Jumlah Inovasi', value: data.jumlahInovasi || 0 },
+                // Loop setiap desa
+                for (const doc of villageSnapshot.docs) {
+                    const data = doc.data();
+                    const lat = parseFloat(data.latitude);
+                    const lon = parseFloat(data.longitude);
+                    const userId = data.userId;
+
+                    if (!isNaN(lat) && !isNaN(lon) && userId) {
+                        // Cocokkan klaim dengan desaId (userId)
+                        const matchedClaims = claims.filter(c => c.desaId === userId);
+
+                        const jumlahInovasi = matchedClaims.length;
+                        const jumlahInovator = new Set(matchedClaims.map(c => c.inovatorId)).size;
+
+                        const details = [
+                            { label: 'Jumlah Inovasi', value: jumlahInovasi },
+                            { label: 'Jumlah Inovator', value: jumlahInovator },
                         ];
-                    } else if (selectedCategory === 'inovator') {
-                        details = [
-                            { label: 'Jumlah Inovasi', value: data.jumlahInovasi || 0 },
-                            { label: 'Jumlah Desa Dampingan', value: data.jumlahDesaDampingan || 0 },
-                        ];
-                    } else if (selectedCategory === 'inovasi') {
-                        details = [
-                            { label: 'Nama Inovator', value: data.namaInovator || 'Tidak diketahui' },
-                            { label: 'Tahun Dibuat', value: data.tahunDibuat || 'Tidak diketahui' },
-                        ];
+
+                        const name = data.namaDesa || 'Tanpa Nama';
+
+                        results.push({ name, lat, lon, details, raw: data });
                     }
-
-                    let name = 'Tanpa Nama';
-                    if (selectedCategory === 'desa') {
-                        name = data.namaDesa || 'Tanpa Nama';
-                    } else if (selectedCategory === 'inovator') {
-                        name = data.namaInovator || 'Tanpa Nama';
-                    } else if (selectedCategory === 'inovasi') {
-                        name = data.namaInovasi || 'Tanpa Nama';
-                    }
-
-                    results.push({ name, lat, lon, details, raw: data });
                 }
-            });
+            }
 
+            // Untuk kategori inovator
+            if (selectedCategory === 'inovator') {
+                const villageSnapshot = await getDocs(collection(db, 'villages'));
+                const claimSnapshot = await getDocs(collection(db, 'claimInnovations'));
+                const innovatorSnapshot = await getDocs(collection(db, 'innovators'));
+
+                const claims = claimSnapshot.docs
+                    .map(doc => doc.data())
+                    .filter(c => c.status === 'Terverifikasi');
+
+                const villageMap: { [key: string]: string } = villageSnapshot.docs.reduce((acc, curr) => {
+                    const data = curr.data();
+                    acc[data.userId] = data.namaDesa;
+                    return acc;
+                }, {} as { [key: string]: string });
+
+                const innovatorNameMap: { [key: string]: string } = innovatorSnapshot.docs.reduce((acc, curr) => {
+                    const data = curr.data();
+                    acc[curr.id] = data.namaInovator || 'Nama Inovator Tidak Ditemukan'; // Ensure the correct mapping
+                    return acc;
+                }, {} as { [key: string]: string });
+
+                const innovatorCategoryMap: { [key: string]: string } = innovatorSnapshot.docs.reduce((acc, curr) => {
+                    const data = curr.data();
+                    acc[curr.id] = data.kategori || 'Kategori Tidak Ditemukan'; // Ensure category is mapped
+                    return acc;
+                }, {} as { [key: string]: string });
+
+                for (const doc of villageSnapshot.docs) {
+                    const data = doc.data();
+                    const lat = parseFloat(data.latitude);
+                    const lon = parseFloat(data.longitude);
+                    const userId = data.userId;
+
+                    if (!isNaN(lat) && !isNaN(lon) && userId) {
+                        const matchedClaims = claims.filter(c => c.desaId === userId);
+                        const inovatorIds = new Set(matchedClaims.map(c => c.inovatorId));
+
+                        const namaDesa = villageMap[userId] || 'Nama Desa Tidak Ditemukan';
+
+                        for (const inovatorId of inovatorIds) {
+                            const namaInovator = innovatorNameMap[inovatorId] || 'Tidak diketahui';
+                            const kategori = innovatorCategoryMap[inovatorId] || 'Tidak diketahui';
+
+                            const marker = {
+                                name: namaInovator,
+                                lat,
+                                lon,
+                                kategori,  // Tambahkan kategori sebagai properti terpisah
+                                namaInovator, // Tambahkan namaInovator sebagai properti terpisah
+                                details: [
+                                    { label: 'Nama Desa', value: namaDesa },
+                                    { label: 'Kategori', value: kategori },
+                                ],
+                                raw: {    // Gabungkan data ke dalam satu objek raw
+                                    ...data,      // Menambahkan data asli dari village
+                                    kategori,     // Menambahkan kategori
+                                    namaInovator  // Menambahkan namaInovator
+                                }
+                            };
+
+                            // Gabungkan seluruh data ke dalam results
+                            results.push(marker);
+
+                        }
+                    }
+                }
+            }
+
+            // Untuk kategori inovasi
+            if (selectedCategory === 'inovasi') {
+                const villageSnapshot = await getDocs(collection(db, 'villages'));
+                const claimSnapshot = await getDocs(collection(db, 'claimInnovations'));
+                const innovationSnapshot = await getDocs(collection(db, 'innovations'));
+
+                const claims = claimSnapshot.docs
+                    .map(doc => doc.data())
+                    .filter(c => c.status === 'Terverifikasi');
+
+                // Create a map to store desaId (userId) and its corresponding namaDesa
+                const villageMap: { [key: string]: string } = villageSnapshot.docs.reduce((acc, curr) => {
+                    const data = curr.data();
+                    acc[data.userId] = data.namaDesa; // Map desaId (userId) to namaDesa
+                    return acc;
+                }, {} as { [key: string]: string });
+
+                // Create a map for inovasiId to namaInovasi
+                const innovationMap: { [key: string]: string } = innovationSnapshot.docs.reduce((acc, curr) => {
+                    const data = curr.data();
+                    acc[curr.id] = data.namaInovasi || 'Nama Inovasi Tidak Ditemukan'; // Map inovasiId to namaInovasi
+                    return acc;
+                }, {} as { [key: string]: string });
+
+                // Create a map for inovatorId to namaInovator
+                const innovatorMap: { [key: string]: string } = innovationSnapshot.docs.reduce((acc, curr) => {
+                    const data = curr.data();
+                    acc[curr.id] = data.namaInnovator || 'Nama Inovator Tidak Ditemukan'; // Map inovatorId to namaInovator
+                    return acc;
+                }, {} as { [key: string]: string });
+
+                // Loop through each village to get the relevant claims and related innovations
+                for (const doc of villageSnapshot.docs) {
+                    const data = doc.data();
+                    const lat = parseFloat(data.latitude);
+                    const lon = parseFloat(data.longitude);
+                    const userId = data.userId;
+
+                    if (!isNaN(lat) && !isNaN(lon) && userId) {
+                        // Filter claims that match the desaId (userId)
+                        const matchedClaims = claims.filter(c => c.desaId === userId);
+                        const inovasiIds = new Set(matchedClaims.map(c => c.inovasiId));  // Get unique inovasiIds
+
+                        const namaDesa = villageMap[userId] || 'Nama Desa Tidak Ditemukan';
+
+                        // Loop through each inovasiId to get the inovasi name and inovator name
+                        for (const inovasiId of inovasiIds) {
+                            const namaInovasi = innovationMap[inovasiId] || 'Nama Inovasi Tidak Ditemukan'; // Get inovasi name
+                            const namaInovator = innovatorMap[inovasiId] || 'Nama Inovator Tidak Ditemukan'; // Get inovator name
+                            const tahunDibuat = innovationSnapshot.docs.find(doc => doc.id === inovasiId)?.data().tahunDibuat || 'Tahun Tidak Ditemukan';
+                            const kategori = innovationSnapshot.docs.find(doc => doc.id === inovasiId)?.data().kategori || 'Kategori Tidak Ditemukan';
+
+                            // Create the marker object
+                            const marker = {
+                                name: namaInovasi,
+                                lat,
+                                lon,
+                                namaInovator,  // Add namaInovator as a separate property
+                                namaInovasi,   // Add namaInovasi as a separate property
+                                tahunDibuat,   // Add tahunDibuat to the marker
+                                kategori,      // Add kategori to the marker
+                                details: [
+                                    { label: 'Nama Desa', value: namaDesa },
+                                    { label: 'Nama Inovator', value: namaInovator },
+                                ],
+                                raw: {    // Combine all the data into one raw object
+                                    ...data,      // Add the original village data
+                                    namaInovator,  // Add namaInovator
+                                    namaInovasi,   // Add namaInovasi
+                                    tahunDibuat,   // Add tahunDibuat
+                                    kategori,      // Add kategori
+                                }
+                            };
+
+                            // Push the marker into results
+                            results.push(marker);
+                        }
+                    }
+                }
+            }
+            console.log("Results Sebelum setMarkers:", results);
             setMarkers(results);
         } catch (err) {
             console.error('Error fetching markers:', err);
@@ -113,16 +261,23 @@ const PetaLama: React.FC = () => {
         setFilterA('');
         setFilterB('');
         setFilterC('');
+        setFilterD('');
     }, [selectedCategory]);
 
     useEffect(() => {
         setFilterB('');
         setFilterC('');
+        setFilterD('');
     }, [filterA]);
 
     useEffect(() => {
         setFilterC('');
+        setFilterD('');
     }, [filterB]);
+
+    useEffect(() => {
+        setFilterD('');
+    }, [filterC]);
 
     const getCategoryLabel = () => {
         switch (selectedCategory) {
@@ -141,77 +296,109 @@ const PetaLama: React.FC = () => {
 
     const getFilterOptions = () => {
         const allData = markers.map(m => m.raw);
+        console.log('ISI FILTER', allData);
 
-        const extractUnique = (data: any[], field: string) =>
-            [...new Set(data.map(item => item[field]).filter(Boolean))];
 
-        // Selalu pakai allData untuk filter A (global)
+        const extractUnique = (data: any[], field: string) => {
+            return [...new Set(data.map(item => {
+                const keys = field.split('.');
+                let value = item;
+                for (const key of keys) {
+                    value = value[key];
+                    if (!value) return undefined; // If there's no value, return undefined
+                }
+                return value;
+            }).filter(Boolean))];
+        };
+
+
+
+        // Filter A Options (Global Filter)
         const filterAOptions = (() => {
             switch (selectedCategory) {
-                case 'desa': return extractUnique(allData, 'provinsi');
-                case 'inovator': return extractUnique(allData, 'kategoriInovator');
-                case 'inovasi': return extractUnique(allData, 'tahunDibuat');
+                case 'desa': return extractUnique(allData, 'lokasi.provinsi.label').sort((a, b) => a.localeCompare(b));
+                case 'inovator': return extractUnique(allData, 'kategori').sort((a, b) => a.localeCompare(b));
+                case 'inovasi': return extractUnique(allData, 'tahunDibuat') // DESC untuk tahun terbaru dulu
                 default: return [];
             }
         })();
 
-        // Filtered subset (cascade) untuk B dan C
+        // Filtered subset for B and C
         let filtered = allData;
 
         if (filterA) {
-            if (selectedCategory === 'desa') filtered = filtered.filter(item => item.provinsi === filterA);
-            if (selectedCategory === 'inovator') filtered = filtered.filter(item => item.kategoriInovator === filterA);
-            if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.tahunDibuat === filterA);
+            if (selectedCategory === 'desa') filtered = filtered.filter(item => item.lokasi?.provinsi?.label === filterA);
+            if (selectedCategory === 'inovator') filtered = filtered.filter(item => item.kategori === filterA);
+            if (selectedCategory === 'inovasi') filtered = filtered.filter(item => Number(item.tahunDibuat) === Number(filterA));
         }
 
         if (filterB) {
-            if (selectedCategory === 'desa') filtered = filtered.filter(item => item.namaDesa === filterB);
+            if (selectedCategory === 'desa') filtered = filtered.filter(item => item.lokasi?.kabupatenKota?.label === filterB);
             if (selectedCategory === 'inovator') filtered = filtered.filter(item => item.namaInovator === filterB);
             if (selectedCategory === 'inovasi') filtered = filtered.filter(item => item.namaInovasi === filterB);
         }
 
         const filterBOptions = (() => {
             switch (selectedCategory) {
-                case 'desa': return extractUnique(filtered, 'namaDesa');
-                case 'inovator': return extractUnique(filtered, 'namaInovator');
-                case 'inovasi': return extractUnique(filtered, 'namaInovasi');
+                case 'desa': return extractUnique(filtered, 'lokasi.kabupatenKota.label').sort((a, b) => a.localeCompare(b));
+                case 'inovator': return extractUnique(filtered, 'namaInovator').sort((a, b) => a.localeCompare(b));
+                case 'inovasi': return extractUnique(filtered, 'namaInovasi').sort((a, b) => a.localeCompare(b));
                 default: return [];
             }
         })();
 
+        
         const filterCOptions = (() => {
             switch (selectedCategory) {
-                case 'desa': return extractUnique(filtered, 'kategoriInovasi');
-                case 'inovasi': return extractUnique(filtered, 'kategori');
+                case 'desa': return extractUnique(filtered, 'lokasi.kecamatan.label').sort((a, b) => a.localeCompare(b));
+                case 'inovasi': return extractUnique(filtered, 'kategori').sort((a, b) => a.localeCompare(b));
+                default: return [];
+            }
+        })();
+        
+        const filterDOptions = (() => {
+            switch (selectedCategory) {
+                case 'desa': return extractUnique(filtered, 'namaDesa').sort((a, b) => a.localeCompare(b));
                 default: return [];
             }
         })();
 
+        // console.log("All Data:", allData);
+        // console.log("Filter A Options:", filterAOptions);
+        // console.log("Filter B Options:", filterBOptions);
+        // console.log("Filtered Data:", filtered);
+        
         return {
             a: filterAOptions,
             b: filterBOptions,
             c: filterCOptions,
+            d: filterDOptions,
         };
     };
+
 
     const getFilteredMarkers = () => {
         return markers.filter((marker) => {
             const data = marker.raw;
+            console.log('Marker Siap dari Filter', data);
             const conditions: boolean[] = [];
 
             if (filterA) {
-                if (selectedCategory === 'desa') conditions.push(data.provinsi === filterA);
-                if (selectedCategory === 'inovator') conditions.push(data.kategoriInovator === filterA);
-                if (selectedCategory === 'inovasi') conditions.push(data.tahunDibuat === filterA);
+                if (selectedCategory === 'desa') conditions.push(data.lokasi?.provinsi?.label === filterA);
+                if (selectedCategory === 'inovator') conditions.push(data.kategori === filterA);
+                if (selectedCategory === 'inovasi') conditions.push(Number(data.tahunDibuat) === Number(filterA));
             }
             if (filterB) {
-                if (selectedCategory === 'desa') conditions.push(data.namaDesa === filterB);
+                if (selectedCategory === 'desa') conditions.push(data.lokasi?.kabupatenKota?.label === filterB);
                 if (selectedCategory === 'inovator') conditions.push(data.namaInovator === filterB);
                 if (selectedCategory === 'inovasi') conditions.push(data.namaInovasi === filterB);
             }
             if (filterC) {
-                if (selectedCategory === 'desa') conditions.push(data.kategoriInovasi === filterC);
+                if (selectedCategory === 'desa') conditions.push(data.lokasi?.kecamatan?.label === filterC);
                 if (selectedCategory === 'inovasi') conditions.push(data.kategori === filterC);
+            }
+            if (filterD) {
+                if (selectedCategory === 'desa') conditions.push(data.namaDesa === filterD);
             }
 
             return conditions.every(Boolean);
@@ -350,7 +537,7 @@ const PetaLama: React.FC = () => {
                                         }
                                     }}
                                     placeholder={`Pilih ${selectedCategory === 'desa'
-                                        ? 'Nama Desa'
+                                        ? 'Kabupaten'
                                         : selectedCategory === 'inovator'
                                             ? 'Nama Inovator'
                                             : 'Nama Inovasi'
@@ -377,13 +564,35 @@ const PetaLama: React.FC = () => {
                                         }
                                     }}
                                     placeholder={`Pilih ${selectedCategory === 'desa'
-                                        ? 'Kategori Inovasi'
+                                        ? 'Kecamatan'
                                         : 'Kategori'
                                         }`}
                                     value={filterC}
                                     onChange={handleFilterChange(setFilterC)}
                                 >
                                     {filterOptions.c.map((val) => (
+                                        <option key={val} value={val}>{val}</option>
+                                    ))}
+                                </Select>
+                            )}
+
+                            {/* Filter D */}
+                            {selectedCategory === 'desa' && filterOptions.d && (
+                                <Select
+                                    fontSize="sm" // label / tampilan luar tetap normal
+                                    sx={{
+                                        option: {
+                                            fontSize: '9px',           // perkecil hanya isi opsi
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                        }
+                                    }}
+                                    placeholder={`Pilih Nama Desa`}  // Memperbaiki placeholder berdasarkan kategori yang dipilih
+                                    value={filterD}  // Perbaiki penggunaan filterD
+                                    onChange={handleFilterChange(setFilterD)}  // Pastikan setFilterD adalah fungsi yang benar
+                                >
+                                    {filterOptions.d.map((val) => (
                                         <option key={val} value={val}>{val}</option>
                                     ))}
                                 </Select>

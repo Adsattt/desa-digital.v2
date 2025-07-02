@@ -1,71 +1,44 @@
 import { Box, Flex, Grid, Text, Stack, Image } from "@chakra-ui/react";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { FaUsers } from "react-icons/fa";
-import DesaIcon from "Assets/icons/village-active.svg"; // icon desa dampingannya
+import DesaIcon from "Assets/icons/village-active.svg"; // sesuaikan path
 
 const ScoreCardDashboardInovator: React.FC = () => {
   const [totalInovators, setTotalInovators] = useState(0);
   const [totalDesaDampingan, setTotalDesaDampingan] = useState(0);
 
-  const fetchData = async () => {
-    try {
-      const db = getFirestore();
-
-      // 🔹 Ambil dari koleksi 'innovators'
-      const innovatorsRef = collection(db, "innovators");
-      const innovatorsSnapshot = await getDocs(innovatorsRef);
-
-      let inovatorCount = 0;
-
-      innovatorsSnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        if (
-          typeof data.jumlahInovasi === "number" &&
-          data.jumlahInovasi > 0 &&
-          data.namaInovator
-        ) {
-          inovatorCount++;
-        }
-      });
-
-      // 🔹 Ambil dari koleksi 'villages'
-      const villagesRef = collection(db, "villages");
-      const villagesSnapshot = await getDocs(villagesRef);
-
-      const villageSet = new Set<string>();
-
-      villagesSnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-
-        if (
-          typeof data.jumlahInovasi === "number" &&
-          data.jumlahInovasi > 0
-        ) {
-          if (typeof data.namaDesa === "string" && data.namaDesa.length > 1) {
-            villageSet.add(data.namaDesa);
-          } else if (
-            data.namaDesa?.label &&
-            typeof data.namaDesa.label === "string" &&
-            data.namaDesa.label.length > 1
-          ) {
-            villageSet.add(data.namaDesa.label);
-          }
-        }
-      });
-
-      // ✅ Set ke state
-      setTotalInovators(inovatorCount);
-      setTotalDesaDampingan(villageSet.size); // dari koleksi villages
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const db = getFirestore();
+
+        // ✅ 1. Ambil inovators dengan namaInovator tidak kosong
+        const innovatorsRef = collection(db, "innovators");
+        const innovatorsQuery = query(innovatorsRef, where("namaInovator", "!=", ""));
+        const innovatorsSnap = await getDocs(innovatorsQuery);
+        setTotalInovators(innovatorsSnap.size);
+
+        // ✅ 2. Ambil desa dari villages dengan jumlahInovasi > 0
+        const villagesRef = collection(db, "villages");
+        const villagesSnap = await getDocs(villagesRef);
+
+        let desaCount = 0;
+        villagesSnap.forEach((doc) => {
+          const data = doc.data();
+          if (typeof data.jumlahInovasiDiterapkan === "number" && data.jumlahInovasiDiterapkan > 0) {
+            desaCount++;
+          }
+        });
+        setTotalDesaDampingan(desaCount);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
     fetchData();
   }, []);
-
 
   const stats = [
     {
@@ -76,7 +49,7 @@ const ScoreCardDashboardInovator: React.FC = () => {
       iconBg: "#C6D8D0",
     },
     {
-      label: "Desa Digital",
+      label: "Dampingan",
       value: totalDesaDampingan,
       iconType: "image",
       icon: DesaIcon,
