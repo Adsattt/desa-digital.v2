@@ -641,8 +641,8 @@ function DetailInnovation() {
           role="Inovator"
           contactData={{
             whatsapp: innovatorData?.whatsapp || "",
-            instagram: innovatorData?.instagram || "",
-            website: innovatorData?.website || "",
+            instagram: innovatorData?.instagram || "https://www.instagram.com/",
+            website: innovatorData?.website || "https://www.google.com/",
           }}
         />
       </ContentContainer>
