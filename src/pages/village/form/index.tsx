@@ -691,7 +691,7 @@ useEffect(() => {
   return (
     <>
       <TopBar title="Registrasi Profil Desa" onBack={() => navigate(-1)} />
-      <Box p="48px 16px 20px 16px">
+      <Box p="48px 16px 20px 16px" mb={16}>
         <form 
            onSubmit={(e) => {
             e.preventDefault(); 

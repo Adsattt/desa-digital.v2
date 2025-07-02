@@ -456,7 +456,7 @@ useEffect(() => {
             }
           }}
         >
-          <Flex direction="column" marginTop="50px">
+          <Flex direction="column" marginTop="50px" marginBottom={16}>
             <Alert
               status={alertStatus}
               fontSize={12}

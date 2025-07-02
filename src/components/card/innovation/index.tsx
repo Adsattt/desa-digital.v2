@@ -32,9 +32,12 @@ function CardInnovation(props: CardInnovationProps) {
     <Container onClick={onClick}>
       <Background src={images ? images[0] : defaultLogo} alt={namaInovasi} />
       <Content>
+        <div>
         <Title>{namaInovasi}</Title>
         <Category>{kategori}</Category>
         <Description>{deskripsi}</Description>
+        </div>
+        <div>
         <CompanyContainer>
           {typeof innovatorLogo === "string" ? (
             <Icon src={innovatorLogo} alt={namaInovasi} />
@@ -48,6 +51,7 @@ function CardInnovation(props: CardInnovationProps) {
           )}
         </CompanyContainer>
         <Applied>Sejak {tahunDibuat || "-"}</Applied>
+        </div>
       </Content>
     </Container>
   );
