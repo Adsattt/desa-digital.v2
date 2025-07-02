@@ -205,7 +205,7 @@ const TableInnovator = () => {
       if (!currentUser) return console.warn("User not authenticated");
 
       try {
-        const profilRef = collection(db, "profilInovator");
+        const profilRef = collection(db, "innovators");
         const qProfil = query(profilRef, where("userId", "==", currentUser.uid));
         const profilSnap = await getDocs(qProfil);
 
@@ -218,15 +218,15 @@ const TableInnovator = () => {
         // Store profile data
         setInovatorProfile({
           namaInovator: profilData.namaInovator || "-",
-          kategoriInovator: profilData.kategoriInovator || "-",
+          kategoriInovator: profilData.kategori|| "-",
           tahunDibentuk: profilData.tahunDibentuk || "-",
           targetPengguna: profilData.targetPengguna || "-",
           produk: profilData.produk || "-",
           modelBisnis: profilData.modelBisnis || "-",
         });
 
-        const inovasiRef = collection(db, "inovasi");
-        const qInovasi = query(inovasiRef, where("inovatorId", "==", profilInovatorId));
+        const inovasiRef = collection(db, "innovations");
+        const qInovasi = query(inovasiRef, where("innovatorId", "==", profilInovatorId));
         const inovasiSnap = await getDocs(qInovasi);
 
         const fetched: Implementation[] = inovasiSnap.docs.map((doc) => {

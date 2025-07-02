@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import {
-  collection,
-  getDocs,
-  query,
-  where,
-  Timestamp,
-  getFirestore,
+  collection, getDocs, query, where, Timestamp, getFirestore, doc, getDoc
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Box, Flex, Text, Image } from "@chakra-ui/react";
@@ -47,61 +42,44 @@ const InfoCards = () => {
     const prevToTimestamp = Timestamp.fromDate(prevTo);
 
     try {
-      const inovatorQuery = query(
-        collection(db, "profilInovator"),
-        where("userId", "==", user.uid)
+      // 1. Get the current innovator document
+      const inovatorDocRef = doc(db, "innovators", user.uid);
+      const inovatorSnap = await getDoc(inovatorDocRef);
+      if (!inovatorSnap.exists()) return;
+
+      const inovatorData = inovatorSnap.data();
+      const inovatorId = inovatorSnap.id;
+
+      // Get jumlah from innovator profile
+      setInovasiCount(inovatorData.jumlahInovasi || 0);
+      setDesaCount(inovatorData.jumlahDesaDampingan || 0);
+
+      // 2. Fetch createdAt from innovations
+      const inovasiQuery = query(
+        collection(db, "innovations"),
+        where("innovatorId", "==", inovatorId)
       );
-      const inovatorSnap = await getDocs(inovatorQuery);
-      if (inovatorSnap.empty) return;
+      const inovasiSnap = await getDocs(inovasiQuery);
+      const inovasiTimestamps = inovasiSnap.docs.map((doc) => doc.data().createdAt?.toDate());
 
-      const inovatorId = inovatorSnap.docs[0].id;
+      // 3. Fetch createdAt from claimInnovations
+      const claimQuery = query(
+        collection(db, "claimInnovations"),
+        where("innovatorId", "==", inovatorId)
+      );
+      const claimSnap = await getDocs(claimQuery);
+      const claimTimestamps = claimSnap.docs.map((doc) => doc.data().createdAt?.toDate());
 
-      const getInovasiCount = async (fromT: Timestamp, toT: Timestamp) => {
-        const q = query(
-          collection(db, "inovasi"),
-          where("inovatorId", "==", inovatorId),
-          where("createdAt", ">=", fromT),
-          where("createdAt", "<=", toT)
-        );
-        return (await getDocs(q)).size;
-      };
+      // 4. Filter counts in current and previous period for trend analysis
+      const countInPeriod = (timestamps: (Date | undefined)[], from: Date, to: Date) =>
+        timestamps.filter((date) => date && date >= from && date <= to).length;
 
-      const getDesaCount = async (fromT: Timestamp, toT: Timestamp) => {
-        const inovasiSnap = await getDocs(
-          query(collection(db, "inovasi"), where("inovatorId", "==", inovatorId))
-        );
+      const currInovasi = countInPeriod(inovasiTimestamps, fromDate, toDate);
+      const prevInovasi = countInPeriod(inovasiTimestamps, prevFrom, prevTo);
+      const currDesa = countInPeriod(claimTimestamps, fromDate, toDate);
+      const prevDesa = countInPeriod(claimTimestamps, prevFrom, prevTo);
 
-        const inovasiIds = inovasiSnap.docs
-          .filter((doc) => {
-            const createdAt = doc.data().createdAt;
-            return createdAt?.toDate() >= fromT.toDate() && createdAt?.toDate() <= toT.toDate();
-          })
-          .map((doc) => doc.id);
-
-        if (inovasiIds.length === 0) return 0;
-
-        const menerapkanSnap = await getDocs(collection(db, "menerapkanInovasi"));
-        const matchedDesa = new Set<string>();
-
-        menerapkanSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          if (inovasiIds.includes(data.inovasiId) && data.namaDesa) {
-            matchedDesa.add(data.namaDesa);
-          }
-        });
-
-        return matchedDesa.size;
-      };
-
-      const [currInovasi, prevInovasi, currDesa, prevDesa] = await Promise.all([
-        getInovasiCount(fromTimestamp, toTimestamp),
-        getInovasiCount(prevFromTimestamp, prevToTimestamp),
-        getDesaCount(fromTimestamp, toTimestamp),
-        getDesaCount(prevFromTimestamp, prevToTimestamp),
-      ]);
-
-      setInovasiCount(currInovasi);
-      setDesaCount(currDesa);
+      // 5. Set trends
       setTrendInovasi(currInovasi - prevInovasi);
       setTrendDesa(currDesa - prevDesa);
 

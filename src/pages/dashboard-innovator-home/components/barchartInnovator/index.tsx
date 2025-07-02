@@ -79,7 +79,7 @@ const BarChartInovasi = () => {
 
         // 1. Get profilInovator docs where userId == current UID
         const profilInovatorQ = query(
-          collection(db, "profilInovator"),
+          collection(db, "innovators"),
           where("userId", "==", uid)
         );
         const profilSnapshot = await getDocs(profilInovatorQ);
@@ -94,7 +94,7 @@ const BarChartInovasi = () => {
           const firstProfilData = profilSnapshot.docs[0].data();
           setProfil({
             namaInovator: firstProfilData.namaInovator || "-",
-            kategoriInovator: firstProfilData.kategoriInovator || "-",
+            kategoriInovator: firstProfilData.kategori || "-",
             tahunDibentuk: firstProfilData.tahunDibentuk || "-",
             targetPengguna: firstProfilData.targetPengguna || "-",
             produk: firstProfilData.produk || "-",
@@ -118,8 +118,8 @@ const BarChartInovasi = () => {
         for (let i = 0; i < profilIds.length; i += batchSize) {
           const batchIds = profilIds.slice(i, i + batchSize);
           const inovasiQ = query(
-            collection(db, "inovasi"),
-            where("inovatorId", "in", batchIds)
+            collection(db, "innovations"),
+            where("innovatorId", "in", batchIds)
           );
           const inovasiSnapshot = await getDocs(inovasiQ);
           inovasiSnapshot.forEach((doc) => {
@@ -127,7 +127,7 @@ const BarChartInovasi = () => {
             const data = doc.data();
             inovasiMap[doc.id] = {
               namaInovasi: data.namaInovasi || "-",
-              inovatorId: data.inovatorId || "-",
+              inovatorId: data.innovatorId || "-",
             };
           });
         }
@@ -144,7 +144,7 @@ const BarChartInovasi = () => {
         for (let i = 0; i < inovasiIds.length; i += batchSize) {
           const batchIds = inovasiIds.slice(i, i + batchSize);
           const menerapkanQ = query(
-            collection(db, "menerapkanInovasi"),
+            collection(db, "claimInnovations"),
             where("inovasiId", "in", batchIds)
           );
           const menerapkanSnapshot = await getDocs(menerapkanQ);

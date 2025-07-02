@@ -70,7 +70,7 @@ const ChartInnovation3 = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const snapshot = await getDocs(collection(db, "inovasi"));
+      const snapshot = await getDocs(collection(db, "innovations"));
       const countPerCategory: Record<string, number> = {};
       const allData: any[] = [];
 

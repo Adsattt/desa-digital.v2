@@ -77,8 +77,8 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
       try {
         const uid = user.uid;
 
-        const profilInovatorRef = collection(db, "profilInovator");
-        const qProfil = query(profilInovatorRef, where("userId", "==", uid));
+        const profilInovatorRef = collection(db, "innovators");
+        const qProfil = query(profilInovatorRef, where("id", "==", uid));
         const profilSnap = await getDocs(qProfil);
         if (profilSnap.empty) {
           setImplementationData([]);
@@ -87,12 +87,12 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
         }
         const inovatorIds = profilSnap.docs.map((doc) => doc.id);
 
-        const inovasiRef = collection(db, "inovasi");
+        const inovasiRef = collection(db, "innovations");
         const chunkSize = 10;
         let inovasiDocs: QueryDocumentSnapshot<DocumentData>[] = [];
         for (let i = 0; i < inovatorIds.length; i += chunkSize) {
           const chunk = inovatorIds.slice(i, i + chunkSize);
-          const qInovasi = query(inovasiRef, where("inovatorId", "in", chunk));
+          const qInovasi = query(inovasiRef, where("innovatorId", "in", chunk));
           const snapInovasi = await getDocs(qInovasi);
           inovasiDocs = inovasiDocs.concat(snapInovasi.docs);
         }
@@ -116,7 +116,7 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
 
         const inovasiIds = Array.from(inovasiMap.keys());
 
-        const menerapkanInovasiRef = collection(db, "menerapkanInovasi");
+        const menerapkanInovasiRef = collection(db, "claimInnovations");
         let menerapkanDocs: QueryDocumentSnapshot<DocumentData>[] = [];
         for (let i = 0; i < inovasiIds.length; i += chunkSize) {
           const chunk = inovasiIds.slice(i, i + chunkSize);

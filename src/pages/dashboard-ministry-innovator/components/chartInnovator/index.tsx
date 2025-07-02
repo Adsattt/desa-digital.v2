@@ -54,7 +54,7 @@ const truncateLabel = (label: string, maxLength = 3): string =>
   label.length > maxLength ? label.slice(0, maxLength) + "..." : label;
 
 const exportToPDF = async (selectedYear: number) => {
-  const snapshot = await getDocs(collection(db, "profilInovator"));
+  const snapshot = await getDocs(collection(db, "innovators"));
   const allData = snapshot.docs.map((doc) => doc.data());
 
   const doc = new jsPDF({ orientation: "landscape" });
@@ -143,7 +143,7 @@ const exportToPDF = async (selectedYear: number) => {
 };
 
 const exportToExcel = async (selectedYear: number) => {
-  const snapshot = await getDocs(collection(db, "profilInovator"));
+  const snapshot = await getDocs(collection(db, "innovators"));
   const allData = snapshot.docs.map((doc) => doc.data());
 
   const grouped = allData.reduce((acc: Record<string, any[]>, item) => {
@@ -203,7 +203,7 @@ const ChartInnovator = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const snapshot = await getDocs(collection(db, "profilInovator"));
+      const snapshot = await getDocs(collection(db, "innovators"));
 
       const categoryMap: Record<string, { count: number }> = {};
 

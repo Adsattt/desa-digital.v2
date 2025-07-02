@@ -140,7 +140,7 @@ const MapVillages = () => {
 
       // Get inovator profile
       const profilInovatorSnap = await getDocs(
-        query(collection(db, "profilInovator"), where("userId", "==", currentUID))
+        query(collection(db, "innovators"), where("id", "==", currentUID))
       );
       const profilInovatorDoc = profilInovatorSnap.docs[0];
       const profilInovatorId = profilInovatorDoc?.id;
@@ -149,7 +149,7 @@ const MapVillages = () => {
 
       // Get inovasi docs by inovatorId
       const inovasiSnap = await getDocs(
-        query(collection(db, "inovasi"), where("inovatorId", "==", profilInovatorId))
+        query(collection(db, "innovations"), where("innovatorId", "==", profilInovatorId))
       );
       const inovasiDocs = inovasiSnap.docs;
       const inovasiMap = Object.fromEntries(
@@ -160,7 +160,7 @@ const MapVillages = () => {
 
       // Get menerapkanInovasi docs filtered by inovasiId in inovasiIds
       const menerapkanSnap = await getDocs(
-        query(collection(db, "menerapkanInovasi"), where("inovasiId", "in", inovasiIds))
+        query(collection(db, "claimInnovations"), where("inovasiId", "in", inovasiIds))
       );
 
       const pinResults: DesaPin[] = [];
@@ -173,7 +173,7 @@ const MapVillages = () => {
         const inovasiId = data.inovasiId;
 
         // Fetch profilDesa data
-        const desaSnap = await getDoc(doc(db, "profilDesa", desaId));
+        const desaSnap = await getDoc(doc(db, "villages", desaId));
         if (!desaSnap.exists()) continue;
         const desaData = desaSnap.data();
 
@@ -208,7 +208,7 @@ const MapVillages = () => {
             kabupaten: desaData.kabupaten ?? "-",
             provinsi: desaData.provinsi ?? "-",
             tanggalPengajuan: data.tanggalPengajuan ?? "-",
-            kategoriInovator: profilInovatorData.kategoriInovator ?? "-",
+            kategoriInovator: profilInovatorData.kategori ?? "-",
             tahunDibentuk: profilInovatorData.tahunDibentuk ?? "-",
             targetPengguna: profilInovatorData.targetPengguna ?? "-",
             produk: profilInovatorData.produk ?? "-",

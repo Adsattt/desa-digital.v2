@@ -50,12 +50,12 @@ const InfoCards = () => {
     let q;
     if (fromT && toT) {
       q = query(
-        collection(db, "profilDesa"),
+        collection(db, "villages"),
         where("createdAt", ">=", fromT),
         where("createdAt", "<=", toT)
       );
     } else {
-      q = collection(db, "profilDesa");
+      q = collection(db, "villages");
     }
     const snap = await getDocs(q);
     const provinces = new Set<string>();

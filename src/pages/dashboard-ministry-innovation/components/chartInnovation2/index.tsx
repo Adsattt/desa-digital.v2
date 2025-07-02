@@ -57,7 +57,7 @@ const ChartInnovation2 = () => {
   useEffect(() => {
     const fetchData = async () => {
       const db = getFirestore();
-      const snapshot = await getDocs(collection(db, "inovasi"));
+      const snapshot = await getDocs(collection(db, "innovations"));
       const rawData = snapshot.docs.map(doc => doc.data()) as Inovasi[];
 
       const classes: MaturityClass[] = ["A", "B", "C", "D"];

@@ -127,7 +127,7 @@ const MapVillages = () => {
 
   useEffect(() => {
     const fetchAllData = async () => {
-      const inovasiSnap = await getDocs(collection(db, "inovasi"));
+      const inovasiSnap = await getDocs(collection(db, "innovations"));
       const inovasiMap = new Map<string, { namaInovator: string; kategoriInovasi: string }>();
       inovasiSnap.docs.forEach(doc => {
         const d = doc.data();
@@ -137,14 +137,14 @@ const MapVillages = () => {
         });
       });
 
-      const desaSnap = await getDocs(collection(db, "profilDesa"));
+      const desaSnap = await getDocs(collection(db, "villages"));
       const desaMap = new Map<string, any>();
       desaSnap.docs.forEach(doc => {
         const d = doc.data();
         desaMap.set(d.namaDesa, d);
       });
 
-      const menerapkanSnap = await getDocs(collection(db, "menerapkanInovasi"));
+      const menerapkanSnap = await getDocs(collection(db, "claimInnovations"));
       const exportTemp: any[] = [];
       const pinsTemp: DesaPin[] = [];
       const countByProvince: Record<string, number> = {};
