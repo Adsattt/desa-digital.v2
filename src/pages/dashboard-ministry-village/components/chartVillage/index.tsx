@@ -164,7 +164,7 @@ const ChartVillage = () => {
           i + 1,
           item.namaDesa,
           item.kecamatan,
-          item.kabupaten,
+          item.kabupatenKota,
           item.provinsi,
           item.idm,
           item.tahunData,

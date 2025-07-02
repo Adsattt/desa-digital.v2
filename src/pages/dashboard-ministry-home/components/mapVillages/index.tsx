@@ -166,7 +166,7 @@ const MapVillages = () => {
         exportTemp.push({
           namaDesa: desaData.namaDesa ?? "-",
           kecamatan: desaData.kecamatan ?? "-",
-          kabupaten: desaData.kabupaten ?? "-",
+          kabupaten: desaData.kabupatenKota ?? "-",
           provinsi: provinsi,
           kategoriDesa: desaData.kategoriDesa ?? "-",
           idm: desaData.idm ?? "-",
@@ -253,7 +253,7 @@ const MapVillages = () => {
       body: exportData.map((row) => [
         row.namaDesa,
         row.kecamatan,
-        row.kabupaten,
+        row.kabupatenKota,
         row.provinsi,
         row.kategoriDesa,
         row.idm,
