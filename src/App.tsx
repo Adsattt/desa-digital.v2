@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
-import SearchPage from "./pages/home/components/search/SearchPage";
 import Navbar from "./components/navbar";
 import Home from "./pages/home";
 import Innovation from "./pages/innovation";

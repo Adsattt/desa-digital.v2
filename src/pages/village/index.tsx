@@ -103,8 +103,10 @@ const Village: React.FC = () => {
           provinsi: data.lokasi?.provinsi?.label || "",
           kabupatenKota: data.lokasi?.kabupatenKota?.label || "",
           namaDesa: data.lokasi?.desaKelurahan?.label || "",
+          status: data.status,
         };
-      });
+      })
+        .filter((item) => item.status === 'Terverifikasi');
       setVillages(villagesData);
     };
     fetchData();
@@ -159,32 +161,24 @@ const Village: React.FC = () => {
         </Text>
         <GridContainer>
           {isFetched &&
-        [...villages]
-          .sort((a, b) => {
-            if (b.jumlahInovasiDiterapkan !== a.jumlahInovasiDiterapkan) {
-              return b.jumlahInovasiDiterapkan - a.jumlahInovasiDiterapkan; 
-            }
-            return a.namaDesa.localeCompare(b.namaDesa); 
-          })
-          .map((item: any, idx: number) => (
-            <CardVillage isHome={false}
-              key={idx}
-              namaDesa={item.namaDesa}
-              logo={item.logo || defaultLogo}
-              header={item.header || defaultHeader}
-              kabupatenKota={item.kabupatenKota}
-              provinsi={item.provinsi}
-              jumlahInovasiDiterapkan={item.jumlahInovasiDiterapkan}
-              ranking={idx + 1}
-              id={item.userId}
-              onClick={() => {
-                const path = generatePath(paths.DETAIL_VILLAGE_PAGE, {
-                  id: item.userId,
-                });
-                navigate(path);
-              }}
-            />
-          ))}
+            filteredVillages.map((item: any, idx: number) => (
+              <CardVillage
+                key={idx}
+                provinsi={item.provinsi}
+                kabupatenKota={item.kabupatenKota}
+                namaDesa={item.namaDesa}
+                logo={item.logo || defaultLogo}
+                header={item.header || defaultHeader}
+                id={item.userId}
+                isHome={false}
+                onClick={() => {
+                  const path = generatePath(paths.DETAIL_VILLAGE_PAGE, {
+                    id: item.userId,
+                  });
+                  navigate(path);
+                }}
+              />
+            ))}
         </GridContainer>
       </Containers>
     </Box>

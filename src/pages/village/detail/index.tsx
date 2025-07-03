@@ -459,7 +459,8 @@ export default function DetailVillage() {
                 Lihat Semua{" "}
               </Text>
             </Flex>
-            <CardContainer>
+            {village?.status === "Terverifikasi" && (
+            <CardContainer style={{ paddingBottom: "40px" }}>
               <Horizontal>
                 {innovations.map((innovation, idx) => (
                   <CardInnovation
@@ -469,8 +470,8 @@ export default function DetailVillage() {
                     kategori={innovation.kategori}
                     deskripsi={innovation.deskripsi}
                     tahunDibuat={innovation.tahunDibuat}
-                    innovatorLogo={innovation.innovatorImgURL}
-                    innovatorName={innovation.namaInnovator}
+                    // innovatorLogo={innovation.innovatorImgURL}
+                    // innovatorName={innovation.namaInnovator}
                     onClick={() => {
                       if (innovation.id) {
                         navigate(generatePath(paths.DETAIL_INNOVATION_PAGE, { id: innovation.id }));
@@ -480,6 +481,7 @@ export default function DetailVillage() {
                 ))}
               </Horizontal>
             </CardContainer>
+            )}
           </div>
           <Box
             position="fixed"

@@ -34,8 +34,10 @@ interface Location {
           provinsi: data.lokasi?.provinsi?.label || "",
           kabupatenKota: data.lokasi?.kabupatenKota?.label || "",
           namaDesa: data.lokasi?.desaKelurahan?.label || "",
+          status: data.status,
         };
-      });
+      })
+        .filter((item) => item.status === 'Terverifikasi');
       console.log("villagesData", villagesData);
       setVillages(villagesData);
     };
