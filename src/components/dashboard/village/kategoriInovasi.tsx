@@ -77,7 +77,7 @@ const KategoriInovasiDesa: React.FC = () => {
                 return;
             }
 
-            // 1. Ambil namaDesa dari villages
+            // 1. Ambil namaDesa dari villages berdasarkan userId
             const desaQuery = query(
                 collection(db, "villages"),
                 where("userId", "==", user.uid)
@@ -86,111 +86,100 @@ const KategoriInovasiDesa: React.FC = () => {
 
             let namaDesa = "";
             if (!desaSnap.empty) {
-                const desaData = desaSnap.docs[0].data() as { namaDesa: string };
-                namaDesa = desaData.namaDesa?.trim().toLowerCase() || "";
+                const desaData = desaSnap.docs[0].data();
+                namaDesa = desaData?.namaDesa?.trim().toLowerCase() || "";
             } else {
                 console.warn("Desa tidak ditemukan");
                 return;
             }
 
-            // 2. Ambil data inovasi
-            const innovationsRef = collection(db, "innovations");
-            const snapshot = await getDocs(innovationsRef);
+            // 2. Ambil data claimInnovations yang terverifikasi terkait dengan desa
+            const claimQuery = query(
+                collection(db, "claimInnovations"),
+                where("desaId", "==", user.uid)
+            );
+            const claimSnap = await getDocs(claimQuery);
 
+            // 3. Ambil inovasiId yang terkait dengan klaim desa ini
+            const inovasiIds = claimSnap.docs.map(doc => doc.data().inovasiId);
+
+            // 4. Ambil inovasi yang terkait dengan klaim desa
+            const inovasiSnap = await getDocs(
+                query(collection(db, "innovations"), where("__name__", "in", inovasiIds))
+            );
+
+            // 5. Tampilkan kategori dari inovasi yang diterapkan pada desa
             const kategoriCount: Record<string, number> = {};
 
-            snapshot.forEach((doc) => {
+            inovasiSnap.forEach((doc) => {
                 const data = doc.data();
-                const input = data.inputDesaMenerapkan;
                 const kategori = data.kategori;
 
-                let cocok = false;
-
-                if (Array.isArray(input)) {
-                    cocok = input.some(
-                        (nama: string) => nama?.toLowerCase().trim() === namaDesa
-                    );
-                } else if (typeof input === "string") {
-                    cocok = input.toLowerCase().trim() === namaDesa;
-                }
-
-                if (cocok && typeof kategori === "string" && kategori.trim()) {
+                if (kategori && typeof kategori === "string" && kategori.trim()) {
                     const formatted = kategori.charAt(0).toUpperCase() + kategori.slice(1).toLowerCase();
                     kategoriCount[formatted] = (kategoriCount[formatted] || 0) + 1;
                 }
             });
 
+            console.log("Kategori yang diterapkan pada desa:", kategoriCount);
 
-            console.log("✅ Nama desa:", namaDesa);
-            console.log("✅ kategoriCount:", kategoriCount);
+            // 6. Set kategori data
+            setAllKategoriData(kategoriCount); // set as object
 
-            // 3. Set semua kategori
-            setAllKategoriData({ ...kategoriCount });
-
-            const kondisiArray = Object.entries(kategoriCount)
-                .map(([kategori, jumlah]) => ({ kategori, jumlah }))
-                .sort((a, b) => b.jumlah - a.jumlah);
+            const kondisiArray = Object.entries(kategoriCount).map(([kategori, jumlah]) => ({
+                kategori,
+                jumlah
+            }));
 
             setKondisiData(kondisiArray);
 
-            // 4. Buat top 5 kategori
+            // 7. Buat top kategori jika ada
             const sortedKategori = Object.entries(kategoriCount)
                 .map(([name, value]) => ({ name, value }))
-                .sort((a, b) => b.value - a.value)
-                .slice(0, 5);
+                .sort((a, b) => b.value - a.value);
 
-            // 5. Handle kasus jika data < 5 (isi dummy)
-            while (sortedKategori.length < 5) {
-                sortedKategori.push({
-                    name: "",
-                    value: 0,
+            // 8. Sesuaikan jumlah kategori yang akan ditampilkan
+            const displayedKategori = sortedKategori.slice(0, 5); // Menampilkan hingga 5 kategori
+
+            // 9. Handle jika data < 5 (tambah dummy untuk kategori yang kosong)
+            while (displayedKategori.length < 5) {
+                displayedKategori.push({
+                    name: "",  // Nama kosong untuk kategori yang tidak ada
+                    value: 0,  // Nilai kosong untuk kategori yang tidak ada
                 });
             }
 
+            // 10. Rank kategori berdasarkan urutan dan atur data bar
             const customOrder = [3, 1, 0, 2, 4];
-            const customHeights = [20, 40, 50, 35, 15];
+            const customHeights = [20, 40, 50, 35, 15];  // Menjaga tinggi tetap sesuai urutan
             const customRanks = ["4th", "2nd", "1st", "3rd", "5th"];
 
+            // 11. Rank kategori berdasarkan urutan dan atur data bar
             const rankedData = customOrder.map((index, rankIndex) => {
-                const item = sortedKategori[index];
+                const item = displayedKategori[index];
                 return {
                     name: item?.name || "-",
-                    value: customHeights[rankIndex],
+                    value: item?.value || 0,
                     valueAsli: item?.value || 0,
                     rank: customRanks[rankIndex],
+                    isEmpty: item?.name === "" // Tandai kategori kosong
                 };
             });
 
-            console.log("✅ rankedData:", rankedData);
+            // 12. Set bar data untuk ditampilkan
             setBarData(rankedData);
+
+
         } catch (error) {
-            console.error("❌ Error fetching kategori data:", error);
+            console.error("Error fetching kategori data:", error);
         }
     };
 
 
-
-    const handleDownload = () => {
-        const sorted = Object.entries(allKategoriData)
-            .map(([name, count]) => ({ name, value: count as number }))
-            .sort((a, b) => b.value - a.value);
-
-        const excelData = sorted.map((item, index) => ({
-            No: index + 1,
-            Kategori: item.name,
-            "Jumlah Desa": item.value,
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(excelData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Kategori Desa");
-
-        XLSX.writeFile(workbook, "inovasi_yang_diterapkan.xlsx");
-    };
-
     useEffect(() => {
         fetchKategoriData();
     }, []);
+
 
     const totalPages = Math.ceil(kondisiData.length / ITEMS_PER_PAGE);
 
@@ -233,7 +222,7 @@ const KategoriInovasiDesa: React.FC = () => {
                 overflow="visible"
             >
                 <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={barData} margin={{ top: 20, right: 20, left: 20, bottom: 0 }}>
+                    <BarChart data={barData} margin={{ top: 50, right: 20, left: 20, bottom: -10 }}>
                         <XAxis dataKey="name" axisLine={false} tickLine={false} hide />
                         <Tooltip content={<CustomTooltip />} />
                         <Bar dataKey="value" radius={[10, 10, 0, 0]} fill="#1E5631">

@@ -691,7 +691,7 @@ useEffect(() => {
   return (
     <>
       <TopBar title="Registrasi Profil Desa" onBack={() => navigate(-1)} />
-      <Box p="48px 16px 20px 16px">
+      <Box p="48px 16px 20px 16px" mb={16}>
         <form 
            onSubmit={(e) => {
             e.preventDefault(); 
@@ -853,81 +853,6 @@ useEffect(() => {
                   isRequired  
                 />
               </Box>
-              
-              <Text fontWeight="400" fontSize="16px" mb="6px">
-                  Infrastruktur <Text as="span" color="red.500">*</Text>
-              </Text>
-              <LocationSelector
-                label="Kondisi Jalan"
-                placeholder="Pilih"
-                 value={
-                  dropdownValue.kondisijalan
-                    ? { value: dropdownValue.kondisijalan, label: dropdownValue.kondisijalan }
-                    : null
-                }
-                options={[
-                  { value: "Seluruh jalan beraspal", label: "Seluruh jalan beraspal" },
-                  { value: "Lebih dari 50% beraspal", label: "Lebih dari 50% beraspal" },
-                  { value: "Kurang dari 50% beraspal", label: "Kurang dari 50% beraspal" },
-                  { value: "Beraspal namun rusak", label: "Beraspal namun rusak" },
-                  { value: "Masih tanah dan bebatuan", label: "Masih tanah dan bebatuan" },
-                ]}
-                onChange={(selected) => setDropdownValue(prev => ({...prev ,kondisijalan: selected?.value ?? null}))}
-                disabled={!isEditable}
-                isRequired
-              />
-
-              <LocationSelector
-                label="Jaringan Internet"
-                placeholder="Pilih"
-                value={
-                  dropdownValue.jaringan
-                    ? { value: dropdownValue.jaringan, label: dropdownValue.jaringan }
-                    : null
-                }
-                options={[
-                  { value: "Jaringan Internet baik di seluruh tempat", label: "Jaringan Internet baik di seluruh tempat" },
-                  { value: "Jaringan Internet baik di beberapa tempat", label: "Jaringan Internet baik di beberapa tempat" },
-                  { value: "Jaringan internet lemah", label: "Jaringan internet lemah" },
-                  { value: "Ada sinyal, namun tidak ada jaringan internet", label: "Ada sinyal, namun tidak ada jaringan internet" },
-                  { value: "Sinyal lemah, namun ada internet (wifi)", label: "Sinyal lemah, namun ada internet (wifi)" },
-                  { value: "Sinyal lemah / tidak ada, dan tidak ada internet", label: "Sinyal lemah / tidak ada, dan tidak ada internet" },
-                ]}
-                onChange={(selected) => setDropdownValue(prev => ({ ...prev, jaringan: selected?.value ?? null }))}
-                disabled={!isEditable}
-                isRequired
-              />
-
-              <LocationSelector
-                label="Ketersediaan Listrik"
-                placeholder="Pilih"
-                value={
-                  dropdownValue.listrik
-                    ? { value: dropdownValue.listrik, label: dropdownValue.listrik }
-                    : null
-                }
-                options={[
-                  { value: "Listrik tersedia di seluruh tempat", label: "Listrik tersedia di seluruh tempat" },
-                  { value: "Listrik tersedia di beberapa tempat", label: "Listrik tersedia di beberapa tempat" },
-                  { value: "Listrik 24 jam hanya di beberapa tempat", label: "Listrik 24 jam hanya di beberapa tempat" },
-                  { value: "Listrik tersedia, namun waktu terbatas", label: "Listrik tersedia, namun waktu terbatas" },
-                  { value: "Listrik tidak tersedia", label: "Listrik tidak tersedia" },
-                ]}
-                onChange={(selected) => setDropdownValue(prev => ({ ...prev, listrik: selected?.value ?? null }))}
-                disabled={!isEditable}
-                isRequired
-              />
-
-              <FormSection
-                title="Lain-lain"
-                name="infrastruktur"
-                placeholder="Masukkan hal lain terkait infrastruktur"
-                value={textInputValue.infrastruktur}
-                disabled={!isEditable}
-                onChange={onTextChange}
-                wordCount={currentWordCount(textInputValue.infrastruktur)}
-                maxWords={30}
-              />
 
               <LocationSelector
                 label="Perkembangan Teknologi Digital"
@@ -1013,6 +938,7 @@ useEffect(() => {
                 wordCount={currentWordCount(textInputValue.pelayanan)}
                 maxWords={30}
               /> */}
+
               <FormSection
                 title="Sosial dan Budaya"
                 name="sosial"
@@ -1035,6 +961,82 @@ useEffect(() => {
                 wordCount={currentWordCount(textInputValue.resource)}
                 maxWords={30}
                 isRequired
+              />
+              
+              <Text fontWeight="600" fontSize="16px" mt="px">
+                  Infrastruktur 
+              </Text>
+              <LocationSelector
+                label="Kondisi Jalan"
+                placeholder="Pilih"
+                 value={
+                  dropdownValue.kondisijalan
+                    ? { value: dropdownValue.kondisijalan, label: dropdownValue.kondisijalan }
+                    : null
+                }
+                options={[
+                  { value: "Seluruh jalan beraspal", label: "Seluruh jalan beraspal" },
+                  { value: "Lebih dari 50% beraspal", label: "Lebih dari 50% beraspal" },
+                  { value: "Kurang dari 50% beraspal", label: "Kurang dari 50% beraspal" },
+                  { value: "Beraspal namun rusak", label: "Beraspal namun rusak" },
+                  { value: "Masih tanah dan bebatuan", label: "Masih tanah dan bebatuan" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({...prev ,kondisijalan: selected?.value ?? null}))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Jaringan Internet"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.jaringan
+                    ? { value: dropdownValue.jaringan, label: dropdownValue.jaringan }
+                    : null
+                }
+                options={[
+                  { value: "Jaringan Internet baik di seluruh tempat", label: "Jaringan Internet baik di seluruh tempat" },
+                  { value: "Jaringan Internet baik di beberapa tempat", label: "Jaringan Internet baik di beberapa tempat" },
+                  { value: "Jaringan internet lemah", label: "Jaringan internet lemah" },
+                  { value: "Ada sinyal, namun tidak ada jaringan internet", label: "Ada sinyal, namun tidak ada jaringan internet" },
+                  { value: "Sinyal lemah, namun ada internet (wifi)", label: "Sinyal lemah, namun ada internet (wifi)" },
+                  { value: "Sinyal lemah / tidak ada, dan tidak ada internet", label: "Sinyal lemah / tidak ada, dan tidak ada internet" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, jaringan: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <LocationSelector
+                label="Ketersediaan Listrik"
+                placeholder="Pilih"
+                value={
+                  dropdownValue.listrik
+                    ? { value: dropdownValue.listrik, label: dropdownValue.listrik }
+                    : null
+                }
+                options={[
+                  { value: "Listrik tersedia di seluruh tempat", label: "Listrik tersedia di seluruh tempat" },
+                  { value: "Listrik tersedia di beberapa tempat", label: "Listrik tersedia di beberapa tempat" },
+                  { value: "Listrik 24 jam hanya di beberapa tempat", label: "Listrik 24 jam hanya di beberapa tempat" },
+                  { value: "Listrik tersedia, namun waktu terbatas", label: "Listrik tersedia, namun waktu terbatas" },
+                  { value: "Listrik tidak tersedia", label: "Listrik tidak tersedia" },
+                ]}
+                onChange={(selected) => setDropdownValue(prev => ({ ...prev, listrik: selected?.value ?? null }))}
+                disabled={!isEditable}
+                isRequired
+              />
+
+              <FormSection
+                title="Lain-lain"
+                name="infrastruktur"
+                placeholder="Masukkan hal lain terkait infrastruktur"
+                value={textInputValue.infrastruktur}
+                disabled={!isEditable}
+                onChange={onTextChange}
+                wordCount={currentWordCount(textInputValue.infrastruktur)}
+                maxWords={30}
+                isRequired={false}
               />
 
               <Text fontWeight="700" fontSize="16px">
@@ -1059,6 +1061,7 @@ useEffect(() => {
                 value={textInputValue.instagram}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired={false}
               />
               <FormSection
                 title="Link Website"
@@ -1068,6 +1071,7 @@ useEffect(() => {
                 value={textInputValue.website}
                 disabled={!isEditable}
                 onChange={onTextChange}
+                isRequired={false}
               />
             </Stack>
           </Flex>

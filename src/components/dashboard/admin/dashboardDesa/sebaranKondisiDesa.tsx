@@ -10,54 +10,38 @@ import {
   Th,
   Td,
   TableContainer,
-  useDisclosure,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerHeader,
-  DrawerOverlay,
-  DrawerFooter,
-  DrawerCloseButton,
-  Select,
   Icon
 } from "@chakra-ui/react";
 import { getFirestore, collection, getDocs } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
-import { Filter } from "lucide-react";
-import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon } from "@chakra-ui/icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
 import * as XLSX from "xlsx";
 
 const SebaranKondisiDesa: React.FC = () => {
   interface DesaData {
     no: number;
-    desa: string;
-    status: string;
-    jalan: string;
-    provinsi: string;
-    kabupaten: string;
-    kecamatan: string;
+    namaDesa: string;
+    kondisiJalan: string;
+    jaringanInternet: string;
+    ketersediaanListrik: string;
+    geografis: string;
+    sosialBudaya: string;
+    sumberDayaAlam: string;
+    perkembanganTeknologi: string;
+    kemampuanTeknologi: string;
   }
 
   const ITEMS_PER_PAGE = 5;
   const [desaData, setDesaData] = useState<DesaData[]>([]);
-  const { isOpen, onOpen, onClose } = useDisclosure();
   const [filteredDesaData, setFilteredDesaData] = useState<DesaData[]>([]);
-  const [provinceList, setProvinceList] = useState<string[]>([]);
-  const [kabupatenList, setKabupatenList] = useState<string[]>([]);
-  const [kecamatanList, setKecamatanList] = useState<string[]>([]);
-
-  const [selectedProvince, setSelectedProvince] = useState("");
-  const [selectedKabupaten, setSelectedKabupaten] = useState("");
-  const [selectedKecamatan, setSelectedKecamatan] = useState("");
-
-  const [filteredKabupatenList, setFilteredKabupatenList] = useState<string[]>([]);
-  const [filteredKecamatanList, setFilteredKecamatanList] = useState<string[]>([]);
-
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchDesaData();
   }, []);
+
+  const limitWords = (text?: string) =>
+    (text || "").split(" ").slice(0, 6).join(" ");
 
   const fetchDesaData = async () => {
     try {
@@ -66,147 +50,45 @@ const SebaranKondisiDesa: React.FC = () => {
       const snapshot = await getDocs(villagesRef);
 
       const desaList: DesaData[] = [];
-      const provinceSet = new Set<string>();
-      const kabupatenSet = new Set<string>();
-      const kecamatanSet = new Set<string>();
-
       let i = 1;
 
       snapshot.docs.forEach((doc) => {
         const data = doc.data();
 
-        const namaDesa = data.desaKelurahan?.trim() || ""; // DULUNYA: namaDesa
-        const status = data.kesiapanDigital?.trim() || "";
-        const jalan = data.infrastrukturDesa?.trim() || "";
-        const provinsi = data.provinsi?.trim() || ""; // NEW FIELD jika tersedia
-        const kabupaten = data.kabupatenKota?.trim() || "";
-        const kecamatan = data.kecamatan?.trim() || "";
-
-        if (
-          !namaDesa || namaDesa.toLowerCase().includes("lorem ipsum") ||
-          !status || status.toLowerCase().includes("lorem ipsum") ||
-          !jalan || jalan.toLowerCase().includes("lorem ipsum") ||
-          !kabupaten || kabupaten.toLowerCase().includes("lorem ipsum") ||
-          !kecamatan || kecamatan.toLowerCase().includes("lorem ipsum")
-        ) {
-          return;
-        }
-
-        const limitWords = (text: string) => text.split(" ").slice(0, 2).join(" ");
-
         desaList.push({
           no: i++,
-          desa: limitWords(namaDesa),
-          status: limitWords(status),
-          jalan: limitWords(jalan),
-          provinsi: limitWords(provinsi), // Tetap dipakai jika tersedia
-          kabupaten: limitWords(kabupaten),
-          kecamatan: limitWords(kecamatan),
+          namaDesa: limitWords(data.namaDesa),
+          kondisiJalan: limitWords(data.kondisijalan),
+          jaringanInternet: limitWords(data.jaringan),
+          ketersediaanListrik: limitWords(data.listrik),
+          geografis: limitWords(data.geografisDesa),
+          sosialBudaya: limitWords(data.sosialBudaya),
+          sumberDayaAlam: limitWords(data.sumberDaya),
+          perkembanganTeknologi: limitWords(data.teknologi),
+          kemampuanTeknologi: limitWords(data.kemampuan),
         });
-
-        provinceSet.add(provinsi);
-        kabupatenSet.add(kabupaten);
-        kecamatanSet.add(kecamatan);
       });
 
       setDesaData(desaList);
       setFilteredDesaData(desaList);
-      setProvinceList([...provinceSet]);
-      setKabupatenList([...kabupatenSet]);
-      setKecamatanList([...kecamatanSet]);
     } catch (error) {
       console.error("❌ Error fetching desa data:", error);
     }
   };
 
-  useEffect(() => {
-    if (selectedProvince) {
-      const filteredKabupaten = desaData
-        .filter(d => d.provinsi === selectedProvince)
-        .map(d => d.kabupaten);
-
-      const uniqueKabupaten = [...new Set(filteredKabupaten)];
-
-      setFilteredKabupatenList(uniqueKabupaten);
-      setSelectedKabupaten(""); // <--- RESET nilai kabupaten
-      setFilteredKecamatanList([]); // <--- CLEAR kecamatan saat provinsi ganti
-      setSelectedKecamatan(""); // <--- RESET kecamatan juga
-    } else {
-      setFilteredKabupatenList(kabupatenList); // default list
-    }
-  }, [selectedProvince]);
-
-
-  useEffect(() => {
-    if (selectedKabupaten) {
-      const filteredKecamatan = desaData
-        .filter(d => d.kabupaten === selectedKabupaten)
-        .map(d => d.kecamatan);
-
-      setFilteredKecamatanList([...new Set(filteredKecamatan)]);
-      setSelectedKecamatan(""); // <--- RESET kecamatan ketika kabupaten ganti
-    } else {
-      setFilteredKecamatanList(kecamatanList); // default list
-    }
-  }, [selectedKabupaten]);
-
-
-  const useFilter = () => {
-    if (!selectedProvince && !selectedKabupaten && !selectedKecamatan) {
-      const resetData = desaData.map((item, index) => ({
-        ...item,
-        no: index + 1,
-      }));
-      setFilteredDesaData(resetData);
-      setCurrentPage(1);
-      onClose();
-      return;
-    }
-
-    let filtered = desaData;
-
-    if (selectedProvince) {
-      filtered = filtered.filter((d) => d.provinsi === selectedProvince);
-    }
-    if (selectedKabupaten) {
-      filtered = filtered.filter((d) => d.kabupaten === selectedKabupaten);
-    }
-    if (selectedKecamatan) {
-      filtered = filtered.filter((d) => d.kecamatan === selectedKecamatan);
-    }
-
-    const renumbered = filtered.map((item, index) => ({
-      ...item,
-      no: index + 1,
-    }));
-
-    setFilteredDesaData(renumbered);
-    setCurrentPage(1);
-    onClose();
-  };
-
-  const handleCloseDrawer = () => {
-    setSelectedProvince("");
-    setSelectedKabupaten("");
-    setSelectedKecamatan("");
-    setFilteredKabupatenList(kabupatenList);
-    setFilteredKecamatanList(kecamatanList);
-
-    const resetData = desaData.map((item, index) => ({
-      ...item,
-      no: index + 1,
-    }));
-
-    setFilteredDesaData(resetData);
-    onClose();
-  };
-
+  // ✅ Fungsi download tetap ada, tidak muncul di UI
   const handleDownloadExcel = () => {
     const data = filteredDesaData.map((item) => ({
       No: item.no,
-      Desa: item.desa,
-      "Status Desa": item.status,
-      "Infrastruktur Jalan": item.jalan,
+      "Nama Desa": item.namaDesa,
+      "Kondisi Jalan Desa": item.kondisiJalan,
+      "Jaringan Internet Desa": item.jaringanInternet,
+      "Ketersediaan Listrik Desa": item.ketersediaanListrik,
+      "Karakteristik Geografis Desa": item.geografis,
+      "Kondisi Sosial dan Budaya": item.sosialBudaya,
+      "Potensi Sumber Daya Alam": item.sumberDayaAlam,
+      "Perkembangan Teknologi Digital": item.perkembanganTeknologi,
+      "Kemampuan Penggunaan Teknologi": item.kemampuanTeknologi,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -224,98 +106,44 @@ const SebaranKondisiDesa: React.FC = () => {
         <Text fontSize="sm" fontWeight="bold" color="gray.800">
           Sebaran Kondisi Desa
         </Text>
-        <Flex gap={2}>
-          {/* <Button
-            size="sm"
-            bg="white"
-            boxShadow="md"
-            border="2px solid"
-            borderColor="gray.200"
-            px={2}
-            py={2}
-            _hover={{ bg: "gray.100" }}
-            onClick={handleDownloadExcel}
-          >
-            <DownloadIcon boxSize={3} color="black" />
-          </Button> */}
-          <Button
-            size="sm"
-            bg="white"
-            boxShadow="md"
-            border="2px solid"
-            borderColor="gray.200"
-            px={2}
-            py={2}
-            leftIcon={<Filter size={14} stroke="#1E5631" fill="#1E5631" />}
-            _hover={{ bg: "gray.100" }}
-            onClick={onOpen}
-          >
-            <Text fontSize="11px" fontWeight="medium" color="black">
-              Wilayah
-            </Text>
-          </Button>
-        </Flex>
       </Flex>
 
-      {/* Drawer */}
-      <Drawer isOpen={isOpen} placement="bottom" onClose={handleCloseDrawer}>
-        <DrawerOverlay />
-        <DrawerContent sx={{ borderTopRadius: "lg", width: "360px", my: "auto", mx: "auto" }}>
-          <DrawerHeader display="flex" justifyContent="space-between" alignItems="center">
-            <Text fontSize="15px" fontWeight="bold">Filter Wilayah</Text>
-            <DrawerCloseButton onClick={handleCloseDrawer} />
-          </DrawerHeader>
-          <DrawerBody>
-            <Select placeholder="Pilih Provinsi" value={selectedProvince} onChange={(e) => setSelectedProvince(e.target.value)} mb={2}>
-              {provinceList.map((prov, index) => (
-                <option key={index} value={prov}>{prov}</option>
-              ))}
-            </Select>
-            <Select placeholder="Pilih Kabupaten" value={selectedKabupaten} onChange={(e) => setSelectedKabupaten(e.target.value)} mb={2} isDisabled={!selectedProvince}>
-              {filteredKabupatenList.map((kab, index) => (
-                <option key={index} value={kab}>{kab}</option>
-              ))}
-            </Select>
-            <Select placeholder="Pilih Kecamatan" value={selectedKecamatan} onChange={(e) => setSelectedKecamatan(e.target.value)} isDisabled={!selectedKabupaten}>
-              {filteredKecamatanList.map((kec, index) => (
-                <option key={index} value={kec}>{kec}</option>
-              ))}
-            </Select>
-          </DrawerBody>
-          <DrawerFooter>
-            <Button bg="#1E5631" color="white" w="full" _hover={{ bg: "#16432D" }} onClick={useFilter}>
-              Terapkan Filter
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
-
-      {/* Table */}
       <Box bg="white" borderRadius="xl" pt={0} pb={3} mx="15px" boxShadow="md" mt={4}>
         <TableContainer borderRadius="md">
-          <Table variant="simple" size="sm">
+          <Table size="sm">
             <Thead bg="#C6D8D0">
               <Tr>
                 <Th p={3} fontSize="8px" textAlign="center">No</Th>
-                <Th p={1} fontSize="8px" textAlign="center">Desa</Th>
-                <Th p={1} fontSize="8px" textAlign="center">Kesiapan Digital</Th>
-                <Th p={1} fontSize="8px" textAlign="center">Infrastruktur Jalan</Th>
+                <Th fontSize="8px" textAlign="center">Nama Desa</Th>
+                <Th fontSize="8px" textAlign="center">Kondisi Jalan Desa</Th>
+                <Th fontSize="8px" textAlign="center">Jaringan Internet Desa</Th>
+                <Th fontSize="8px" textAlign="center">Ketersediaan Listrik Desa</Th>
+                <Th fontSize="8px" textAlign="center">Karakteristik Geografis Desa</Th>
+                <Th fontSize="8px" textAlign="center">Kondisi Sosial dan Budaya</Th>
+                <Th fontSize="8px" textAlign="center">Potensi Sumber Daya Alam</Th>
+                <Th fontSize="8px" textAlign="center">Perkembangan Teknologi Digital</Th>
+                <Th fontSize="8px" textAlign="center">Kemampuan Penggunaan Teknologi</Th>
               </Tr>
             </Thead>
             <Tbody>
               {currentData.map((row) => (
                 <Tr key={row.no}>
-                  <Td p={1} fontSize="8px" textAlign="center" fontWeight="bold">{row.no}</Td>
-                  <Td p={1} fontSize="8px" textAlign="center">{row.desa}</Td>
-                  <Td p={1} fontSize="8px" textAlign="center">{row.status}</Td>
-                  <Td p={1} fontSize="8px" textAlign="center">{row.jalan}</Td>
+                  <Td fontSize="8px" textAlign="center" fontWeight="bold">{row.no}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.namaDesa}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.kondisiJalan}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.jaringanInternet}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.ketersediaanListrik}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.geografis}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.sosialBudaya}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.sumberDayaAlam}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.perkembanganTeknologi}</Td>
+                  <Td fontSize="8px" textAlign="center">{row.kemampuanTeknologi}</Td>
                 </Tr>
               ))}
             </Tbody>
           </Table>
         </TableContainer>
 
-        {/* 🔹 Pagination */}
         <Flex justify="center" mt={3} gap={2}>
           {(() => {
             const pagesPerBlock = 5;
@@ -325,7 +153,6 @@ const SebaranKondisiDesa: React.FC = () => {
 
             return (
               <>
-                {/* Prev icon button */}
                 {startPage > 1 && (
                   <Button
                     size="xs"
@@ -336,8 +163,6 @@ const SebaranKondisiDesa: React.FC = () => {
                     <Icon as={ChevronLeftIcon} />
                   </Button>
                 )}
-
-                {/* Page numbers */}
                 {[...Array(endPage - startPage + 1)].map((_, index) => {
                   const page = startPage + index;
                   return (
@@ -354,8 +179,6 @@ const SebaranKondisiDesa: React.FC = () => {
                     </Button>
                   );
                 })}
-
-                {/* Next icon button */}
                 {endPage < totalPages && (
                   <Button
                     size="xs"

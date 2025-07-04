@@ -59,13 +59,16 @@ const Login: React.FC = () => {
         console.log("user snap", userDoc.data());
         if (userDoc.exists()) {
           const userRole = userDoc.data()?.role;
-          if (userRole === "admin") {
-            navigate(paths.ADMIN_PAGE);
-            console.log("user snap admin", userDoc.data().role);
-          } else {
-            console.log("User  snap bukan admin: ", userDoc.data().role);
-            navigate(paths.LANDING_PAGE);
-          }
+        if (userRole === "admin") {
+          navigate(paths.ADMIN_PAGE);
+          console.log("user snap admin", userDoc.data().role);
+        } else if (userRole === "ministry") {
+          navigate(paths.DASHBOARD_MINISTRY_HOME);
+          console.log("user snap ministry", userDoc.data().role);
+        } else {
+          console.log("User snap bukan admin/ministry: ", userDoc.data().role);
+          navigate(paths.LANDING_PAGE);
+        }
           toast.success("Berhasil Masuk", {
             position: "top-center",
             autoClose: 2000,

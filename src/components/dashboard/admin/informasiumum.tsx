@@ -6,23 +6,27 @@ import {
   Icon,
   Image,
   Grid,
-  Button as ChakraButton
+  Button as ChakraButton,
 } from "@chakra-ui/react";
-import {
-  ArrowUpRight,
-  ArrowDownRight,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { getFirestore, collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  doc,
+  getDoc,
+  query,
+  where,
+} from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 import { firestore } from "../../../firebase/clientApp";
 import { FaUsers } from "react-icons/fa";
-import VillageActive from 'Assets/icons/village-active.svg';
+import VillageActive from "Assets/icons/village-active.svg";
 import InnovationActive from "Assets/icons/innovation3.svg";
 import * as XLSX from "xlsx";
-import { paths } from 'Consts/path';  // Import paths from Consts/path
+import { paths } from "Consts/path"; // Import paths from Consts/path
 
 const InformasiUmum: React.FC = () => {
   const navigate = useNavigate();
@@ -71,13 +75,7 @@ const InformasiUmum: React.FC = () => {
         const db = getFirestore();
         const villageRef = collection(db, "villages");
         const snapshot = await getDocs(villageRef);
-
-        const validVillages = snapshot.docs.filter((doc) => {
-          const data = doc.data();
-          return typeof data.jumlahInovasi === "number" && data.jumlahInovasi > 0;
-        });
-
-        setTotalVillage(validVillages.length);
+        setTotalVillage(snapshot.size); 
       } catch (error) {
         console.error("Error fetching village count:", error);
       }
@@ -148,16 +146,25 @@ const InformasiUmum: React.FC = () => {
           </Text>
         </Flex>
 
-        <Grid templateColumns={{ base: "repeat(1, 1fr)", md: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" }} gap={3}>
+        <Grid
+          templateColumns={{
+            base: "repeat(1, 1fr)",
+            md: "repeat(2, 1fr)",
+            lg: "repeat(3, 1fr)",
+          }}
+          gap={3}
+        >
           {[
             {
               label: "Desa Digital",
-              icon: <Image src={VillageActive} alt="Village Icon" w={6} h={6} />,
+              icon: (
+                <Image src={VillageActive} alt="Village Icon" w={6} h={6} />
+              ),
               iconBg: "#C6D8D0",
               value: totalVillage,
               change: changeVillage,
               isIncrease: isIncreaseVillage,
-              category: "desa"
+              category: "desa",
             },
             {
               label: "Inovator",
@@ -166,16 +173,23 @@ const InformasiUmum: React.FC = () => {
               value: totalInnovators,
               change: changeInnovator,
               isIncrease: isIncreaseInnovator,
-              category: "inovator"
+              category: "inovator",
             },
             {
               label: "Inovasi",
-              icon: <Image src={InnovationActive} alt="Innovation Icon" w={6} h={6} />,
+              icon: (
+                <Image
+                  src={InnovationActive}
+                  alt="Innovation Icon"
+                  w={6}
+                  h={6}
+                />
+              ),
               iconBg: "#C6D8D0",
               value: totalInnovation,
               change: changeInnovation,
               isIncrease: isIncreaseInnovation,
-              category: "inovasi"
+              category: "inovasi",
             },
           ].map((stat, index) => (
             <Box
@@ -210,7 +224,12 @@ const InformasiUmum: React.FC = () => {
                 {stat.icon}
               </Box>
 
-              <Text fontSize="22px" fontWeight="bold" color="green.700" lineHeight="1">
+              <Text
+                fontSize="22px"
+                fontWeight="bold"
+                color="green.700"
+                lineHeight="1"
+              >
                 {stat.value}
               </Text>
 
@@ -218,10 +237,19 @@ const InformasiUmum: React.FC = () => {
                 {stat.label}
               </Text>
 
-              <Flex align="center" color={stat.isIncrease ? "green.500" : "red.500"} mt={1}>
-                <Icon as={stat.isIncrease ? ArrowUpRight : ArrowDownRight} boxSize={3} mr={1} />
+              <Flex
+                align="center"
+                color={stat.isIncrease ? "green.500" : "red.500"}
+                mt={1}
+              >
+                <Icon
+                  as={stat.isIncrease ? ArrowUpRight : ArrowDownRight}
+                  boxSize={3}
+                  mr={1}
+                />
                 <Text fontSize="7px">
-                  {Math.abs(stat.change)} {stat.isIncrease ? "bertambah" : "berkurang"} dari bulan lalu
+                  {Math.abs(stat.change)}{" "}
+                  {stat.isIncrease ? "bertambah" : "berkurang"} dari bulan lalu
                 </Text>
               </Flex>
 
@@ -251,11 +279,10 @@ const InformasiUmum: React.FC = () => {
                   justifyContent="center"
                   ml={1}
                 >
-                  <ArrowRight size={8} color="#347357" />  {/* Ikon panah kanan dengan ukuran lebih kecil */}
+                  <ArrowRight size={8} color="#347357" />{" "}
+                  {/* Ikon panah kanan dengan ukuran lebih kecil */}
                 </Box>
               </ChakraButton>
-
-
             </Box>
           ))}
         </Grid>

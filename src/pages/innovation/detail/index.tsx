@@ -12,31 +12,34 @@ import {
   Text,
   useDisclosure,
 } from "@chakra-ui/react";
-import { toast } from "react-toastify";
-import { useUser } from "src/contexts/UserContext";
 import Check from "Assets/icons/check-circle.svg";
 import StatusCard from "Components/card/status/StatusCard.tsx";
 import RejectionModal from "Components/confirmModal/RejectionModal.tsx";
-import Container from "Components/container";
 import ActionDrawer from "Components/drawer/ActionDrawer.tsx";
 import TopBar from "Components/topBar";
 import { paths } from "Consts/path.ts";
 import {
+  collection,
   deleteField,
   doc,
   DocumentData,
+  documentId,
   getDoc,
+  getDocs,
   increment,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { query, where, getDocs, collection } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { FaCircle } from "react-icons/fa"; // Import ikon elips
 import { generatePath, useNavigate, useParams } from "react-router-dom";
 import Slider from "react-slick";
+import { toast } from "react-toastify";
 import "slick-carousel/slick/slick-theme.css";
 import "slick-carousel/slick/slick.css";
+import { useUser } from "src/contexts/UserContext";
 import { auth, firestore } from "../../../firebase/clientApp";
 import { getDocumentById } from "../../../firebase/inovationTable.ts";
 import {
@@ -49,16 +52,17 @@ import {
   Icon,
   Label,
   Logo,
+  SubText,
   Text1,
   Text2,
-  Text3,
-  Title,
-  SubText,
+  Title
 } from "./_detailStyle.ts";
+
+import defaultLogo from "@public/images/default-logo.svg";
 
 function DetailInnovation() {
   const navigate = useNavigate();
-  const { role, isVillageVerified } = useUser()
+  const { role, isVillageVerified } = useUser();
   const [isExpanded, setIsExpanded] = useState(false);
   const { id } = useParams();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -76,7 +80,6 @@ function DetailInnovation() {
     villageSafe.map((v) => [v.namaDesa, { userId: v.userId, logo: v.logo }])
   );
 
- 
   useEffect(() => {
     const fetchUser = async () => {
       if (user?.uid) {
@@ -95,7 +98,6 @@ function DetailInnovation() {
       getDocumentById("innovations", id)
         .then((detailInovasi) => {
           setData(detailInovasi);
-          console.log("Innovation Data:", detailInovasi); // Log the fetched innovation data
         })
         .catch((error) => {
           console.error("Error fetching innovation details:", error);
@@ -105,66 +107,70 @@ function DetailInnovation() {
 
   useEffect(() => {
     if (data.innovatorId) {
-      console.log("Fetching innovator with ID:", data.innovatorId); // Log the innovator ID
       getDocumentById("innovators", data.innovatorId)
         .then((detailInnovator) => {
           setDatainnovator(detailInnovator);
-          console.log("Innovator Data:", detailInnovator); // Log the fetched innovator data
         })
         .catch((error) => {
           console.error("Error fetching innovator details:", error);
         });
     }
   }, [data.innovatorId]);
-  
+
   useEffect(() => {
     const fetchData = async () => {
-      if (!id) return;
+      if (!id) {
+        console.error("Innovation ID is not provided.");
+        return;
+      }
 
-      console.log("Fetching innovation data for ID:", id);
+      try {
+        const innovationRef = doc(firestore, "innovations", id);
+        const innovationSnap = await getDoc(innovationRef);
 
-      // Fetch data dari collection innovations berdasarkan id
-      const innovationRef = doc(firestore, "innovations", id);
-      const innovationSnap = await getDoc(innovationRef);
-
-      if (innovationSnap.exists()) {
-        const innovationData = innovationSnap.data();
-        const inputDesaMenerapkan = innovationData?.inputDesaMenerapkan || [];
-
-        if (inputDesaMenerapkan.length > 0) {
-          console.log("Fetching villages for:", inputDesaMenerapkan);
-          try {
-            const villagesRef = collection(firestore, "villages");
-            const villagesQuery = query(
-              villagesRef,
-              where("namaDesa", "in" , inputDesaMenerapkan)
-            );
-            const villagesSnapshot = await getDocs(villagesQuery);
-
-            const villagesData = villagesSnapshot.docs.map((doc) => doc.data());
-            console.log("Fetched Villages Data:", villagesData);
-
-            setVillage(villagesData);
-          } catch (error) {
-            console.error("Error fetching villages:", error);
-          }
-        } else {
-          console.log("No villages to fetch, inputDesaMenerapkan is empty.");
+        if (!innovationSnap.exists()) {
+          console.error("Innovation document not found!");
+          return;
         }
+
+        const innovationData = innovationSnap.data();
+        const villageIds = innovationData.desaId;
+
+        if (!villageIds || villageIds.length === 0) {
+          console.log("No villages linked to this innovation.");
+          setVillage([]);
+          return;
+        }
+
+        const villagesRef = collection(firestore, "villages");
+
+        const villagesQuery = query(
+          villagesRef,
+          where(documentId(), "in", villageIds)
+        );
+
+        const villagesSnapshot = await getDocs(villagesQuery);
+
+        const villagesData = villagesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setVillage(villagesData);
+      } catch (error) {
+        console.error("Error fetching related villages:", error);
       }
     };
 
     fetchData();
   }, [id]);
 
-
   type Village = {
     namaDesa: string;
     logo: string;
-    userId: string
+    userId: string;
   };
-  
-  
+
   const handleVerify = async () => {
     setLoading(true);
     try {
@@ -219,23 +225,23 @@ function DetailInnovation() {
   };
 
   const handleVillageonClick = () => {
-      if (role === "village" && isVillageVerified) {
-        navigate(paths.KLAIM_INOVASI_PAGE);
-      } else {
-        toast.warning(
-          "Akun anda belum terdaftar atau terverifikasi sebagai desa",
-          {
-            position: "top-center",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-          }
-        );
-      }
-    };
+    if (role === "village" && isVillageVerified) {
+      navigate(paths.KLAIM_INOVASI_PAGE);
+    } else {
+      toast.warning(
+        "Akun anda belum terdaftar atau terverifikasi sebagai desa",
+        {
+          position: "top-center",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+        }
+      );
+    }
+  };
 
   const year = new Date(data.tahunDibuat).getFullYear();
 
@@ -340,7 +346,7 @@ function DetailInnovation() {
             )
           }
         >
-          <Logo src={innovatorData.logo} alt="logo" />
+          <Logo src={innovatorData.logo || defaultLogo} alt="logo" />
           <div>
             <Text2>Inovator</Text2>
             <Text1>{innovatorData.namaInovator}</Text1>
@@ -348,7 +354,7 @@ function DetailInnovation() {
         </ActionContainer>
         <Stack spacing="8px">
           <div>
-            <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="16px">
+            <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="12px">
               Deskripsi
             </Text>
             <Box fontSize="12px" fontWeight="400" color="#4B5563">
@@ -416,19 +422,22 @@ function DetailInnovation() {
             </Text>
             <Text fontSize="12px" fontWeight="400" color="#4B5563">
               {data.hargaMinimal
-                ? `Rp. ${new Intl.NumberFormat("id-ID").format(data.hargaMinimal)}${
+                ? `Rp. ${new Intl.NumberFormat("id-ID").format(
+                    data.hargaMinimal
+                  )}${
                     data.hargaMaksimal
-                      ? ` - Rp. ${new Intl.NumberFormat("id-ID").format(data.hargaMaksimal)}`
+                      ? ` - Rp. ${new Intl.NumberFormat("id-ID").format(
+                          data.hargaMaksimal
+                        )}`
                       : ""
                   }`
                 : "Harga tidak tersedia"}
             </Text>
-
           </div>
         </Stack>
 
         <div>
-          <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="16px">
+          <Text fontSize="16px" fontWeight="700" lineHeight="140%">
             Manfaat
           </Text>
           <Flex>
@@ -441,7 +450,7 @@ function DetailInnovation() {
                   ) => (
                     <Flex
                       key={index}
-                      mb="12px"
+                      mt="12px"
                       border="1px solid var(--Gray-30, #E5E7EB);"
                       borderRadius="8px"
                     >
@@ -463,10 +472,14 @@ function DetailInnovation() {
                                   size={12}
                                   color="#568A73"
                                   style={{
-                                    overflow: "visible"
+                                    overflow: "visible",
                                   }}
                                 />
-                                <Text fontSize="12px" fontWeight="700" textAlign="start">
+                                <Text
+                                  fontSize="12px"
+                                  fontWeight="700"
+                                  textAlign="start"
+                                >
                                   {item.judul}
                                 </Text>
                               </Flex>
@@ -490,12 +503,12 @@ function DetailInnovation() {
           </Flex>
         </div>
 
-        <div>
-          <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="16px">
+        <Flex direction="column" mb={14}>
+          <Text fontSize="16px" fontWeight="700" lineHeight="140%" mb="12px">
             Perlu Disiapkan
           </Text>
           {Array.isArray(data.infrastruktur) &&
-            data.infrastruktur.length > 0 ? (
+          data.infrastruktur.length > 0 ? (
             data.infrastruktur.map((item, index) => (
               <BenefitContainer key={index}>
                 <Icon src={Check} alt="check" />
@@ -505,89 +518,110 @@ function DetailInnovation() {
           ) : (
             <Description>No specific needs listed.</Description>
           )}
-        </div>
-        {/* <Flex flexDirection="column" paddingBottom="70px" gap="8px">
-          <Flex justifyContent="space-between" alignItems="flex-end" align-self="stretch">
+        </Flex>
+        <Flex flexDirection="column" mb='70px' gap="8px">
+          <Flex
+            justifyContent="space-between"
+            alignItems="flex-end"
+            align-self="stretch"
+          >
             <SubText>Desa yang Menerapkan</SubText>
             <Text
-              onClick={() =>  navigate(
-                generatePath(paths.DESA_YANG_MENERAPKAN_PAGE, {
-                  id: data.id,
-                })
-              )} 
+              onClick={() =>
+                navigate(
+                  generatePath(paths.DESA_YANG_MENERAPKAN_PAGE, {
+                    id: data.id,
+                  })
+                )
+              }
               cursor="pointer"
               color="var(--Primary, #347357)"
               fontSize="12px"
               fontWeight="500"
               textDecorationLine="underline"
               paddingBottom="12px"
-            > Lihat Semua </Text>
+            >
+              {" "}
+              Lihat Semua{" "}
+            </Text>
           </Flex>
-          {Array.isArray(data.inputDesaMenerapkan) &&
-          data.inputDesaMenerapkan.map((desa: string, index: number) => {
-            const village = villageMap.get(desa); // Ambil data desa berdasarkan nama
-            return (
-              <ActionContainer 
-                key={index} 
-                onClick={() => village?.userId && navigate(generatePath(paths.DETAIL_VILLAGE_PAGE, { id: village.userId }))} 
-                style={{ cursor: "pointer" }}
-              >
-                <Logo 
-                  src={village?.logo || innovatorData.logo} 
-                  alt="logo" 
-                  style={{ 
-                    boxShadow: "0px 0px 3px rgba(0, 0, 0, 1)", 
-                    borderRadius: "50%" 
-                  }} 
-                />
-                <Text1>{desa ?? "Belum tersedia"}</Text1>
-              </ActionContainer>
-            );
-          })}
-          </Flex> */}
-          
+          {village.map((desa: any, index: number) => (
+            <ActionContainer
+              key={index}
+              onClick={() =>
+                navigate(
+                  generatePath(paths.DETAIL_VILLAGE_PAGE, {
+                    id: desa.userId,
+                  })
+                )
+              }
+              style={{ cursor: "pointer" }}
+            >
+              <Logo
+                src={desa.logo || innovatorData.logo}
+                alt="logo"
+                style={{
+                  borderRadius: "50%",
+                }}
+              />
+              <Text1>{desa.namaDesa}</Text1>
+            </ActionContainer>
+          ))}
+        </Flex>
+
         {owner && ( // Conditionally render the Edit button
-          <Button
+          <Box
+            position="fixed"
+            bottom="0"
+            left="50%"
+            transform="translateX(-50%)"
             width="100%"
-            fontSize="16px"
-            onClick={() =>
-              navigate(
-                generatePath(paths.EDIT_INNOVATION_PAGE, {
-                  id: data.id,
-                })
-              )
-            }
+            maxWidth="360px"
+            bg="white"
+            p="3.5"
+            boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
           >
-            Edit
-          </Button>
+            <Button
+              width="100%"
+              fontSize="16px"
+              onClick={() =>
+                navigate(
+                  generatePath(paths.EDIT_INNOVATION_PAGE, {
+                    id: data.id,
+                  })
+                )
+              }
+            >
+              Edit
+            </Button>
+          </Box>
         )}
         {!owner && (
-        <Box
-          position="fixed"
-          bottom="0"
-          left="50%"
-          transform="translateX(-50%)" 
-          width="100%"
-          maxWidth="360px" 
-          bg="white"
-          p="3.5"
-          boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
-        >
-          {admin ? (
-            data.status === "Terverifikasi" || data.status === "Ditolak" ? (
-              <StatusCard message={data.catatanAdmin} status={data.status} />
+          <Box
+            position="fixed"
+            bottom="0"
+            left="50%"
+            transform="translateX(-50%)"
+            width="100%"
+            maxWidth="360px"
+            bg="white"
+            p="3.5"
+            boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
+          >
+            {admin ? (
+              data.status === "Terverifikasi" || data.status === "Ditolak" ? (
+                <StatusCard message={data.catatanAdmin} status={data.status} />
+              ) : (
+                <Button width="100%" fontSize="14px" onClick={onOpen}>
+                  Verifikasi Permohonan Inovasi
+                </Button>
+              )
             ) : (
-              <Button width="100%" fontSize="14px" onClick={onOpen}>
-                Verifikasi Permohonan Inovasi
+              <Button width="100%" fontSize="16px" onClick={onOpen}>
+                Ketahui lebih lanjut
               </Button>
-            )
-          ) : (
-            <Button width="100%" fontSize="16px" onClick={onOpen}>
-              Ketahui lebih lanjut
-            </Button>
-          )}
-        </Box>
-
+            )}
+          </Box>
         )}
         <RejectionModal
           isOpen={openModal}
@@ -606,9 +640,9 @@ function DetailInnovation() {
           setOpenModal={setOpenModal}
           role="Inovator"
           contactData={{
-            whatsapp: innovatorData?.whatsapp || "", 
-            instagram: innovatorData?.instagram || "",
-            website: innovatorData?.website || ""
+            whatsapp: innovatorData?.whatsapp || "",
+            instagram: innovatorData?.instagram || "https://www.instagram.com/",
+            website: innovatorData?.website || "https://www.google.com/",
           }}
         />
       </ContentContainer>

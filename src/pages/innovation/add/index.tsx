@@ -17,20 +17,15 @@ import {
   Textarea,
   useToast,
 } from "@chakra-ui/react";
-import { NavbarButton } from "../../village/profile/_profileStyle";
-import Container from "Components/container";
 import TopBar from "Components/topBar";
 import {
   addDoc,
   collection,
   doc,
   getDoc,
-  getDocs,
   increment,
-  query,
   serverTimestamp,
-  updateDoc,
-  where
+  updateDoc
 } from "firebase/firestore";
 import {
   deleteObject,
@@ -43,10 +38,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
-import ImageUpload from "../../../components/form/ImageUpload";
-import { auth, firestore, storage } from "../../../firebase/clientApp";
 import ConfModal from "../../../components/confirmModal/confModal";
 import SecConfModal from "../../../components/confirmModal/secConfModal";
+import ImageUpload from "../../../components/form/ImageUpload";
+import { auth, firestore, storage } from "../../../firebase/clientApp";
+import { NavbarButton } from "../../village/profile/_profileStyle";
 
 type OptionType = {
   value: string;
@@ -56,6 +52,7 @@ type OptionType = {
 const categoryOptions = [
   { value: "E-Government", label: "E-Government" },
   { value: "E-Tourism", label: "E-Tourism" },
+  { value: "Infrastruktur Lokal", label: "Infrastruktur Lokal" },
   { value: "Layanan Keuangan", label: "Layanan Keuangan" },
   { value: "Layanan Sosial", label: "Layanan Sosial" },
   {
@@ -69,7 +66,6 @@ const categoryOptions = [
   { value: "Pengelolaan Sumber Daya", label: "Pengelolaan Sumber Daya" },
   { value: "Pertanian Cerdas", label: "Pertanian Cerdas" },
   { value: "Sistem Informasi", label: "Sistem Informasi" },
-  { value: "UMKM", label: "UMKM" },
 ];
 
 const predefinedModels = [

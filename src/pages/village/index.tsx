@@ -66,7 +66,9 @@ const Village: React.FC = () => {
     handleFetchProvinces();
   }, []);
 
-  const handleProvinceChange = (selected: { label: string; value: string } | null) => {
+  const handleProvinceChange = (
+    selected: { label: string; value: string } | null
+  ) => {
     if (selected) {
       setSelectedProvince(selected.label);
       setSelectedRegency("");
@@ -78,14 +80,16 @@ const Village: React.FC = () => {
       setRegencies([]);
     }
   };
-  
-  const handleRegencyChange = (selected: { label: string; value: string } | null) => {
+
+  const handleRegencyChange = (
+    selected: { label: string; value: string } | null
+  ) => {
     if (selected) {
       setSelectedRegency(selected.label);
     } else {
       setSelectedRegency("");
     }
-  };  
+  };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -156,7 +160,9 @@ const Village: React.FC = () => {
         <Text>
           Menampilkan semua desa untuk{" "}
           <Texthighlight>
-            "{selectedProvince || "Semua Provinsi"}"
+            {selectedProvince || selectedRegency
+              ? `${selectedProvince}${ selectedProvince && selectedRegency ? ", " : ""}${selectedRegency}`
+              : "Semua Provinsi"}
           </Texthighlight>
         </Text>
         <GridContainer>

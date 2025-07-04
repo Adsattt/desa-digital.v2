@@ -43,7 +43,9 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { generatePath, useNavigate } from "react-router-dom";
@@ -67,14 +69,11 @@ import {
 import RejectionModal from "Components/confirmModal/RejectionModal";
 import ActionDrawer from "Components/drawer/ActionDrawer.tsx";
 
-
 export default function DetailVillage() {
   const navigate = useNavigate();
   const [userLogin] = useAuthState(auth);
-  const innovationRef = collection(firestore, "innovations");
   const [innovations, setInnovations] = useState<DocumentData[]>([]);
   const [village, setVillage] = useState<DocumentData | undefined>();
-  const [user, setUser] = useState<DocumentData | undefined>();
   const { id } = useParams();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [admin, setAdmin] = useState(false);
@@ -156,19 +155,6 @@ export default function DetailVillage() {
     // console.log("User:", user);
   }, [userLogin, id]);
 
-  useEffect(() => {
-    const fetchInnovations = async () => {
-      const innovationsSnapshot = await getDocs(innovationRef);
-      const innovationsData = innovationsSnapshot.docs.map((doc) => ({
-        id: doc.id, // Ambil id dokumen dari Firestore
-        ...doc.data(), // Ambil data lainnya
-      }));
-      setInnovations(innovationsData);
-    };
-  
-    fetchInnovations();
-  }, [innovationRef]);
-  
 
   useEffect(() => {
     const fetchVillageData = async () => {
@@ -177,6 +163,15 @@ export default function DetailVillage() {
           const docRef = doc(firestore, "villages", id);
           const docSnap = await getDoc(docRef);
 
+          const inovationRef = collection(firestore, "innovations");
+          const q = query(inovationRef, where("desaId", "array-contains", id));
+          const innovationsSnapshot = await getDocs(q);
+          const innovationsData = innovationsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(), 
+          }));
+          setInnovations(innovationsData);
+          console.log("Inovasi:", innovationsData);
           if (docSnap.exists()) {
             // console.log("Village Data:", docSnap.data());
             setVillage(docSnap.data());
@@ -195,7 +190,7 @@ export default function DetailVillage() {
   }, [id]); // Tambahkan id sebagai dependensi
 
   return (
-    <Box>
+    <Box paddingBottom={16}>
       <TopBar title="Detail Desa" onBack={() => navigate(-1)} />
       <div style={{ position: "relative", width: "100%" }}>
         <Background src={village?.header || defaultHeader} alt="background" />
@@ -287,7 +282,9 @@ export default function DetailVillage() {
                   </Box>
                   <Box mt={2}>
                     <Text fontWeight="bold">Lain-lain:</Text>
-                    <Text>{village?.infrastrukturDesa || "Tidak tersedia"}</Text>
+                    <Text>
+                      {village?.infrastrukturDesa || "Tidak tersedia"}
+                    </Text>
                   </Box>
                 </AccordionPanel>
               </AccordionItem>
@@ -314,7 +311,9 @@ export default function DetailVillage() {
                   paddingRight="4px"
                 >
                   <Box>
-                    <Text fontWeight="bold">Perkembangan Teknologi Digital:</Text>
+                    <Text fontWeight="bold">
+                      Perkembangan Teknologi Digital:
+                    </Text>
                     <Text>{village?.teknologi || "Tidak tersedia"}</Text>
                   </Box>
                   <Box mt={2}>
@@ -429,14 +428,19 @@ export default function DetailVillage() {
           <div>
             <SubText>Galeri Desa</SubText>
             <CardContainer>
-              <Horizontal>
-                {village?.images &&
-                  (Object.values(village.images) as string[]).map(
+              {village?.images && Object.values(village.images).length > 0 ? (
+                <Horizontal>
+                  {(Object.values(village.images) as string[]).map(
                     (image: string, index: number) => (
                       <EnlargedImage key={index} src={image} />
                     )
                   )}
-              </Horizontal>
+                </Horizontal>
+              ) : (
+                <Text color="gray.400" fontSize={12}>
+                  Tidak ada gambar
+                </Text>
+              )}
             </CardContainer>
           </div>
           <div>
@@ -462,7 +466,12 @@ export default function DetailVillage() {
             {village?.status === "Terverifikasi" && (
             <CardContainer style={{ paddingBottom: "40px" }}>
               <Horizontal>
-                {innovations.map((innovation, idx) => (
+                {innovations.length === 0 ? (
+                  <Text color="gray.400" fontSize={12}>
+                    Belum ada inovasi yang diterapkan
+                  </Text>
+                ) : (
+                innovations.slice(0,5).map((innovation, idx) => (
                   <CardInnovation
                     key={idx}
                     images={innovation.images}
@@ -476,9 +485,10 @@ export default function DetailVillage() {
                       if (innovation.id) {
                         navigate(generatePath(paths.DETAIL_INNOVATION_PAGE, { id: innovation.id }));
                       }
-                    }}
+               
                   />
-                ))}
+                ))
+              )}
               </Horizontal>
             </CardContainer>
             )}
@@ -487,9 +497,9 @@ export default function DetailVillage() {
             position="fixed"
             bottom="0"
             left="50%"
-            transform="translateX(-50%)" 
+            transform="translateX(-50%)"
             width="100%"
-            maxWidth="360px" 
+            maxWidth="360px"
             bg="white"
             p="3.5"
             boxShadow="0px -6px 12px rgba(0, 0, 0, 0.1)"
@@ -512,10 +522,7 @@ export default function DetailVillage() {
             ) : (
               // Logika untuk Non-Admin
               <Flex>
-                <Button
-                  width="100%"
-                  onClick={onOpen}
-                >
+                <Button width="100%" onClick={onOpen}>
                   Kontak Desa
                 </Button>
               </Flex>
@@ -532,19 +539,19 @@ export default function DetailVillage() {
         </ContentContainer>
       </div>
       <ActionDrawer
-            isOpen={isOpen}
-            onClose={onClose}
-            isAdmin={admin}
-            loading={loading}
-            onVerify={handleVerify}
-            setOpenModal={setOpenModal}
-            role="Desa"
-            contactData={{
-              whatsapp: village?.whatsapp || "", 
-              instagram: village?.instagram || "",
-              website: village?.website || ""
-            }}
-          />
+        isOpen={isOpen}
+        onClose={onClose}
+        isAdmin={admin}
+        loading={loading}
+        onVerify={handleVerify}
+        setOpenModal={setOpenModal}
+        role="Desa"
+        contactData={{
+          whatsapp: village?.whatsapp || "",
+          instagram: village?.instagram || "https://www.instagram.com/",
+          website: village?.website || "https://www.google.com/",
+        }}
+      />
     </Box>
   );
 }
