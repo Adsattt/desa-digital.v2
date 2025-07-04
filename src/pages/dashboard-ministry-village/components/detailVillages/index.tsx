@@ -57,7 +57,7 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
           return {
             namaDesa: d.namaDesa,
             provinsi: d.provinsi,
-            kabupaten: d.kabupaten,
+            kabupaten: d.kabupatenKota,
             kecamatan: d.kecamatan,
             potensi: d.potensi,
             idm: String(d.idm),
@@ -112,7 +112,7 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
     doc.text(`Daftar Desa Berdasarkan Kategori: ${selectedCategory}`, 14, y);
     y += 6;
 
-    const sortedData = [...data]; // Assuming it's already sorted externally or here
+    const sortedData = [...data];
 
     autoTable(doc, {
       startY: y,

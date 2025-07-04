@@ -30,8 +30,8 @@ const TopInnovations = () => {
 
       try {
         const profilQuery = query(
-          collection(db, "profilInovator"),
-          where("userId", "==", currentUser.uid)
+          collection(db, "innovators"),
+          where("id", "==", currentUser.uid)
         );
         const profilSnapshot = await getDocs(profilQuery);
 
@@ -45,8 +45,8 @@ const TopInnovations = () => {
         const inovatorId = profilDoc.id;
 
         const inovasiQuery = query(
-          collection(db, "inovasi"),
-          where("inovatorId", "==", inovatorId)
+          collection(db, "innovations"),
+          where("innovatorId", "==", inovatorId)
         );
         const inovasiSnapshot = await getDocs(inovasiQuery);
 

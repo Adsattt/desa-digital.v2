@@ -42,7 +42,7 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
       try {
         // 1. Get inovasi document matching selectedInovasi
         const inovasiSnap = await getDocs(query(
-          collection(db, "inovasi"),
+          collection(db, "innovations"),
           where("namaInovasi", "==", selectedInovasi)
         ));
 
@@ -56,7 +56,7 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
 
         // 2. Confirm inovator exists in profilInovator
         const profilSnap = await getDocs(query(
-          collection(db, "profilInovator"),
+          collection(db, "innovators"),
           where("namaInovator", "==", inovatorName)
         ));
 
@@ -67,7 +67,7 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
 
         // 3. Get all menerapkanInovasi where namaInovasi == selectedInovasi
         const implementSnap = await getDocs(query(
-          collection(db, "menerapkanInovasi"),
+          collection(db, "claimInnovations"),
           where("namaInovasi", "==", selectedInovasi)
         ));
 

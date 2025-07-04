@@ -55,7 +55,7 @@ const ChartVillage = () => {
   useEffect(() => {
     async function fetchData() {
       const db = getFirestore();
-      const snapshot = await getDocs(collection(db, "profilDesa"));
+      const snapshot = await getDocs(collection(db, "villages"));
 
       const categoryCounts: Record<string, number> = {
         Maju: 0,
@@ -164,7 +164,7 @@ const ChartVillage = () => {
           i + 1,
           item.namaDesa,
           item.kecamatan,
-          item.kabupaten,
+          item.kabupatenKota,
           item.provinsi,
           item.idm,
           item.tahunData,

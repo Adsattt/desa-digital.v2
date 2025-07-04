@@ -41,8 +41,8 @@ const TopVillages = () => {
       try {
         // Get profilInovator for current user
         const profilQuery = query(
-          collection(db, "profilInovator"),
-          where("userId", "==", currentUser.uid)
+          collection(db, "innovators"),
+          where("id", "==", currentUser.uid)
         );
         const profilSnapshot = await getDocs(profilQuery);
 
@@ -57,8 +57,8 @@ const TopVillages = () => {
 
         // Get inovasi where inovatorId matches
         const inovasiQuery = query(
-          collection(db, "inovasi"),
-          where("inovatorId", "==", inovatorId)
+          collection(db, "innovations"),
+          where("innovatorId", "==", inovatorId)
         );
         const inovasiSnapshot = await getDocs(inovasiQuery);
 
@@ -84,7 +84,7 @@ const TopVillages = () => {
 
         for (const chunk of chunks) {
           const menerapkanQuery = query(
-            collection(db, "menerapkanInovasi"),
+            collection(db, "claimInnovations"),
             where("inovasiId", "in", chunk)
           );
           const snapshot = await getDocs(menerapkanQuery);

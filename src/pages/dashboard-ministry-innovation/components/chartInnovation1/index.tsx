@@ -57,7 +57,7 @@ const ChartInnovation1 = () => {
   useEffect(() => {
     const fetchData = async () => {
       const db = getFirestore(getApp());
-      const snapshot = await getDocs(collection(db, "inovasi"));
+      const snapshot = await getDocs(collection(db, "innovations"));
 
       const scales: Record<string, number[]> = {
         developmentScale: [0, 0, 0, 0],

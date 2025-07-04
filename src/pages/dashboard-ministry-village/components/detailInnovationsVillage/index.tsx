@@ -68,7 +68,7 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
         const db = getFirestore();
 
         // 1. Query menerapkanInovasi by selectedVillage
-        const menerapkanRef = collection(db, "menerapkanInovasi");
+        const menerapkanRef = collection(db, "claimInnovations");
         const q1 = query(menerapkanRef, where("namaDesa", "==", selectedVillage));
         const snapshot1 = await getDocs(q1);
 
@@ -84,7 +84,7 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
         );
 
         // 2. Query inovasi collection for namaInovasi in batches
-        const inovasiRef = collection(db, "inovasi");
+        const inovasiRef = collection(db, "innovations");
         const chunks: string[][] = [];
         for (let i = 0; i < inovasiNames.length; i += 10) {
           chunks.push(inovasiNames.slice(i, i + 10));

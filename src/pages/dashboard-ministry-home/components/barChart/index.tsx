@@ -62,9 +62,9 @@ const BarChartInovasi = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const profilDesaSnap = await getDocs(collection(db, "profilDesa"));
-        const menerapkanSnap = await getDocs(collection(db, "menerapkanInovasi"));
-        const inovasiSnap = await getDocs(collection(db, "inovasi"));
+        const profilDesaSnap = await getDocs(collection(db, "villages"));
+        const menerapkanSnap = await getDocs(collection(db, "claimInnovations"));
+        const inovasiSnap = await getDocs(collection(db, "innovations"));
 
         const menerapkanData = menerapkanSnap.docs.map((doc) => doc.data());
         const inovasiData = inovasiSnap.docs.map((doc) => doc.data());

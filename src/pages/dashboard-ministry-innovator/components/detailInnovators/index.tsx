@@ -75,11 +75,11 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
 
     if (kategoriInovator) {
       q = query(
-        collection(db, "profilInovator"),
+        collection(db, "innovators"),
         where("kategoriInovator", "==", kategoriInovator)
       );
     } else {
-      q = query(collection(db, "profilInovator"));
+      q = query(collection(db, "innovators"));
     }
 
     try {

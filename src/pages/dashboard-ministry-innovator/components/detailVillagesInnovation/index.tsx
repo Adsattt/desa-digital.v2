@@ -71,9 +71,9 @@ const DetailVillages = ({ selectedNamaDesa }: DetailVillagesProps) => {
 
       try {
         // Fetch all documents from the three collections
-        const menerapkanSnapshot = await getDocs(collection(db, "menerapkanInovasi"));
-        const inovasiSnapshot = await getDocs(collection(db, "inovasi"));
-        const profilInovatorSnapshot = await getDocs(collection(db, "profilInovator"));
+        const menerapkanSnapshot = await getDocs(collection(db, "claimInnovations"));
+        const inovasiSnapshot = await getDocs(collection(db, "innovations"));
+        const profilInovatorSnapshot = await getDocs(collection(db, "innovators"));
 
         // Map docs to arrays of objects
         const menerapkanArr = menerapkanSnapshot.docs.map((doc) => doc.data());
