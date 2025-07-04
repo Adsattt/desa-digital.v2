@@ -10,6 +10,7 @@ import React from "react";
 import Hero from "../home/components/hero";
 import Innovator from "../home/components/innovator";
 import Menu from "../home/components/menu";
+import Villages from "../home/components/villages";
 
 const AdminPage: React.FC = () => {
   
@@ -32,6 +33,9 @@ const AdminPage: React.FC = () => {
         <BestBanner />
         <Box mt="120px">
           <Innovator />
+        </Box>
+        <Box mt="-10px">
+          <Villages />
         </Box>
       </Stack>
     </Container>

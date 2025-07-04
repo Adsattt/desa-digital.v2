@@ -70,14 +70,15 @@ const InovatorUnggulan: React.FC = () => {
         const fetchTopInovator = async () => {
             try {
                 const db = getFirestore();
-                const inovatorRef = collection(db, "innovators"); // ✅ Ambil dari collection "innovators"
+                const inovatorRef = collection(db, "innovators"); //  Ambil dari collection "innovators"
                 const snapshot = await getDocs(inovatorRef);
         
                 // Ambil data inovator dan urutkan berdasarkan jumlahInovasi (desc)
                 const inovators = snapshot.docs
                     .map((doc) => ({
-                        name: doc.data().namaInovator as string, // ✅ Ganti "namaDesa" ke "namaInovator"
-                        value: doc.data().jumlahInovasi as number || 0, // ✅ Ganti "jumlahInovasi"
+                        name: doc.data().namaInovator as string, // Ganti "namaDesa" ke "namaInovator"
+                        value: doc.data().jumlahDesaDampingan as number || 0, 
+                        // value: doc.data().jumlahInovasi as number || 0, // Ganti "jumlahInovasi"
                     }))
                     .sort((a, b) => b.value - a.value) // Urutkan dari terbesar ke terkecil
                     .slice(0, 5); // Ambil top 5 inovator

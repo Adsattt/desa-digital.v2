@@ -9,19 +9,45 @@ import { CardContainer, Horizontal, Title } from "./_innovatorStyle";
 import defaultHeader from "@public/images/default-header.svg";
 import defaultLogo from "@public/images/default-logo.svg";
 
+interface InnovatorData {
+  id: string;
+  namaInovator: string;
+  jumlahDesaDampingan: number;
+  jumlahInovasi: number;
+  header?: string;
+  logo?: string;
+  status?: boolean; 
+}
+
+
 function Innovator() {
   const navigate = useNavigate();
   const innovatorsRef = collection(firestore, "innovators");
   const [innovators, setInnovators] = useState<DocumentData[]>([]);
 
   useEffect(() => {
-    const fetchInnovators = async () => {
-      const innovatorsSnapshot = await getDocs(innovatorsRef);
-      const innovatorsData = innovatorsSnapshot.docs.map((doc) => doc.data());
-      setInnovators(innovatorsData);
-    };
-    fetchInnovators();
-  }, [innovatorsRef]);
+  const fetchInnovators = async () => {
+    const innovatorsSnapshot = await getDocs(innovatorsRef);
+    const innovatorsData: InnovatorData[] = innovatorsSnapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          namaInovator: data.namaInovator,
+          jumlahDesaDampingan: data.jumlahDesaDampingan,
+          jumlahInovasi: data.jumlahInovasi,
+          header: data.header,
+          logo: data.logo,
+          status: data.status,
+        };
+      })
+      .filter((item) => item.status === 'Terverifikasi'); // Filter hanya inovator yang terverifikasi
+
+    setInnovators(innovatorsData);
+  };
+  fetchInnovators();
+}, [innovatorsRef]);
+
 
   return (
     <Box padding="0 14px">
@@ -46,14 +72,11 @@ function Innovator() {
           ))} */}
           {[...innovators]
           .sort((a, b) => {
-            if (b.jumlahInovasi !== a.jumlahInovasi){
-              return b.jumlahInovasi - a.jumlahInovasi;
-            }
-            if (b.jumlahDesaDampingan !== a.jumlahDesaDampingan){
-              return b.jumlahDesaDampingan - a.jumlahDesaDampingan;
-            }
-            return a.namaInovator.localeCompare(b.namaInovator);
-          }) 
+              if (b.jumlahDesaDampingan !== a.jumlahDesaDampingan){
+                return b.jumlahDesaDampingan - a.jumlahDesaDampingan;
+              }
+              return a.namaInovator.localeCompare(b.namaInovator);
+            }) 
           .slice(0, 5) // ambil 5 teratas
           .map((item, idx) => (
             <CardInnovator
