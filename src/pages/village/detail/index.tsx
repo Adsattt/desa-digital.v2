@@ -484,7 +484,7 @@ export default function DetailVillage() {
                     onClick={() => {
                       if (innovation.id) {
                         navigate(generatePath(paths.DETAIL_INNOVATION_PAGE, { id: innovation.id }));
-                      }
+                      }}}
                
                   />
                 ))
