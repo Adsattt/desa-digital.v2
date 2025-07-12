@@ -4,12 +4,20 @@ export const CardContainer = styled.div`
   overflow: auto;
   width: 100%;
   white-space: nowrap;
-  height: 194px;
+  height: 196px;
 `
 
 export const Horizontal = styled.div`
   display: flex;
   gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  -ms-overflow-style: none;  /* IE dan Edge lama */
+  scrollbar-width: none;     /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;            /* Chrome, Safari, Edge */
+  }
+  padding-bottom: 4px;
 `
 
 export const Title = styled.p`

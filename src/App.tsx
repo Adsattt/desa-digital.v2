@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
-import SearchPage from "./pages/home/components/search/SearchPage";
 import Navbar from "./components/navbar";
 import Home from "./pages/home";
 import Innovation from "./pages/innovation";
@@ -47,8 +46,17 @@ import KlaimInovasiManual from "./pages/village/klaimInovasi/manual";
 import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
-import { Bounce, ToastContainer } from "react-toastify";
+import SearchPage from "./pages/home/components/search/SearchPage";
+import { Bounce, ToastContainer } from "react-toastify"; 
 import InovationForm from "./pages/innovation/add/InovationForm";
+import DashboardInnovator from "./pages/dashboard-innovator-home";
+import DashboardInnovatorInnovation from "./pages/dashboard-innovator-innovation";
+import DashboardInnovatorVillage from "./pages/dashboard-innovator-village";
+import DashboardMinistry from "./pages/dashboard-ministry-home";
+import DashboardMinistryInnovation from "./pages/dashboard-ministry-innovation";
+import DashboardMinistryInnovator from "./pages/dashboard-ministry-innovator";
+import DashboardMinistryVillage from "./pages/dashboard-ministry-village";
+
 
 const queryClient = new QueryClient();
 
@@ -263,6 +271,41 @@ const routes = [
   {
     path: "/search",
     element: <SearchPage />,
+  },
+    {
+    path: paths.DASHBOARD_INNOVATOR_HOME,
+    element: <DashboardInnovator />,
+    exact: true,
+  },
+  {
+    path: paths.DASHBOARD_INNOVATOR_INNOVATION,
+    element: <DashboardInnovatorInnovation />,
+    exact: true,
+  },
+  {
+    path: paths.DASHBOARD_INNOVATOR_VILLAGE,
+    element: <DashboardInnovatorVillage />,
+    exact: true,
+  },
+  {
+    path: paths.DASHBOARD_MINISTRY_HOME,
+    element: <DashboardMinistry />,
+    exact: true,
+  },
+  {
+    path: paths.DASHBOARD_MINISTRY_INNOVATION,
+    element: <DashboardMinistryInnovation />,
+    exact: true,
+  },
+  {
+    path: paths.DASHBOARD_MINISTRY_INNOVATOR,
+    element: <DashboardMinistryInnovator />,
+    exact: true,
+  },
+  {
+    path: paths.DASHBOARD_MINISTRY_VILLAGE,
+    element: <DashboardMinistryVillage />,
+    exact: true,
   },
 ];
 
