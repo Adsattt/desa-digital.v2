@@ -55,6 +55,8 @@ const BestBanner: React.FC = () => {
     fetchTopData();
   }, []);
 
+  console.log("Innovators:", innovators);
+  console.log("Villages:", villages);
   
   useEffect(() => {
     const interval = setInterval(() => {

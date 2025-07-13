@@ -30,13 +30,14 @@ const Village: React.FC = () => {
       const villagesRef = collection(firestore, "villages");
       const q = query(
         villagesRef,
+        
         orderBy("jumlahInovasiDiterapkan", "desc"), // Urutkan dari inovasi terbanyak
         limit(5) // Ambil hanya 5 desa teratas
       );
 
       const snapShot = await getDocs(q);
       const villagesData = snapShot.docs.map((doc) => ({
-        id: doc.id, // Selalu sertakan ID unik dari dokumen
+        id: doc.id, 
         ...doc.data(),
       }));
       setVillages(villagesData);

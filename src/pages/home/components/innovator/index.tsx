@@ -54,6 +54,7 @@ function Innovator() {
     fetchInnovators();
   }, []); // Hapus dependency agar hanya jalan sekali
 
+  console.log("Innovators:", innovators);
   return (
     <Box padding="0 14px">
       <Title>Inovator Unggulan</Title>
