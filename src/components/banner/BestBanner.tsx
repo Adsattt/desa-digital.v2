@@ -24,14 +24,14 @@ const BestBanner: React.FC = () => {
     const fetchTopData = async () => {
       const innovatorQuery = query(
         collection(firestore, "innovators"),
-        where("status", "==", "Terverifikasi"),
+        // where("status", "==", "Terverifikasi"),
         orderBy("jumlahDesaDampingan", "desc"),
         limit(3)
       )
 
       const villageQuery = query(
         collection(firestore, "villages"),
-        where("status", "==", "Terverifikasi"),
+        // where("status", "==", "Terverifikasi"),
         orderBy("jumlahInovasiDiterapkan", "desc"),
         limit(3)  
       )

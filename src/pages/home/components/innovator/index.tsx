@@ -38,7 +38,7 @@ function Innovator() {
 
       const q = query(
         innovatorsRef,
-        where("status", "==", "Terverifikasi"), // 1. Filter hanya yang terverifikasi
+        // where("status", "==", "Terverifikasi"), // 1. Filter hanya yang terverifikasi
         orderBy("jumlahDesaDampingan", "desc"), // 2. Urutkan dari dampingan terbanyak
         limit(5) // 3. Ambil hanya 5 data teratas
       );
