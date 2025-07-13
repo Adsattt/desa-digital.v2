@@ -1,7 +1,15 @@
 import { Box } from "@chakra-ui/react";
 import CardInnovator from "Components/card/innovator";
 import { paths } from "Consts/path";
-import { DocumentData, collection, getDocs } from "firebase/firestore";
+import {
+  DocumentData,
+  collection,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { generatePath, useNavigate } from "react-router-dom";
 import { firestore } from "../../../../firebase/clientApp";
@@ -22,65 +30,39 @@ interface InnovatorData {
 
 function Innovator() {
   const navigate = useNavigate();
-  const innovatorsRef = collection(firestore, "innovators");
   const [innovators, setInnovators] = useState<DocumentData[]>([]);
 
   useEffect(() => {
-  const fetchInnovators = async () => {
-    const innovatorsSnapshot = await getDocs(innovatorsRef);
-    const innovatorsData: InnovatorData[] = innovatorsSnapshot.docs
-      .map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          namaInovator: data.namaInovator,
-          jumlahDesaDampingan: data.jumlahDesaDampingan,
-          jumlahInovasi: data.jumlahInovasi,
-          header: data.header,
-          logo: data.logo,
-          status: data.status,
-        };
-      })
-      .filter((item) => item.status === 'Terverifikasi'); // Filter hanya inovator yang terverifikasi
+    const fetchInnovators = async () => {
+      const innovatorsRef = collection(firestore, "innovators");
 
-    setInnovators(innovatorsData);
-  };
-  fetchInnovators();
-}, [innovatorsRef]);
+      const q = query(
+        innovatorsRef,
+        // where("status", "==", "Terverifikasi"), 
+        orderBy("jumlahDesaDampingan", "desc"), 
+        limit(5) // Ambil hanya 5 data teratas
+      );
 
+      const innovatorsSnapshot = await getDocs(q);
+      const innovatorsData = innovatorsSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
+      setInnovators(innovatorsData);
+    };
+    fetchInnovators();
+  }, []); // Hapus dependency agar hanya jalan sekali
+
+  console.log("Innovators:", innovators);
   return (
     <Box padding="0 14px">
       <Title>Inovator Unggulan</Title>
       <CardContainer>
         <Horizontal>
-          {/* {innovators.map((item, idx) => (
+          {innovators.map((item: any, idx) => (
             <CardInnovator
-              key={idx}
-              id={item.id}
-              header={item.header || defaultHeader}
-              logo={item.logo || defaultLogo}
-              namaInovator={item.namaInovator}
-              jumlahDesaDampingan={item.jumlahDesaDampingan}
-              jumlahInovasi={item.jumlahInovasi}
-              onClick={() =>
-                navigate(
-                  generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id })
-                )
-              }
-            />
-          ))} */}
-          {[...innovators]
-          .sort((a, b) => {
-              if (b.jumlahDesaDampingan !== a.jumlahDesaDampingan){
-                return b.jumlahDesaDampingan - a.jumlahDesaDampingan;
-              }
-              return a.namaInovator.localeCompare(b.namaInovator);
-            }) 
-          .slice(0, 5) // ambil 5 teratas
-          .map((item, idx) => (
-            <CardInnovator
-              key={idx}
+              key={item.id} // Gunakan ID unik dari dokumen
               id={item.id}
               header={item.header || defaultHeader}
               logo={item.logo || defaultLogo}
@@ -92,7 +74,7 @@ function Innovator() {
                 navigate(
                   generatePath(paths.INNOVATOR_PROFILE_PAGE, { id: item.id })
                 )
-            }
+              }
             />
           ))}
         </Horizontal>
@@ -102,3 +84,4 @@ function Innovator() {
 }
 
 export default Innovator;
+
