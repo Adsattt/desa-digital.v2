@@ -26,16 +26,15 @@ const BestBanner: React.FC = () => {
         collection(firestore, "innovators"),
         // where("status", "==", "Terverifikasi"),
         orderBy("jumlahDesaDampingan", "desc"),
-        orderBy("jumlahInovasi", "desc"),
         limit(3)
       )
 
       const villageQuery = query(
         collection(firestore, "villages"),
-        where("status", "==", "Terverifikasi"),
+        // where("status", "==", "Terverifikasi"),
         orderBy("jumlahInovasiDiterapkan", "desc"),
-        limit(3)
-      );
+        limit(3)  
+      )
 
       const [innovatorSnapshot, villageSnapshot] = await Promise.all([
         getDocs(innovatorQuery),

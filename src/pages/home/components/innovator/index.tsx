@@ -40,7 +40,6 @@ function Innovator() {
         innovatorsRef,
         // where("status", "==", "Terverifikasi"), 
         orderBy("jumlahDesaDampingan", "desc"), 
-        orderBy("jumlahInovasi", "desc"),
         limit(5) // Ambil hanya 5 data teratas
       );
 
