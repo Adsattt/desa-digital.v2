@@ -89,7 +89,7 @@ const Dashboard = () => {
 
   const data = [
     {
-      label: "Desa Digital",
+      label: "Desa",
       value: totalVillage,
       icon: (
         <Box bg="#C6D8D0" borderRadius="full" p={2}>

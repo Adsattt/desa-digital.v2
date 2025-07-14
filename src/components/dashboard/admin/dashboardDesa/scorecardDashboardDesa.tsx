@@ -111,7 +111,7 @@ const ScoreCardDashboardDesa: React.FC = () => {
       iconBg: "#C6D8D0",
     },
     {
-      label: "Desa Digital",
+      label: "Desa",
       value: totalVillage,
       icon: VillageIcon,
       iconBg: "#C6D8D0",

@@ -17,11 +17,11 @@ const firestore = getFirestore(app);
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-if (import.meta.env.DEV) {
-  connectAuthEmulator(auth, "http://localhost:9099");
-  connectFirestoreEmulator(firestore, "localhost", 8080);
-  connectStorageEmulator(storage, "localhost", 9199);
-}
+// if (import.meta.env.DEV) {
+//   connectAuthEmulator(auth, "http://localhost:9099");
+//   connectFirestoreEmulator(firestore, "localhost", 8080);
+//   connectStorageEmulator(storage, "localhost", 9199);
+// }
 
 export  default app;
 export { firestore, auth, storage }

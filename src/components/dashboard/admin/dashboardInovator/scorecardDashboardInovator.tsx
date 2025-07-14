@@ -49,7 +49,7 @@ const ScoreCardDashboardInovator: React.FC = () => {
       iconBg: "#C6D8D0",
     },
     {
-      label: "Dampingan",
+      label: "Desa Digital",
       value: totalDesaDampingan,
       iconType: "image",
       icon: DesaIcon,

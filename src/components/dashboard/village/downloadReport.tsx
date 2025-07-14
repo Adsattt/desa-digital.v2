@@ -40,6 +40,8 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
   const [inovatorData, setInovatorData] = useState<InovatorReportData[]>([]);
   const [desaMetadata, setDesaMetadata] = useState<any>(null);
 
+
+
   // Fungsi untuk mengambil data dari Firestore
   const fetchData = async () => {
     try {
@@ -151,7 +153,7 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
 
               // Menambahkan data inovator ke dalam array inovatorData
               inovatorData.push({
-                no: index + 1,
+                no: 0,
                 namaInovator,
                 namaInovasi,
                 kategori,
@@ -164,8 +166,10 @@ const DownloadReport: React.FC<DownloadReportProps> = ({
           }
         });
 
-        // Mengurutkan data berdasarkan jumlahInovasi secara descending
-        setInovatorData(inovatorData.sort((a, b) => b.jumlahInovasi - a.jumlahInovasi));
+        // Setelah semua .push() ke inovatorData
+        const sortedData = inovatorData.sort((a, b) => b.jumlahInovasi - a.jumlahInovasi);
+        const numberedData = sortedData.map((item, index) => ({ ...item, no: index + 1 }));
+        setInovatorData(numberedData);
       };
 
       fetchInovasiData();

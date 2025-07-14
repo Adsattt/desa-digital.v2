@@ -57,7 +57,7 @@ const Top5Inovator: React.FC = () => {
           text.split(" ").slice(0, 3).join(" ");
 
         // Ambil semua data + sorting benar
-        let allData = snapshot.docs
+        const allData = snapshot.docs
           .map((doc) => {
             const data = doc.data();
             return {
@@ -73,8 +73,12 @@ const Top5Inovator: React.FC = () => {
             if (b.jumlahInovasi !== a.jumlahInovasi) {
               return b.jumlahInovasi - a.jumlahInovasi;
             }
+            if (b.jumlahDesaDampingan !== a.jumlahDesaDampingan) {
+              return b.jumlahDesaDampingan - a.jumlahDesaDampingan;
+            }
             return a.namaInovatorFull.localeCompare(b.namaInovatorFull);
           });
+
 
         // ✅ Untuk tabel (semua data)
         setInovatorData(

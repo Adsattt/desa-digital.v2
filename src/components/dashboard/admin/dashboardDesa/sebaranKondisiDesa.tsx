@@ -69,6 +69,8 @@ const SebaranKondisiDesa: React.FC = () => {
         });
       });
 
+      desaList.sort((a, b) => a.namaDesa.localeCompare(b.namaDesa));
+      desaList.forEach((item, index) => item.no = index + 1);
       setDesaData(desaList);
       setFilteredDesaData(desaList);
     } catch (error) {

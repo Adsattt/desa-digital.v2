@@ -537,7 +537,7 @@ const PetaLama: React.FC = () => {
                                         }
                                     }}
                                     placeholder={`Pilih ${selectedCategory === 'desa'
-                                        ? 'Kabupaten'
+                                        ? 'Kabupaten/Kota'
                                         : selectedCategory === 'inovator'
                                             ? 'Nama Inovator'
                                             : 'Nama Inovasi'

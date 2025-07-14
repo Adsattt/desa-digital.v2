@@ -102,7 +102,7 @@ const InformasiUmum: React.FC = () => {
   const handleDownload = () => {
     const excelData = [
       {
-        Kategori: "Desa Digital",
+        Kategori: "Desa",
         Jumlah: totalVillage,
       },
       {
@@ -156,7 +156,7 @@ const InformasiUmum: React.FC = () => {
         >
           {[
             {
-              label: "Desa Digital",
+              label: "Desa",
               icon: (
                 <Image src={VillageActive} alt="Village Icon" w={6} h={6} />
               ),
