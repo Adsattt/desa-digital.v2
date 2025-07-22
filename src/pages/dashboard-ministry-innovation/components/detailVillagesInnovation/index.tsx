@@ -40,7 +40,6 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 1. Get inovasi document matching selectedInovasi
         const inovasiSnap = await getDocs(query(
           collection(db, "innovations"),
           where("namaInovasi", "==", selectedInovasi)
@@ -52,9 +51,8 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
         }
 
         const inovasiDoc = inovasiSnap.docs[0];
-        const inovatorName = inovasiDoc.data().namaInovator;
+        const inovatorName = inovasiDoc.data().namaInnovator;
 
-        // 2. Confirm inovator exists in profilInovator
         const profilSnap = await getDocs(query(
           collection(db, "innovators"),
           where("namaInovator", "==", inovatorName)
@@ -65,18 +63,22 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
           return;
         }
 
-        // 3. Get all menerapkanInovasi where namaInovasi == selectedInovasi
-        const implementSnap = await getDocs(query(
+        const claimSnap = await getDocs(query(
           collection(db, "claimInnovations"),
           where("namaInovasi", "==", selectedInovasi)
         ));
 
-        const records: VillageRecord[] = implementSnap.docs.map(doc => ({
-          namaInovasi: selectedInovasi,
-          namaInovator: inovatorName,
-          namaDesa: doc.data().namaDesa,
-          tanggalPengajuan: doc.data().tanggalPengajuan,
-        }));
+        const records: VillageRecord[] = claimSnap.docs.map(doc => {
+          const rawNamaDesa = doc.data().namaDesa || "";
+          const namaDesaCleaned = rawNamaDesa.replace(/^Desa\s+/i, "");
+
+          return {
+            namaInovasi: selectedInovasi,
+            namaInovator: inovatorName,
+            namaDesa: namaDesaCleaned,
+            tanggalPengajuan: doc.data().createdAt?.toDate().getFullYear(),
+          };
+        });
 
         setData(records);
       } catch (err) {

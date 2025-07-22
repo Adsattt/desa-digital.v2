@@ -72,7 +72,7 @@ const getColorByTotal = (total: number): string => {
   return "#2e7d32";
 };
 
-const provinceStyle = (feature: any, totals: Record<string, number>) => {
+const provinceStyle = (totals: Record<string, number>) => (feature: any) => {
   const rawName = feature?.properties?.Propinsi || "unknown";
   const name = cleanName(rawName);
   const total = totals[name] ?? 0;
@@ -84,11 +84,15 @@ const provinceStyle = (feature: any, totals: Record<string, number>) => {
   };
 };
 
-const onEachFeature = (feature: any, layer: L.Layer, totals: Record<string, number>) => {
+const onEachFeature = (totals: Record<string, number>) => (
+  feature: any,
+  layer: L.Layer
+) => {
   const rawName = feature?.properties?.Propinsi || "Unknown";
   const name = cleanName(rawName);
   const total = totals[name] ?? 0;
   layer.bindPopup(`${rawName}: ${total} desa digital`);
+  console.log("rawName:", rawName, "cleaned:", name, "total:", total, "totals:", totals);
 };
 
 const Legend = () => {
@@ -139,17 +143,17 @@ const MapVillages = () => {
       if (!currentUID) return;
 
       // Get inovator profile
-      const profilInovatorSnap = await getDocs(
+      const inovatorSnap = await getDocs(
         query(collection(db, "innovators"), where("id", "==", currentUID))
       );
-      const profilInovatorDoc = profilInovatorSnap.docs[0];
-      const profilInovatorId = profilInovatorDoc?.id;
-      const profilInovatorData = profilInovatorDoc?.data();
-      if (!profilInovatorId || !profilInovatorData) return;
+      const inovatorDoc = inovatorSnap.docs[0];
+      const inovatorId = inovatorDoc?.id;
+      const inovatorData = inovatorDoc?.data();
+      if (!inovatorId || !inovatorData) return;
 
       // Get inovasi docs by inovatorId
       const inovasiSnap = await getDocs(
-        query(collection(db, "innovations"), where("innovatorId", "==", profilInovatorId))
+        query(collection(db, "innovations"), where("innovatorId", "==", inovatorId))
       );
       const inovasiDocs = inovasiSnap.docs;
       const inovasiMap = Object.fromEntries(
@@ -159,7 +163,7 @@ const MapVillages = () => {
       if (inovasiIds.length === 0) return;
 
       // Get menerapkanInovasi docs filtered by inovasiId in inovasiIds
-      const menerapkanSnap = await getDocs(
+      const claimSnap = await getDocs(
         query(collection(db, "claimInnovations"), where("inovasiId", "in", inovasiIds))
       );
 
@@ -167,12 +171,17 @@ const MapVillages = () => {
       const dynamicTotals: Record<string, number> = {};
       const exportTemp: any[] = [];
 
-      for (const docSnap of menerapkanSnap.docs) {
-        const data = docSnap.data();
-        const desaId = data.desaId;
-        const inovasiId = data.inovasiId;
+      const produkInovator = inovasiDocs
+        .map((doc) => doc.data().namaInovasi)
+        .filter(Boolean)
+        .join(", ");
 
-        // Fetch profilDesa data
+      for (const docSnap of claimSnap.docs) {
+        const klaimData = docSnap.data();
+        const desaId = klaimData.desaId;
+        const inovasiId = klaimData.inovasiId;
+
+        // Fetch villages data
         const desaSnap = await getDoc(doc(db, "villages", desaId));
         if (!desaSnap.exists()) continue;
         const desaData = desaSnap.data();
@@ -184,7 +193,7 @@ const MapVillages = () => {
         // Coordinates
         const lat = desaData.lat || desaData.latitude || desaData.latlong?.[0];
         const lng = desaData.lng || desaData.longitude || desaData.latlong?.[1];
-        const provinsiRaw = desaData.provinsi || "Unknown";
+        const provinsiRaw = desaData.lokasi.provinsi.label || "Unknown";
         const provinsi = cleanName(provinsiRaw);
 
         if (lat && lng) {
@@ -199,23 +208,31 @@ const MapVillages = () => {
 
           dynamicTotals[provinsi] = (dynamicTotals[provinsi] || 0) + 1;
 
+          const capitalizeWords = (str: string) =>
+            str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
+          const lokasi = desaData.lokasi || {};
+
           exportTemp.push({
             namaDesa: desaData.namaDesa ?? "-",
             namaInovasi: inovasiData.namaInovasi ?? "-",
-            kategoriInovasi: inovasiData.kategoriInovasi ?? "-",
-            namaInovator: inovasiData.namaInovator ?? "-",
-            kecamatan: desaData.kecamatan ?? "-",
-            kabupaten: desaData.kabupatenKota ?? "-",
-            provinsi: desaData.provinsi ?? "-",
-            tanggalPengajuan: data.tanggalPengajuan ?? "-",
-            kategoriInovator: profilInovatorData.kategori ?? "-",
-            tahunDibentuk: profilInovatorData.tahunDibentuk ?? "-",
-            targetPengguna: profilInovatorData.targetPengguna ?? "-",
-            produk: profilInovatorData.produk ?? "-",
-            modelBisnis: profilInovatorData.modelBisnis ?? "-",
+            kategoriInovasi: inovasiData.kategori ?? "-",
+            namaInovator: inovasiData.namaInnovator ?? "-",
+            desaKelurahan: capitalizeWords(desaData.lokasi?.desaKelurahan?.label ?? "-"),
+            kecamatan: capitalizeWords(desaData.lokasi?.kecamatan?.label ?? "-"),
+            kabupatenKota: capitalizeWords(desaData.lokasi?.kabupatenKota?.label ?? "-"),
+            provinsi: capitalizeWords(desaData.lokasi?.provinsi?.label ?? "-"),
+            tanggalKlaim: klaimData.createdAt?.toDate?.().getFullYear?.() ?? "-",
+            kategoriInovator: inovatorData.kategori ?? "-",
+            tahunDibentuk: inovatorData.tahunDibentuk ?? "-",
+            targetPengguna: inovatorData.targetPengguna ?? "-",
+            modelBisnis: inovatorData.modelBisnis ?? "-",
+            produk: produkInovator || "-",
           });
         }
       }
+
+      console.log("Exported Data:", exportTemp);
 
       setExportData(exportTemp);
       setDesaPins(pinResults);
@@ -284,13 +301,13 @@ const MapVillages = () => {
     doc.text(`: ${inovatorProfile.targetPengguna || "-"}`, valueX, y);
     y += lineHeight;
 
-    doc.text("Produk", labelX, y);
-    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
-    y += lineHeight;
-
     doc.text("Model Bisnis", labelX, y);
     doc.text(`: ${inovatorProfile.modelBisnis || "-"}`, valueX, y);
     y += 10;
+
+    doc.text("Produk", labelX, y);
+    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
+    y += lineHeight;
 
     // Table starts after profile
     y += 5;
@@ -303,24 +320,24 @@ const MapVillages = () => {
     autoTable(doc, {
       startY: y,
       head: [[
-        "Nama Inovator",
+        "No.",
         "Nama Inovasi",
         "Kategori Inovasi",
         "Nama Desa",
         "Kecamatan",
         "Kabupaten",
         "Provinsi",
-        "Tanggal Pengajuan",
+        "Tahun Klaim",
       ]],
-      body: exportData.map((row) => [
-        row.namaInovator,
+      body: exportData.map((row, idx) => [
+        idx + 1,
         row.namaInovasi,
         row.kategoriInovasi,
-        row.namaDesa,
+        row.desaKelurahan,
         row.kecamatan,
         row.kabupatenKota,
         row.provinsi,
-        row.tanggalPengajuan,
+        row.tanggalKlaim,
       ]),
       headStyles: {
         fillColor: [0, 128, 0],
@@ -340,6 +357,8 @@ const MapVillages = () => {
     const dataBlob = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(dataBlob, "data_sebaran_inovasi.xlsx");
   };
+
+  console.log("GeoJSON render totals:", totals);
 
   return (
     <Box p={4} maxW="100%" mx="auto">
@@ -373,26 +392,24 @@ const MapVillages = () => {
 
       <MapContainerWrapper>
         <StyledMapBox>
-          <MapContainer
-            center={[2, 120]}
-            zoom={3}
-            style={{ height: "100%", width: "100%" }}
+          <MapContainer center={[2, 120]} zoom={3}
+            style={{ height: "100%", width: "100%", zIndex: 0 }}
           >
             <TileLayer
               attribution="&copy; OpenStreetMap contributors"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <GeoJSON
-              data={geoData as any}
-              style={(feature) => provinceStyle(feature, totals)}
-              onEachFeature={(feature, layer) =>
-                onEachFeature(feature, layer, totals)
-              }
-            />
+            {Object.keys(totals).length > 0 && (
+              <GeoJSON
+                data={geoData as any}
+                style={provinceStyle(totals)}
+                onEachFeature={onEachFeature(totals)}
+              />
+            )}
             {desaPins.map((desa) => (
               <Marker key={desa.desaId} position={[desa.lat, desa.lng]}>
                 <Popup>
-                  <strong>Desa {desa.namaDesa}</strong>
+                  <strong>{desa.namaDesa}</strong>
                   <br />
                   Inovasi: {desa.inovasiName ?? "-"}
                 </Popup>

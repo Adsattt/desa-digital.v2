@@ -59,21 +59,21 @@ const TopVillages = () => {
         // Collect all inovasi document IDs
         const inovasiIds = inovasiSnapshot.docs.map((doc) => doc.id);
 
-        // 3. Query menerapkanInovasi where inovasiId IN inovasiIds in chunks (max 10 per query)
+        // 3. Query klaimInovasi where inovasiId IN inovasiIds in chunks (max 10 per query)
         const chunkSize = 10;
-        let allMenerapkanDocs: QueryDocumentSnapshot<DocumentData>[] = [];
+        let allKlaimDocs: QueryDocumentSnapshot<DocumentData>[] = [];
 
         for (let i = 0; i < inovasiIds.length; i += chunkSize) {
           const chunk = inovasiIds.slice(i, i + chunkSize);
-          const menerapkanQuery = query(
+          const klaimQuery = query(
             collection(db, "claimInnovations"),
             where("inovasiId", "in", chunk)
           );
-          const menerapkanSnapshot = await getDocs(menerapkanQuery);
-          allMenerapkanDocs = allMenerapkanDocs.concat(menerapkanSnapshot.docs);
+          const klaimSnapshot = await getDocs(klaimQuery);
+          allKlaimDocs = allKlaimDocs.concat(klaimSnapshot.docs);
         }
 
-        if (allMenerapkanDocs.length === 0) {
+        if (allKlaimDocs.length === 0) {
           setTopInnovations([]);
           setLoading(false);
           return;
@@ -81,7 +81,7 @@ const TopVillages = () => {
 
         // Count namaDesa occurrences
         const countMap: Record<string, number> = {};
-        allMenerapkanDocs.forEach((doc) => {
+        allKlaimDocs.forEach((doc) => {
           const data = doc.data();
           const namaDesa = data.namaDesa;
           if (namaDesa) {

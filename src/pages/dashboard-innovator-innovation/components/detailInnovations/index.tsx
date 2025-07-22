@@ -17,7 +17,8 @@ import {
   query,
   where,
   getDocs,
-  QueryDocumentSnapshot, DocumentData
+  QueryDocumentSnapshot,
+  DocumentData
 } from "firebase/firestore";
 import {
   titleStyle,
@@ -53,6 +54,15 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
   const [implementationData, setImplementationData] = useState<Implementation[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [inovatorProfile, setInovatorProfile] = useState({
+    namaInovator: "-",
+    kategoriInovator: "-",
+    tahunDibentuk: "-",
+    targetPengguna: "-",
+    produk: "-",
+    modelBisnis: "-",
+  });
+
   const auth = getAuth();
   const db = getFirestore();
   const [userName, setUserName] = useState<string | null>(null);
@@ -75,10 +85,8 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
     const fetchData = async () => {
       setLoading(true);
       try {
-        const uid = user.uid;
-
         const profilInovatorRef = collection(db, "innovators");
-        const qProfil = query(profilInovatorRef, where("id", "==", uid));
+        const qProfil = query(profilInovatorRef, where("id", "==", user.uid));
         const profilSnap = await getDocs(qProfil);
         if (profilSnap.empty) {
           setImplementationData([]);
@@ -110,19 +118,34 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
           const data = doc.data();
           inovasiMap.set(doc.id, {
             namaInovasi: data.namaInovasi,
-            inovatorId: data.inovatorId,
+            inovatorId: data.innovatorId,
           });
         });
 
         const inovasiIds = Array.from(inovasiMap.keys());
 
-        const menerapkanInovasiRef = collection(db, "claimInnovations");
-        let menerapkanDocs: QueryDocumentSnapshot<DocumentData>[] = [];
+        const produkInovator = inovasiDocs
+          .map((doc) => doc.data().namaInovasi)
+          .filter(Boolean)
+          .join(", ");
+        
+        const profileData = profilSnap.docs[0].data();
+        setInovatorProfile({
+          namaInovator: profileData.namaInovator || "-",
+          kategoriInovator: profileData.kategori || "-",
+          tahunDibentuk: profileData.tahunDibentuk || "-",
+          targetPengguna: profileData.targetPengguna || "-",
+          modelBisnis: profileData.modelBisnis || "-",
+          produk: produkInovator || "-",
+        });
+
+        const klaimInovasiRef = collection(db, "claimInnovations");
+        let klaimDocs: QueryDocumentSnapshot<DocumentData>[] = [];
         for (let i = 0; i < inovasiIds.length; i += chunkSize) {
           const chunk = inovasiIds.slice(i, i + chunkSize);
-          const qMenerapkan = query(menerapkanInovasiRef, where("inovasiId", "in", chunk));
-          const snapMenerapkan = await getDocs(qMenerapkan);
-          menerapkanDocs = menerapkanDocs.concat(snapMenerapkan.docs);
+          const qKlaim = query(klaimInovasiRef, where("inovasiId", "in", chunk));
+          const snapKlaim = await getDocs(qKlaim);
+          klaimDocs = klaimDocs.concat(snapKlaim.docs);
         }
 
         const inovatorIdSet = new Set<string>(
@@ -146,7 +169,7 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
           { innovationId: string; inovator: string; namaInovasi: string; desaSet: Set<string> }
         >();
 
-        for (const docSnap of menerapkanDocs) {
+        for (const docSnap of klaimDocs) {
           const data = docSnap.data();
           const inovasiId = data.inovasiId;
           const namaDesa = data.namaDesa;
@@ -199,86 +222,6 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
     setCurrentPage(page);
   };
 
-  // Utility function to download a string as a file
-  const downloadFile = (filename: string, content: string, type: string) => {
-    const blob = new Blob([content], { type });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportToCSV = () => {
-    if (implementationData.length === 0) {
-      alert("No data to export");
-      return;
-    }
-
-    const headers = ["No", "Nama Inovasi", "Inovator", "Jumlah Desa"];
-    const rows = implementationData.map((item, index) => [
-      index + 1,
-      item.namaInovasi,
-      item.inovator,
-      item.jumlahDesa,
-    ]);
-
-    let csvContent = headers.join(",") + "\n";
-    rows.forEach((row) => {
-      csvContent += row.map((field) => `"${field}"`).join(",") + "\n";
-    });
-
-    downloadFile("inovasi_data.csv", csvContent, "text/csv;charset=utf-8;");
-  };
-
-  const exportToPDF = () => {
-    if (implementationData.length === 0) {
-      alert("No data to export");
-      return;
-    }
-
-    const doc = new jsPDF();
-
-    doc.setFontSize(14);
-    doc.text(`Daftar Inovasi ${userName}`, 14, 20);
-
-    // Prepare table headers and data rows
-    const headers = [["No", "Nama Inovasi", "Inovator", "Jumlah Desa"]];
-    const rows = implementationData.map((item, index) => [
-      index + 1,
-      item.namaInovasi,
-      item.inovator,
-      item.jumlahDesa.toString(),
-    ]);
-
-    // Use autoTable plugin to create the table
-    autoTable(doc, {
-      startY: 30,
-      head: headers,
-      body: rows,
-      styles: { fontSize: 12 },
-      headStyles: { fillColor: [22, 160, 133] }, // header background color
-      columnStyles: {
-        0: { cellWidth: 10 }, // No
-        1: { cellWidth: 60 }, // Nama Inovasi
-        2: { cellWidth: 50 }, // Inovator
-        3: { cellWidth: 30 }, // Jumlah Desa
-      },
-      didDrawPage: () => {},
-    } as any); // <= bypass TS
-
-    doc.save("inovasi_data.pdf");
-  };
-
-  const handleDownload = (type: "excel" | "pdf") => {
-    if (type === "excel") {
-      exportToCSV();
-    } else if (type === "pdf") {
-      exportToPDF();
-    }
-  };
-
   const getPageNumbers = () => {
     const pageNumbers: (number | string)[] = [];
     const maxPagesToShow = 5;
@@ -312,6 +255,129 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
     return pageNumbers;
   };
 
+    const exportToPDF = () => {
+    if (implementationData.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const doc = new jsPDF();
+
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Assuming `userName` is defined and `implementationData` is the list of innovations
+    const userProfile = {
+      nama: userName || "-",
+    };
+
+    // Header with green background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 210, 30, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Inovator", 14, 13);
+    doc.text(inovatorProfile.namaInovator, 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("KMS Inovasi Desa Digital", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset styles for content
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+
+    // Inovator profile section
+    const profileStartY = 42;
+    let y = profileStartY;
+
+    const labelX = 14;
+    const valueX = 50;
+    const lineHeight = 8;
+
+    doc.text("Profil Inovator", 14, y);
+    y += lineHeight;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+
+    doc.text("Nama", labelX, y);
+    doc.text(`: ${inovatorProfile.namaInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Kategori", labelX, y);
+    doc.text(`: ${inovatorProfile.kategoriInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Tahun Dibentuk", labelX, y);
+    doc.text(`: ${inovatorProfile.tahunDibentuk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Target Pengguna", labelX, y);
+    doc.text(`: ${inovatorProfile.targetPengguna || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Model Bisnis", labelX, y);
+    doc.text(`: ${inovatorProfile.modelBisnis || "-"}`, valueX, y);
+    y += 10;
+
+    doc.text("Produk", labelX, y);
+    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    // Table title
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Data Inovasi ${inovatorProfile.namaInovator}`, 14, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["No", "Nama Inovasi", "Nama Inovator", "Jumlah Desa"]],
+      body: implementationData.map((item, idx) => [
+        idx + 1,
+        item.namaInovasi,
+        item.inovator,
+        item.jumlahDesa,
+      ]),
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+    });
+
+    doc.save("daftar-inovasi.pdf");
+  };
+  
+  const exportToExcel = () => {
+    if (implementationData.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(
+      implementationData.map((item, idx) => ({
+        "No": idx + 1,
+        "Nama Inovator": item.inovator,
+        "Nama Inovasi": item.namaInovasi,
+        "Jumlah Desa": item.jumlahDesa,
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inovasi");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, "daftar-inovasi.xlsx");
+  };
+
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
@@ -325,8 +391,8 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
               variant="ghost"
             />
             <MenuList>
-              <MenuItem onClick={() => handleDownload("pdf")}>Download PDF</MenuItem>
-              <MenuItem onClick={() => handleDownload("excel")}>Download Excel</MenuItem>
+              <MenuItem onClick={exportToPDF}>Download PDF</MenuItem>
+              <MenuItem onClick={exportToExcel}>Download Excel</MenuItem>
             </MenuList>
           </Menu>
         </Flex>

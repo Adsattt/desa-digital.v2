@@ -3,9 +3,7 @@ import Container from "Components/container";
 import TopBar from "Components/topBar";
 import { useNavigate } from "react-router-dom";
 import CategoryInnovation from './components/categoryInnovation';
-import ChartInnovation1 from './components/chartInnovation1';
-import ChartInnovation2 from './components/chartInnovation2';
-import ChartInnovation3 from './components/chartInnovation3';
+import ChartInnovation from './components/chartInnovation';
 import DetailInnovations from './components/detailInnovations';
 import DetailVillagesInnovation from './components/detailVillagesInnovation';
 import { getAuth } from "firebase/auth";
@@ -39,9 +37,7 @@ const DashboardMinistryInnovation = () => {
         />
         {selectedInovasi && <DetailVillagesInnovation selectedInovasi={selectedInovasi} />}
 
-        {/* <ChartInnovation1 /> */}
-        {/* <ChartInnovation2 /> */}
-        <ChartInnovation3 />
+        <ChartInnovation />
         </Container>
     );
 };

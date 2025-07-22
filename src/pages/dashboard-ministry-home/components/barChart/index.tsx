@@ -63,10 +63,10 @@ const BarChartInovasi = () => {
       setLoading(true);
       try {
         const profilDesaSnap = await getDocs(collection(db, "villages"));
-        const menerapkanSnap = await getDocs(collection(db, "claimInnovations"));
+        const claimSnap = await getDocs(collection(db, "claimInnovations"));
         const inovasiSnap = await getDocs(collection(db, "innovations"));
 
-        const menerapkanData = menerapkanSnap.docs.map((doc) => doc.data());
+        const claimData = claimSnap.docs.map((doc) => doc.data());
         const inovasiData = inovasiSnap.docs.map((doc) => doc.data());
 
         const counts: Record<number, number> = {};
@@ -86,11 +86,11 @@ const BarChartInovasi = () => {
             // Count per year
             counts[year] = (counts[year] || 0) + 1;
 
-            const foundMenerapkan = menerapkanData.find((m) => m.namaDesa === namaDesa);
-            const namaInovasi = foundMenerapkan?.namaInovasi || "-";
+            const foundClaim = claimData.find((m) => m.namaDesa === namaDesa);
+            const namaInovasi = foundClaim?.namaInovasi || "-";
 
             const foundInovasi = inovasiData.find((i) => i.namaInovasi === namaInovasi);
-            const namaInovator = foundInovasi?.namaInovator || "-";
+            const namaInovator = foundInovasi?.namaInnovator || "-";
 
             detailed.push({
               namaDesa,

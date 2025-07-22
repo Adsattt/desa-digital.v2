@@ -114,15 +114,21 @@ const Dashboard = () => {
         <Text fontSize="17" fontWeight="bold" color="gray.700">
           Pantau Inovasi Sekarang
         </Text>
-        <Link
-          as={NavLink}
-          to={userRole === "admin" ? paths.ADMIN_DASHBOARD : paths.VILLAGE_DASHBOARD}
-          fontSize="sm"
-          color="gray.500"
-          textDecoration="underline"
-        >
-          Selengkapnya
-        </Link>
+          <Link
+            as={NavLink}
+          to={
+            userRole === "admin"
+              ? paths.ADMIN_DASHBOARD
+              : userRole === "village"
+              ? paths.VILLAGE_DASHBOARD
+              : paths.DASHBOARD_INNOVATOR_HOME
+          }
+            fontSize="sm"
+            color="gray.500"
+            textDecoration="underline"
+          >
+            Selengkapnya
+          </Link>
       </Flex>
 
       <Flex gap={4}>

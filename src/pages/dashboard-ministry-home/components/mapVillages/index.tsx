@@ -132,8 +132,8 @@ const MapVillages = () => {
       inovasiSnap.docs.forEach(doc => {
         const d = doc.data();
         inovasiMap.set(d.namaInovasi, {
-          namaInovator: d.namaInovator,
-          kategoriInovasi: d.kategoriInovasi,
+          namaInovator: d.namaInnovator,
+          kategoriInovasi: d.kategori,
         });
       });
 
@@ -141,20 +141,30 @@ const MapVillages = () => {
       const desaMap = new Map<string, any>();
       desaSnap.docs.forEach(doc => {
         const d = doc.data();
-        desaMap.set(d.namaDesa, d);
+        const lokasi = d.lokasi || {};
+
+        desaMap.set(d.namaDesa, {
+          ...d,
+          lokasi: {
+            desaKelurahan: lokasi.desaKelurahan?.label ?? "-",
+            kabupatenKota: lokasi.kabupatenKota?.label ?? "-",
+            kecamatan: lokasi.kecamatan?.label ?? "-",
+            provinsi: lokasi.provinsi?.label ?? "-",
+          }
+        });
       });
 
-      const menerapkanSnap = await getDocs(collection(db, "claimInnovations"));
+      const claimSnap = await getDocs(collection(db, "claimInnovations"));
       const exportTemp: any[] = [];
       const pinsTemp: DesaPin[] = [];
       const countByProvince: Record<string, number> = {};
 
-      for (const doc of menerapkanSnap.docs) {
+      for (const doc of claimSnap.docs) {
         const d = doc.data();
         const desaData = desaMap.get(d.namaDesa);
         if (!desaData || desaData.latitude == null || desaData.longitude == null) continue;
 
-        const provinsi = desaData.provinsi || "Unknown";
+        const provinsi = desaData.lokasi.provinsi || "Unknown";
         const provKey = cleanName(provinsi);
         countByProvince[provKey] = (countByProvince[provKey] || 0) + 1;
 
@@ -163,19 +173,25 @@ const MapVillages = () => {
           kategoriInovasi: "-",
         };
 
+        const capitalizeWords = (str: string) =>
+          str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
         exportTemp.push({
           namaDesa: desaData.namaDesa ?? "-",
-          kecamatan: desaData.kecamatan ?? "-",
-          kabupaten: desaData.kabupatenKota ?? "-",
-          provinsi: provinsi,
-          kategoriDesa: desaData.kategoriDesa ?? "-",
+          desaKelurahan: capitalizeWords(desaData.lokasi?.desaKelurahan ?? "-"),
+          kecamatan: capitalizeWords(desaData.lokasi?.kecamatan ?? "-"),
+          kabupatenKota: capitalizeWords(desaData.lokasi?.kabupatenKota ?? "-"),
+          provinsi: capitalizeWords(desaData.lokasi?.provinsi ?? "-"),
+          kategoriDesa: desaData.kategori ?? "-",
           idm: desaData.idm ?? "-",
-          potensi: desaData.potensi ?? "-",
+          potensi: desaData.potensiDesa ?? "-",
           namaInovasi: d.namaInovasi ?? "-",
           tanggalPengajuan: d.tanggalPengajuan ?? "-",
           namaInovator: inovasiInfo.namaInovator,
           kategoriInovasi: inovasiInfo.kategoriInovasi,
         });
+
+        console.log("Exported Data:", exportTemp);
 
         pinsTemp.push({
           desaId: doc.id,
@@ -248,10 +264,9 @@ const MapVillages = () => {
         "Nama Inovasi",
         "Kategori Inovasi",
         "Nama Inovator",
-        "Tanggal Pengajuan",
       ]],
       body: exportData.map((row) => [
-        row.namaDesa,
+        row.desaKelurahan,
         row.kecamatan,
         row.kabupatenKota,
         row.provinsi,
@@ -261,7 +276,6 @@ const MapVillages = () => {
         row.namaInovasi,
         row.kategoriInovasi,
         row.namaInovator,
-        row.tanggalPengajuan,
       ]),
       headStyles: {
         fillColor: [0, 128, 0],
@@ -270,17 +284,16 @@ const MapVillages = () => {
         minCellHeight: 12,
       },
       columnStyles: {
-        0: { cellWidth: 25 },  // Nama Desa
+        0: { cellWidth: 25 },  // Desa
         1: { cellWidth: 25 },  // Kecamatan
         2: { cellWidth: 25 },  // Kabupaten
         3: { cellWidth: 25 },  // Provinsi
         4: { cellWidth: 25 },  // Kategori Desa
         5: { cellWidth: 15 },  // IDM
         6: { cellWidth: 35 },  // Potensi Desa
-        7: { cellWidth: 25 },  // Nama Inovasi
-        8: { cellWidth: 25 },  // Kategori Inovasi
-        9: { cellWidth: 25 },  // Nama Inovator
-        10: { cellWidth: 25 }, // Tanggal Pengajuan
+        7: { cellWidth: 30 },  // Nama Inovasi
+        8: { cellWidth: 30 },  // Kategori Inovasi
+        9: { cellWidth: 30 },  // Nama Inovator
       }
     } as any);
 
@@ -299,7 +312,7 @@ const MapVillages = () => {
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={3}>
-        <Text {...headerTextStyle}>Peta Sebaran Inovasi Digital</Text>
+        <Text {...headerTextStyle}>Peta Sebaran Desa Digital</Text>
         <Flex gap={2} align="center">
           <Image
             src={filterIcon}
@@ -328,16 +341,25 @@ const MapVillages = () => {
 
       <MapContainerWrapper>
         <StyledMapBox>
-          <MapContainer center={[2, 120]} zoom={3} style={{ height: "100%", width: "100%" }}>
+          <MapContainer center={[2, 120]} zoom={3}
+            style={{ height: "100%", width: "100%", zIndex: 0 }}
+          >
             <TileLayer
               attribution="&copy; OpenStreetMap contributors"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <GeoJSON
+            {/* <GeoJSON
               data={geoData as any}
               style={(feature) => provinceStyle(feature, totals)}
               onEachFeature={(feature, layer) => onEachFeature(feature, layer, totals)}
-            />
+            /> */}
+            {Object.keys(totals).length > 0 && (
+              <GeoJSON
+                data={geoData as any}
+                style={(feature) => provinceStyle(feature, totals)}
+                onEachFeature={(feature, layer) => onEachFeature(feature, layer, totals)}
+              />
+            )}
             {desaPins
               .filter((desa) => selectedProvince ? desa.provinsi === selectedProvince : true)
               .map((desa) => (

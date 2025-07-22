@@ -27,6 +27,7 @@ import { saveAs } from "file-saver";
 
 interface Implementation {
   namaInovasi: string;
+  namaInovator: string;
   kategoriInovasi: string;
   tahunDibuat: number;
 }
@@ -37,7 +38,6 @@ const TableInnovator = () => {
   const userName = user?.displayName || "Inovator";
   const [currentPage, setCurrentPage] = useState(1);
   const [implementationData, setImplementationData] = useState<Implementation[]>([]);
-  // const [userName, setUserName] = useState<string>("Anda");
   const itemsPerPage = 5;
 
   const totalPages = Math.ceil(implementationData.length / itemsPerPage);
@@ -84,6 +84,61 @@ const TableInnovator = () => {
     produk: "-",
     modelBisnis: "-",
   });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const auth = getAuth();
+      const db = getFirestore();
+      const currentUser = auth.currentUser;
+
+      if (!currentUser) return console.warn("User not authenticated");
+
+      try {
+        const profilRef = collection(db, "innovators");
+        const qProfil = query(profilRef, where("id", "==", currentUser.uid));
+        const profilSnap = await getDocs(qProfil);
+
+        if (profilSnap.empty) return console.warn("No Inovator found.");
+
+        const profilDoc = profilSnap.docs[0];
+        const profilData = profilDoc.data();
+        const profilInovatorId = profilDoc.id;
+
+        const inovasiRef = collection(db, "innovations");
+        const qInovasi = query(inovasiRef, where("innovatorId", "==", profilInovatorId));
+        const inovasiSnap = await getDocs(qInovasi);
+
+        const fetched: Implementation[] = inovasiSnap.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            namaInovator: data.namaInnovator || "-",
+            namaInovasi: data.namaInovasi || "-",
+            kategoriInovasi: data.kategori || "-",
+            tahunDibuat: data.tahunDibuat || 0,
+          };
+        });
+
+        const produkInovator = fetched.map(item => item.namaInovasi).filter(Boolean).join(", ");
+
+        setInovatorProfile({
+          namaInovator: profilData.namaInovator || "-",
+          kategoriInovator: profilData.kategori|| "-",
+          tahunDibentuk: profilData.tahunDibentuk || "-",
+          targetPengguna: profilData.targetPengguna || "-",
+          modelBisnis: profilData.modelBisnis || "-",
+          produk: produkInovator || "-",
+        });
+
+        setImplementationData(
+          fetched.sort((a, b) => a.namaInovasi.localeCompare(b.namaInovasi))
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -147,13 +202,13 @@ const TableInnovator = () => {
     doc.text(`: ${inovatorProfile.targetPengguna || "-"}`, valueX, y);
     y += lineHeight;
 
-    doc.text("Produk", labelX, y);
-    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
-    y += lineHeight;
-
     doc.text("Model Bisnis", labelX, y);
     doc.text(`: ${inovatorProfile.modelBisnis || "-"}`, valueX, y);
     y += 10;
+
+    doc.text("Produk", labelX, y);
+    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
+    y += lineHeight;
 
     // Table title
     y += 5;
@@ -184,6 +239,7 @@ const TableInnovator = () => {
     const worksheet = XLSX.utils.json_to_sheet(
       implementationData.map((item, idx) => ({
         No: idx + 1,
+        "Nama Inovator": item.namaInovator,
         "Nama Inovasi": item.namaInovasi,
         "Kategori Inovasi": item.kategoriInovasi,
         "Tahun Dibuat": item.tahunDibuat,
@@ -195,59 +251,6 @@ const TableInnovator = () => {
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(blob, "daftar-inovasi.xlsx");
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const auth = getAuth();
-      const db = getFirestore();
-      const currentUser = auth.currentUser;
-
-      if (!currentUser) return console.warn("User not authenticated");
-
-      try {
-        const profilRef = collection(db, "innovators");
-        const qProfil = query(profilRef, where("userId", "==", currentUser.uid));
-        const profilSnap = await getDocs(qProfil);
-
-        if (profilSnap.empty) return console.warn("No profilInovator found");
-
-        const profilDoc = profilSnap.docs[0];
-        const profilData = profilDoc.data();
-        const profilInovatorId = profilDoc.id;
-
-        // Store profile data
-        setInovatorProfile({
-          namaInovator: profilData.namaInovator || "-",
-          kategoriInovator: profilData.kategori|| "-",
-          tahunDibentuk: profilData.tahunDibentuk || "-",
-          targetPengguna: profilData.targetPengguna || "-",
-          produk: profilData.produk || "-",
-          modelBisnis: profilData.modelBisnis || "-",
-        });
-
-        const inovasiRef = collection(db, "innovations");
-        const qInovasi = query(inovasiRef, where("innovatorId", "==", profilInovatorId));
-        const inovasiSnap = await getDocs(qInovasi);
-
-        const fetched: Implementation[] = inovasiSnap.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            namaInovasi: data.namaInovasi || "-",
-            kategoriInovasi: data.kategoriInovasi || "-",
-            tahunDibuat: data.tahunDibuat || 0,
-          };
-        });
-
-        setImplementationData(
-          fetched.sort((a, b) => a.namaInovasi.localeCompare(b.namaInovasi))
-        );
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
 
   return (
     <Box p={4} maxW="100%" mx="auto">

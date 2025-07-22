@@ -104,16 +104,16 @@ const PieChartVillage = () => {
     const fetchData = async () => {
       const db = getFirestore();
       try {
-        const snapshot = await getDocs(collection(db, 'profilDesa'));
+        const snapshot = await getDocs(collection(db, 'villages'));
         const kategoriCounts: Record<string, number> = {};
 
         snapshot.forEach(doc => {
           const data = doc.data();
-          const kategori = data.kategoriDesa || 'ND';
+          const kategori = data.kategori || 'Tidak diketahui';
           kategoriCounts[kategori] = (kategoriCounts[kategori] || 0) + 1;
         });
 
-        const allowedCategories = ['Maju', 'Berkembang', 'Tertinggal', 'Mandiri'];
+        const allowedCategories = ['Maju', 'Berkembang', 'Tertinggal', 'Sangat Tertinggal', 'Mandiri'];
 
         let knownCategories: [string, number][] = [];
         let lainnyaCount = 0;

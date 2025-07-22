@@ -42,44 +42,61 @@ const InfoCards = () => {
     const prevToTimestamp = Timestamp.fromDate(prevTo);
 
     try {
-      // 1. Get the current innovator document
-      const inovatorDocRef = doc(db, "innovators", user.uid);
-      const inovatorSnap = await getDoc(inovatorDocRef);
-      if (!inovatorSnap.exists()) return;
-
-      const inovatorData = inovatorSnap.data();
-      const inovatorId = inovatorSnap.id;
-
-      // Get jumlah from innovator profile
-      setInovasiCount(inovatorData.jumlahInovasi || 0);
-      setDesaCount(inovatorData.jumlahDesaDampingan || 0);
-
-      // 2. Fetch createdAt from innovations
-      const inovasiQuery = query(
-        collection(db, "innovations"),
-        where("innovatorId", "==", inovatorId)
+      const inovatorQuery = query(
+        collection(db, "innovators"),
+        where("id", "==", user.uid)
       );
-      const inovasiSnap = await getDocs(inovasiQuery);
-      const inovasiTimestamps = inovasiSnap.docs.map((doc) => doc.data().createdAt?.toDate());
+      const inovatorSnap = await getDocs(inovatorQuery);
+      if (inovatorSnap.empty) return;
 
-      // 3. Fetch createdAt from claimInnovations
-      const claimQuery = query(
-        collection(db, "claimInnovations"),
-        where("innovatorId", "==", inovatorId)
-      );
-      const claimSnap = await getDocs(claimQuery);
-      const claimTimestamps = claimSnap.docs.map((doc) => doc.data().createdAt?.toDate());
+      const inovatorId = inovatorSnap.docs[0].id;
 
-      // 4. Filter counts in current and previous period for trend analysis
-      const countInPeriod = (timestamps: (Date | undefined)[], from: Date, to: Date) =>
-        timestamps.filter((date) => date && date >= from && date <= to).length;
+      const getInovasiCount = async (fromT: Timestamp, toT: Timestamp) => {
+        const q = query(
+          collection(db, "innovations"),
+          where("innovatorId", "==", inovatorId),
+          where("createdAt", ">=", fromT),
+          where("createdAt", "<=", toT)
+        );
+        return (await getDocs(q)).size;
+      };
 
-      const currInovasi = countInPeriod(inovasiTimestamps, fromDate, toDate);
-      const prevInovasi = countInPeriod(inovasiTimestamps, prevFrom, prevTo);
-      const currDesa = countInPeriod(claimTimestamps, fromDate, toDate);
-      const prevDesa = countInPeriod(claimTimestamps, prevFrom, prevTo);
+      const getDesaCount = async (fromT: Timestamp, toT: Timestamp) => {
+        const inovasiSnap = await getDocs(
+          query(collection(db, "innovations"), where("innovatorId", "==", inovatorId))
+        );
 
-      // 5. Set trends
+        const inovasiIds = inovasiSnap.docs
+          .filter((doc) => {
+            const createdAt = doc.data().createdAt;
+            return createdAt?.toDate() >= fromT.toDate() && createdAt?.toDate() <= toT.toDate();
+          })
+          .map((doc) => doc.id);
+
+        if (inovasiIds.length === 0) return 0;
+
+        const klaimSnap = await getDocs(collection(db, "claimInnovations"));
+        const matchedDesa = new Set<string>();
+
+        klaimSnap.docs.forEach((doc) => {
+          const data = doc.data();
+          if (inovasiIds.includes(data.inovasiId) && data.namaDesa) {
+            matchedDesa.add(data.namaDesa);
+          }
+        });
+
+        return matchedDesa.size;
+      };
+
+      const [currInovasi, prevInovasi, currDesa, prevDesa] = await Promise.all([
+        getInovasiCount(fromTimestamp, toTimestamp),
+        getInovasiCount(prevFromTimestamp, prevToTimestamp),
+        getDesaCount(fromTimestamp, toTimestamp),
+        getDesaCount(prevFromTimestamp, prevToTimestamp),
+      ]);
+
+      setInovasiCount(currInovasi);
+      setDesaCount(currDesa);
       setTrendInovasi(currInovasi - prevInovasi);
       setTrendDesa(currDesa - prevDesa);
 

@@ -26,7 +26,7 @@ const TopInnovations = () => {
       const auth = getAuth();
       const currentUser = auth.currentUser;
 
-      if (!currentUser) return;
+      if (!currentUser) return console.warn("User not authenticated");
 
       try {
         const profilQuery = query(
@@ -36,6 +36,7 @@ const TopInnovations = () => {
         const profilSnapshot = await getDocs(profilQuery);
 
         if (profilSnapshot.empty) {
+          console.warn("Inovator tidak ditemukan");
           setTopInnovations([]);
           setLoading(false);
           return;
@@ -52,28 +53,30 @@ const TopInnovations = () => {
 
         const inovasiData = inovasiSnapshot.docs.map((doc) => doc.data());
 
-        const countMap: Record<string, number> = {};
-        inovasiData.forEach((item) => {
-          const name = item.namaInovasi;
-          if (name) {
-            countMap[name] = (countMap[name] || 0) + 1;
-          }
-        });
+        const countInovasi = inovasiData
+          .filter((item) => item.namaInovasi && typeof item.jumlahKlaim === "number")
+          .map((item) => ({
+            name: item.namaInovasi,
+            count: item.jumlahKlaim,
+          }));
 
-        const sortedByFrequency = Object.entries(countMap)
+        const sortedByFrequency = countInovasi
           .sort((a, b) => {
-            if (b[1] === a[1]) {
-              return a[0].localeCompare(b[0]);
+            if (b.count === a.count) {
+              return a.name.localeCompare(b.name);
             }
-            return b[1] - a[1];
+            return b.count - a.count;
           })
           .slice(0, 3)
-          .map(([name, count], index) => ({
-            name,
-            count,
+          .map((item, index) => ({
+            ...item,
             rank: index + 1,
             label: `${index + 1}${["st", "nd", "rd"][index] || "th"}`,
           }));
+
+          console.log("Inovator ID:", inovatorId);
+          console.log("Inovasi Data:", inovasiSnapshot);
+          console.log("Inovasi Data:", inovasiData);
 
         setTopInnovations(sortedByFrequency);
       } catch (error) {

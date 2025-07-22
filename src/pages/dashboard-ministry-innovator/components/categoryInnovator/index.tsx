@@ -23,12 +23,12 @@ const PieChartInnovator = ({ onSliceClick }: { onSliceClick: (categoryName: stri
   useEffect(() => {
     const fetchData = async () => {
       const db = getFirestore();
-      const snapshot = await getDocs(collection(db, 'profilInovator'));
+      const snapshot = await getDocs(collection(db, 'innovators'));
 
       const counts: Record<string, number> = {};
 
       snapshot.forEach(doc => {
-        const kategori = doc.data()?.kategoriInovator;
+        const kategori = doc.data()?.kategori;
 
         if (kategori && kategori !== 'ND' && kategori !== '-') {
           counts[kategori] = (counts[kategori] || 0) + 1;
@@ -48,8 +48,9 @@ const PieChartInnovator = ({ onSliceClick }: { onSliceClick: (categoryName: stri
       setLoading(false);
     };
 
+    console.log("Fetched Categories:", categories);
     fetchData();
-  }, []);
+  }, [categories]);
 
   const total = categories.reduce((sum, category) => sum + category.value, 0);
 
@@ -58,26 +59,28 @@ const PieChartInnovator = ({ onSliceClick }: { onSliceClick: (categoryName: stri
     const percentage = category.value / total;
     const angle = percentage * 360;
     const endAngle = startAngle + angle;
+    const isFullCircle = angle >= 359.99;
 
     const startRad = (startAngle - 90) * Math.PI / 180;
     const endRad = (endAngle - 90) * Math.PI / 180;
 
-    const x1 = 100 + 80 * Math.cos(startRad);
-    const y1 = 100 + 80 * Math.sin(startRad);
-    const x2 = 100 + 80 * Math.cos(endRad);
-    const y2 = 100 + 80 * Math.sin(endRad);
+    const x1 = +(100 + 80 * Math.cos(startRad)).toFixed(6);
+    const y1 = +(100 + 80 * Math.sin(startRad)).toFixed(6);
+    const x2 = +(100 + 80 * Math.cos(endRad)).toFixed(6);
+    const y2 = +(100 + 80 * Math.sin(endRad)).toFixed(6);
 
-    const largeArcFlag = angle > 180 ? 1 : 0;
+    const largeArcFlag = angle >= 180 ? 1 : 0;
 
-    const pathData = `M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+    const pathData = isFullCircle
+      ? `M 100 100 m -80 0 a 80 80 0 1 0 160 0 a 80 80 0 1 0 -160 0`
+      : `M 100 100 L ${x1} ${y1} A 80 80 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
 
     const midAngle = startAngle + angle / 2;
     const midRad = (midAngle - 90) * Math.PI / 180;
-
     const textRadius = 45;
-    const textX = 100 + textRadius * Math.cos(midRad);
-    const textY = 100 + textRadius * Math.sin(midRad);
-
+    const textX = +(100 + textRadius * Math.cos(midRad)).toFixed(2);
+    const textY = +(100 + textRadius * Math.sin(midRad)).toFixed(2);
+    
     const displayName = percentage >= 0.3
       ? category.name
       : category.name.length > 5
@@ -92,6 +95,8 @@ const PieChartInnovator = ({ onSliceClick }: { onSliceClick: (categoryName: stri
       textY,
       displayName,
     };
+
+    console.log("Path for", category.name, ":", pathData);
 
     startAngle = endAngle;
     return result;

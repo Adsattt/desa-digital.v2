@@ -67,12 +67,18 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
       try {
         const db = getFirestore();
 
-        // 1. Query menerapkanInovasi by selectedVillage
         const menerapkanRef = collection(db, "claimInnovations");
-        const q1 = query(menerapkanRef, where("namaDesa", "==", selectedVillage));
-        const snapshot1 = await getDocs(q1);
+        const snapshot = await getDocs(menerapkanRef);
 
-        if (snapshot1.empty) {
+        const filteredDocs = snapshot.docs.filter(doc => {
+          const namaDesa = doc.data().namaDesa || "";
+          const cleanedNamaDesa = namaDesa.replace(/^Desa\s+/i, "").trim().toLowerCase();
+          return cleanedNamaDesa === selectedVillage.trim().toLowerCase();
+        });
+
+        console.log("selectedVillage", selectedVillage);
+
+        if (filteredDocs.length === 0) {
           setData([]);
           setLoading(false);
           return;
@@ -80,10 +86,10 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
 
         // Extract unique namaInovasi
         const inovasiNames = Array.from(
-          new Set(snapshot1.docs.map((doc) => doc.data().namaInovasi))
+          new Set(filteredDocs.map((doc) => doc.data().namaInovasi))
         );
 
-        // 2. Query inovasi collection for namaInovasi in batches
+        // Query inovasi collection in batches
         const inovasiRef = collection(db, "innovations");
         const chunks: string[][] = [];
         for (let i = 0; i < inovasiNames.length; i += 10) {
@@ -101,19 +107,18 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
         const inovasiMap = new Map<string, string>();
         inovasiDocs.forEach((doc) => {
           const d = doc.data();
-          inovasiMap.set(d.namaInovasi, d.namaInovator || "Unknown");
+          inovasiMap.set(d.namaInovasi, d.namaInnovator || "Unknown");
         });
 
-        // 3. Combine data without date formatting, use tanggalPengajuan as tahun directly
-        const combinedList = snapshot1.docs.map((doc, idx) => {
+        // Combine data
+        const combinedList = filteredDocs.map((doc, idx) => {
           const d = doc.data();
-
           return {
             no: idx + 1,
-            namaDesa: d.namaDesa,
-            namaInovasi: d.namaInovasi,
-            namaInovator: inovasiMap.get(d.namaInovasi) || "Unknown",
-            tahun: d.tanggalPengajuan, // directly use this field
+            namaDesa: d.namaDesa || "-",
+            namaInovasi: d.namaInovasi || "-",
+            namaInovator: inovasiMap.get(d.namaInovasi) || "-",
+            tahun: d.createdAt?.toDate().getFullYear() ?? "-",
           };
         });
 
@@ -195,10 +200,10 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
       },
       columnStyles: {
         0: { cellWidth: 15 },  // No
-        1: { cellWidth: 30 },  // Nama Desa
-        2: { cellWidth: 50 },  // Nama Inovasi
-        3: { cellWidth: 60 },  // Nama Inovator
-        4: { cellWidth: 25 },  // Tahun
+        1: { cellWidth: 40 },  // Nama Desa
+        2: { cellWidth: 40 },  // Nama Inovasi
+        3: { cellWidth: 40 },  // Nama Inovator
+        4: { cellWidth: 40 },  // Tahun
       },
     } as any);
 

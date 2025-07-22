@@ -104,12 +104,12 @@ const PieChartInnovator = () => {
     const fetchData = async () => {
       const db = getFirestore();
       try {
-        const snapshot = await getDocs(collection(db, 'profilInovator'));
+        const snapshot = await getDocs(collection(db, 'innovators'));
         const kategoriCounts: Record<string, number> = {};
 
         snapshot.forEach(doc => {
           const data = doc.data();
-          const kategori = data.kategoriInovator || 'Tidak diketahui';
+          const kategori = data.kategori || 'Tidak diketahui';
           kategoriCounts[kategori] = (kategoriCounts[kategori] || 0) + 1;
         });
 

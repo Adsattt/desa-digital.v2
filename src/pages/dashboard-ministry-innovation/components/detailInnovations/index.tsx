@@ -24,11 +24,12 @@ interface Props {
 
 interface Innovation {
   namaInovasi: string;
-  namaInovator: string;
-  kategoriInovasi: string;
+  namaInnovator: string;
+  kategori: string;
+  jumlahKlaim: number;
 }
 
-interface InnovatorProfile {
+interface Innovator {
   namaInovator: string;
   jumlahDesaDampingan: number;
 }
@@ -36,8 +37,8 @@ interface InnovatorProfile {
 interface JoinedData {
   namaInovasi: string;
   namaInovator: string;
-  jumlahDesaDampingan: number;
-  kategoriInovasi: string;
+  jumlahKlaim: number;
+  kategori: string;
 }
 
 const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
@@ -57,31 +58,22 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
       setLoading(true);
       const db = getFirestore();
 
-      const inovasiSnap = await getDocs(collection(db, 'inovasi'));
-      const profilSnap = await getDocs(collection(db, 'profilInovator'));
-
+      const inovasiSnap = await getDocs(collection(db, 'innovations'));
       const inovasiList: Innovation[] = inovasiSnap.docs.map(doc => doc.data() as Innovation);
-      const profilList: InnovatorProfile[] = profilSnap.docs.map(doc => doc.data() as InnovatorProfile);
 
       const normalize = (str: string) => str.replace(/\s+/g, '').toLowerCase();
       const normalizedSelected = normalize(selectedCategory);
 
-      // Filter inovasi by kategoriInovasi
       const matchingInovasi = inovasiList.filter(i =>
-        normalize(i.kategoriInovasi).includes(normalizedSelected)
+        normalize(i.kategori).includes(normalizedSelected)
       );
 
-      const joinedData = matchingInovasi.map(i => {
-        const matchedProfile = profilList.find(p =>
-          normalize(p.namaInovator) === normalize(i.namaInovator)
-        );
-        return {
-          namaInovasi: i.namaInovasi,
-          namaInovator: i.namaInovator,
-          jumlahDesaDampingan: matchedProfile?.jumlahDesaDampingan || 0,
-          kategoriInovasi: i.kategoriInovasi,
-        };
-      });
+      const joinedData: JoinedData[] = matchingInovasi.map(i => ({
+        namaInovasi: i.namaInovasi,
+        namaInovator: i.namaInnovator,
+        jumlahKlaim: i.jumlahKlaim,
+        kategori: i.kategori,
+      }));
 
       setData(joinedData);
       setCurrentPage(1);
@@ -90,6 +82,7 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
 
     fetchData();
   }, [selectedCategory]);
+
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const currentData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -153,12 +146,12 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
       index + 1,
       item.namaInovasi,
       item.namaInovator,
-      item.jumlahDesaDampingan,
+      item.jumlahKlaim,
     ]);
 
     autoTable(doc, {
       startY: y,
-      head: [["No", "Nama Inovasi", "Nama Inovator", "Jumlah Desa"]],
+      head: [["No", "Nama Inovasi", "Nama Inovator", "Jumlah Desa Dampingan"]],
       body: exportData,
       headStyles: {
         fillColor: [0, 128, 0],
@@ -170,9 +163,9 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
       },
       columnStyles: {
         0: { cellWidth: 15 },  // No
-        1: { cellWidth: 60 },  // Nama Inovasi
-        2: { cellWidth: 70 },  // Nama Inovator
-        3: { cellWidth: 30 },  // Jumlah Desa
+        1: { cellWidth: 55 },  // Nama Inovasi
+        2: { cellWidth: 55 },  // Nama Inovator
+        3: { cellWidth: 50 },  // Jumlah Desa
       },
     } as any);
 
@@ -181,12 +174,12 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
 
   const exportXLSX = () => {
     if (!data.length) return;
-    const headers = ['No', 'Nama Inovasi', 'Nama Inovator', 'Jumlah Desa'];
+    const headers = ['No', 'Nama Inovasi', 'Nama Inovator', 'Jumlah Desa Dampingan'];
     const exportData = data.map((item, index) => [
       index + 1,
       item.namaInovasi,
       item.namaInovator,
-      item.jumlahDesaDampingan,
+      item.jumlahKlaim,
     ]);
 
     const ws = XLSX.utils.aoa_to_sheet([headers, ...exportData]);
@@ -262,7 +255,7 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
                           <Td sx={tableCellStyle}>{(currentPage - 1) * itemsPerPage + i + 1}</Td>
                           <Td sx={tableCellStyle}>{item.namaInovasi}</Td>
                           <Td sx={tableCellStyle}>{item.namaInovator}</Td>
-                          <Td sx={tableCellStyle}>{item.jumlahDesaDampingan}</Td>
+                          <Td sx={tableCellStyle}>{item.jumlahKlaim}</Td>
                         </Tr>
                       ))
                     )}

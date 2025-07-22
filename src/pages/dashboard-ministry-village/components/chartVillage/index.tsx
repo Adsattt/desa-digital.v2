@@ -70,7 +70,7 @@ const ChartVillage = () => {
       snapshot.forEach((doc) => {
         const data = doc.data();
         const yearRaw = data.tahunData?.toString()?.trim();
-        const category = data.kategoriDesa;
+        const category = data.kategori;
 
         if (!yearRaw || yearRaw === "-" || yearRaw.toUpperCase() === "ND") return;
         const yearNum = parseInt(yearRaw);
@@ -78,7 +78,7 @@ const ChartVillage = () => {
         if (!categories.includes(category)) return;
 
         categoryCounts[category]++;
-        desaData.push(data); // Save full data for export
+        desaData.push(data);
       });
 
       const formattedData = categories.map((category, index) => ({
@@ -112,7 +112,7 @@ const ChartVillage = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, `Data_${selectedYear}`);
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, `perkembangan_desa_${selectedYear}.xlsx`);
+    saveAs(blob, `perkembangan_desa_digital_${selectedYear}.xlsx`);
   };
 
   const exportToPDF = (data: any[], selectedYear: number) => {
@@ -143,7 +143,7 @@ const ChartVillage = () => {
     const labelX = 14;
 
     const grouped: Record<string, any[]> = data.reduce((acc, curr) => {
-      const key = curr.kategoriDesa || "Tidak Diketahui";
+      const key = curr.kategori || "Tidak Diketahui";
       if (!acc[key]) acc[key] = [];
       acc[key].push(curr);
       return acc;
@@ -155,6 +155,9 @@ const ChartVillage = () => {
       doc.text(`Data Perkembangan Desa Digital Tahun ${selectedYear} Kategori: ${kategori}`, labelX, y);
       y += 6;
 
+      const capitalizeWords = (str: string) =>
+        str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
       autoTable(doc, {
         startY: y,
         head: [
@@ -162,10 +165,10 @@ const ChartVillage = () => {
         ],
         body: sortedEntries.map((item, i) => [
           i + 1,
-          item.namaDesa,
-          item.kecamatan,
-          item.kabupatenKota,
-          item.provinsi,
+          capitalizeWords(item.lokasi.desaKelurahan?.label),
+          capitalizeWords(item.lokasi.kecamatan?.label),
+          capitalizeWords(item.lokasi.kabupatenKota?.label),
+          capitalizeWords(item.lokasi.provinsi?.label),
           item.idm,
           item.tahunData,
         ]),
@@ -179,12 +182,12 @@ const ChartVillage = () => {
         },
         columnStyles: {
           0: { cellWidth: 10 },
-          1: { cellWidth: 35 },
-          2: { cellWidth: 25 },
-          3: { cellWidth: 25 },
-          4: { cellWidth: 25 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 30 },
+          4: { cellWidth: 30 },
           5: { cellWidth: 20 },
-          6: { cellWidth: 20 },
+          6: { cellWidth: 25 },
         },
         margin: { top: 10 },
       } as any);
@@ -192,7 +195,7 @@ const ChartVillage = () => {
       y = (doc as any).lastAutoTable.finalY + 15;
     }
 
-    doc.save(`perkembangan_desa_detail_${selectedYear}.pdf`);
+    doc.save(`perkembangan_desa_digital_${selectedYear}.pdf`);
   };
 
   return (
