@@ -197,6 +197,17 @@ const Register: React.FC = () => {
               <Label>Perangkat desa</Label>
             </CheckboxContainer>
 
+            <CheckboxContainer mt={12}>
+              <input
+                name="role"
+                type="radio"
+                value="ministry"
+                onChange={onChange}
+                required
+              />
+              <Label>Kementerian</Label>
+            </CheckboxContainer>
+
             {(error || userError) && (
               <Text textAlign="center" color="red" fontSize="10pt" mt={2}>
                 {error ||
