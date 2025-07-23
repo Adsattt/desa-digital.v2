@@ -27,7 +27,6 @@ const InfoCards = () => {
     provinces: 0,
   });
 
-  // Helper to get count with optional date range
   const getCount = async (colName: string, fromT?: Timestamp, toT?: Timestamp) => {
     const db = getFirestore();
     let q;
@@ -44,7 +43,6 @@ const InfoCards = () => {
     return snap.size;
   };
 
-  // Special case for provinces: unique count by provinsi field in profilDesa
   const getProvinceCount = async (fromT?: Timestamp, toT?: Timestamp) => {
     const db = getFirestore();
     let q;
@@ -59,9 +57,14 @@ const InfoCards = () => {
     }
     const snap = await getDocs(q);
     const provinces = new Set<string>();
+
+    const capitalizeWords = (str: string) =>
+      str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
     snap.forEach(doc => {
       const data = doc.data();
-      if (data.provinsi) provinces.add(data.provinsi);
+        if (data.lokasi.provinsi?.label)
+          provinces.add(data.lokasi.provinsi.label);
     });
     return provinces.size;
   };
@@ -84,14 +87,14 @@ const InfoCards = () => {
       currVillages, prevVillages,
       currProvinces, prevProvinces
     ] = await Promise.all([
-      getCount("profilInovator", fromTimestamp, toTimestamp),
-      getCount("profilInovator", prevFromTimestamp, prevToTimestamp),
+      getCount("innovators", fromTimestamp, toTimestamp),
+      getCount("innovators", prevFromTimestamp, prevToTimestamp),
 
-      getCount("inovasi", fromTimestamp, toTimestamp),
-      getCount("inovasi", prevFromTimestamp, prevToTimestamp),
+      getCount("innovations", fromTimestamp, toTimestamp),
+      getCount("innovations", prevFromTimestamp, prevToTimestamp),
 
-      getCount("profilDesa", fromTimestamp, toTimestamp),
-      getCount("profilDesa", prevFromTimestamp, prevToTimestamp),
+      getCount("villages", fromTimestamp, toTimestamp),
+      getCount("villages", prevFromTimestamp, prevToTimestamp),
 
       getProvinceCount(fromTimestamp, toTimestamp),
       getProvinceCount(prevFromTimestamp, prevToTimestamp),

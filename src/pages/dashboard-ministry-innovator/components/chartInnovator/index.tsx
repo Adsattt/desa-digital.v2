@@ -10,6 +10,7 @@ import {
   MenuList,
   MenuItem,
   IconButton,
+  Select,
 } from "@chakra-ui/react";
 
 import { useEffect, useState, useRef } from "react";
@@ -21,6 +22,8 @@ import {
   barGroupStyle,
   barStyle,
   labelStyle,
+  xAxisStyle,
+  yAxisStyle,
   legendContainerStyle,
   legendItemStyle,
   legendDotStyle,
@@ -28,8 +31,11 @@ import {
   yAxisLabelStyle,
   yAxisWrapperStyle,
   chartBarContainerStyle,
+  barAndLineWrapperStyle,
 } from "./_chartInnovatorStyle";
 
+import CategoryFilter from "./categoryFilter";
+import filterIcon from "../../../../assets/icons/icon-filter.svg";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
 import jsPDF from "jspdf";
@@ -53,150 +59,14 @@ type ChartGroup = {
 const truncateLabel = (label: string, maxLength = 3): string =>
   label.length > maxLength ? label.slice(0, maxLength) + "..." : label;
 
-const exportToPDF = async (selectedYear: number) => {
-  const snapshot = await getDocs(collection(db, "innovators"));
-  const allData = snapshot.docs.map((doc) => doc.data());
-
-  const doc = new jsPDF({ orientation: "landscape" });
-  const downloadDate = new Date().toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  doc.setFillColor(0, 128, 0);
-  doc.rect(0, 0, 1000, 30, "F");
-  doc.setTextColor(255, 255, 255);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(15);
-  doc.text("Dokumen Laporan Kementerian", 14, 13);
-  doc.text("KMS Inovasi Desa Digital", 280, 13, { align: "right" });
-
-  doc.setFontSize(12);
-  doc.text("Diambil dari: Grafik Jumlah Inovator per Kategori", 14, 22);
-  doc.text(`Diunduh pada: ${downloadDate}`, 280, 22, { align: "right" });
-
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-
-  let y = 42;
-  const labelX = 14;
-
-  const grouped = allData.reduce((acc: Record<string, any[]>, item) => {
-    const kategori = item.kategoriInovator || "Tidak Diketahui";
-    if (!acc[kategori]) acc[kategori] = [];
-    acc[kategori].push(item);
-    return acc;
-  }, {});
-
-  for (const [kategori, entries] of Object.entries(grouped)) {
-    doc.text(`Data Inovator Tahun ${selectedYear}, Kategori: ${kategori}`, labelX, y);
-    y += 6;
-
-    autoTable(doc, {
-      startY: y,
-      head: [
-        [
-          "No",
-          "Nama Inovator",
-          "Kategori Inovator",
-          "Jumlah Inovasi",
-          "Jumlah Desa Dampingan",
-          "Target Pengguna",
-          "Model Bisnis",
-        ],
-      ],
-      body: entries.map((item, i) => [
-        i + 1,
-        item.namaInovator || "-",
-        item.kategoriInovator || "-",
-        item.jumlahInovasi ?? 0,
-        item.jumlahDesaDampingan ?? 0,
-        item.targetPengguna || "-",
-        item.modelBisnis || "-",
-      ]),
-      headStyles: {
-        fillColor: [0, 128, 0],
-        textColor: 255,
-        fontStyle: "bold",
-      },
-      styles: {
-        fontSize: 10,
-      },
-      columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 45 },
-        2: { cellWidth: 30 },
-        3: { cellWidth: 25 },
-        4: { cellWidth: 30 },
-        5: { cellWidth: 50 },
-        6: { cellWidth: 80 },
-      },
-      margin: { top: 10 },
-    } as any);
-
-    y = (doc as any).lastAutoTable.finalY + 15;
-  }
-
-  doc.save(`inovator_per_kategori_${selectedYear}.pdf`);
-};
-
-const exportToExcel = async (selectedYear: number) => {
-  const snapshot = await getDocs(collection(db, "innovators"));
-  const allData = snapshot.docs.map((doc) => doc.data());
-
-  const grouped = allData.reduce((acc: Record<string, any[]>, item) => {
-    const kategori = item.kategoriInovator || "Tidak Diketahui";
-    if (!acc[kategori]) acc[kategori] = [];
-    acc[kategori].push(item);
-    return acc;
-  }, {});
-
-  const worksheetData: any[] = [];
-
-  for (const [kategori, entries] of Object.entries(grouped)) {
-    worksheetData.push({ Kategori: `Data Inovator Tahun ${selectedYear}, Kategori: ${kategori}` });
-    worksheetData.push({
-      No: "No",
-      NamaInovator: "Nama Inovator",
-      KategoriInovator: "Kategori Inovator",
-      JumlahInovasi: "Jumlah Inovasi",
-      JumlahDesaDampingan: "Jumlah Desa Dampingan",
-      TargetPengguna: "Target Pengguna",
-      ModelBisnis: "Model Bisnis",
-    });
-
-    entries.forEach((item, i) => {
-      worksheetData.push({
-        No: i + 1,
-        NamaInovator: item.namaInovator || "-",
-        KategoriInovator: item.kategoriInovator || "-",
-        JumlahInovasi: item.jumlahInovasi ?? 0,
-        JumlahDesaDampingan: item.jumlahDesaDampingan ?? 0,
-        TargetPengguna: item.targetPengguna || "-",
-        ModelBisnis: item.modelBisnis || "-",
-      });
-    });
-
-    worksheetData.push({});
-  }
-
-  const worksheet = XLSX.utils.json_to_sheet(worksheetData, { skipHeader: true });
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Inovator");
-
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-
-  saveAs(blob, `inovator_per_kategori_${selectedYear}.xlsx`);
-};
-
 const ChartInnovator = () => {
   const [chartData, setChartData] = useState<ChartGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [maxValue, setMaxValue] = useState(10);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [kategoriList, setKategoriList] = useState<string[]>(["Semua"]);
+  const [selectedKategori, setSelectedKategori] = useState("Semua");
 
   const chartBarRef = useRef<HTMLDivElement>(null);
 
@@ -206,19 +76,27 @@ const ChartInnovator = () => {
       const snapshot = await getDocs(collection(db, "innovators"));
 
       const categoryMap: Record<string, { count: number }> = {};
+      const allKategori: Set<string> = new Set();
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        if (!data.kategoriInovator) return;
+        if (!data.kategori) return;
 
-        const kategori = data.kategoriInovator;
+        const kategori = data.kategori;
+        allKategori.add(kategori);
+
         if (!categoryMap[kategori]) {
           categoryMap[kategori] = { count: 0 };
         }
         categoryMap[kategori].count += 1;
       });
 
-      const formattedData: ChartGroup[] = Object.entries(categoryMap)
+      const filteredCategoryMap =
+        selectedKategori === "Semua"
+          ? categoryMap
+          : { [selectedKategori]: categoryMap[selectedKategori] };
+
+      const formattedData: ChartGroup[] = Object.entries(filteredCategoryMap)
         .map(([category, { count }]) => ({
           category,
           values: [{ id: 1, value: count, color: "#568A73" }],
@@ -229,19 +107,167 @@ const ChartInnovator = () => {
 
       setChartData(formattedData);
       setMaxValue(maxCount);
+      setKategoriList(["Semua", ...Array.from(allKategori)]);
       setLoading(false);
     };
 
     fetchData();
-  }, []);
+  }, [selectedKategori]);
 
   const isEmpty = chartData.length === 0 || chartData.every((group) => group.values[0].value === 0);
+
+  const exportToPDF = async (selectedYear: number) => {
+    const snapshot = await getDocs(collection(db, "innovators"));
+    const allData = snapshot.docs.map((doc) => doc.data());
+
+    const doc = new jsPDF({ orientation: "landscape" });
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 280, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Grafik Jumlah Inovator per Kategori", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 280, 22, { align: "right" });
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+
+    let y = 42;
+    const labelX = 14;
+
+    const grouped = allData.reduce((acc: Record<string, any[]>, item) => {
+      const kategori = item.kategori || "Tidak Diketahui";
+      if (!acc[kategori]) acc[kategori] = [];
+      acc[kategori].push(item);
+      return acc;
+    }, {});
+
+    for (const [kategori, entries] of Object.entries(grouped)) {
+      doc.text(`Data Inovator Kategori: ${kategori}`, labelX, y);
+      y += 6;
+
+      autoTable(doc, {
+        startY: y,
+        head: [
+          [
+            "No",
+            "Nama Inovator",
+            "Kategori Inovator",
+            "Jumlah Inovasi",
+            "Jumlah Desa Dampingan",
+            "Target Pengguna",
+            "Model Bisnis",
+          ],
+        ],
+        body: entries.map((item, i) => [
+          i + 1,
+          item.namaInovator || "-",
+          item.kategori || "-",
+          item.jumlahInovasi ?? 0,
+          item.jumlahDesaDampingan ?? 0,
+          item.targetPengguna || "-",
+          item.modelBisnis || "-",
+        ]),
+        headStyles: {
+          fillColor: [0, 128, 0],
+          textColor: 255,
+          fontStyle: "bold",
+        },
+        styles: {
+          fontSize: 10,
+        },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 45 },
+          2: { cellWidth: 30 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 30 },
+          5: { cellWidth: 50 },
+          6: { cellWidth: 80 },
+        },
+        margin: { top: 10 },
+      } as any);
+
+      y = (doc as any).lastAutoTable.finalY + 15;
+    }
+
+    doc.save(`inovator_per_kategori.pdf`);
+  };
+
+  const exportToExcel = async (selectedYear: number) => {
+    const snapshot = await getDocs(collection(db, "innovators"));
+    const allData = snapshot.docs.map((doc) => doc.data());
+
+    const grouped = allData.reduce((acc: Record<string, any[]>, item) => {
+      const kategori = item.kategori || "Tidak Diketahui";
+      if (!acc[kategori]) acc[kategori] = [];
+      acc[kategori].push(item);
+      return acc;
+    }, {});
+
+    const worksheetData: any[] = [];
+
+    for (const [kategori, entries] of Object.entries(grouped)) {
+      worksheetData.push({ Kategori: `Data Inovator Kategori: ${kategori}` });
+      worksheetData.push({
+        No: "No",
+        NamaInovator: "Nama Inovator",
+        KategoriInovator: "Kategori Inovator",
+        JumlahInovasi: "Jumlah Inovasi",
+        JumlahDesaDampingan: "Jumlah Desa Dampingan",
+        TargetPengguna: "Target Pengguna",
+        ModelBisnis: "Model Bisnis",
+      });
+
+      entries.forEach((item, i) => {
+        worksheetData.push({
+          No: i + 1,
+          NamaInovator: item.namaInovator || "-",
+          KategoriInovator: item.kategori || "-",
+          JumlahInovasi: item.jumlahInovasi ?? 0,
+          JumlahDesaDampingan: item.jumlahDesaDampingan ?? 0,
+          TargetPengguna: item.targetPengguna || "-",
+          ModelBisnis: item.modelBisnis || "-",
+        });
+      });
+
+      worksheetData.push({});
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData, { skipHeader: true });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inovator");
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+
+    saveAs(blob, `daftar_inovator_per_kategori.xlsx`);
+  };
 
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center" mb={2}>
         <Text {...titleStyle}>Perkembangan Inovator</Text>
         <Flex justify="flex-end" align="center">
+          <Image
+            src={filterIcon}
+            alt="Filter"
+            boxSize="16px"
+            cursor="pointer"
+            ml={2}
+            onClick={() => setIsFilterOpen(true)}
+          />
           <Menu>
             <MenuButton
               as={IconButton}
@@ -288,7 +314,8 @@ const ChartInnovator = () => {
               </Flex>
 
               <Flex {...chartBarContainerStyle} ref={chartBarRef} position="relative">
-                <Flex width="100%" justify="space-between" align="flex-end" height="150px">
+                <Box {...yAxisStyle} />
+                <Flex {...barAndLineWrapperStyle}>
                   {chartData.map((group, i) => {
                     const barValue = group.values.find((v) => v.id === 1);
                     return (
@@ -312,12 +339,21 @@ const ChartInnovator = () => {
                       </Box>
                     );
                   })}
+                  <Box {...xAxisStyle} />
                 </Flex>
               </Flex>
             </Box>
           )}
         </Box>
       )}
+
+      <CategoryFilter
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        onApply={(kategori) => setSelectedKategori(kategori)}
+        kategoriList={kategoriList}
+        defaultKategori={selectedKategori}
+      />
     </Box>
   );
 };

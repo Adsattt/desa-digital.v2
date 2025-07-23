@@ -28,7 +28,7 @@ interface Props {
 }
 
 interface Implementation {
-  namaDesa: string;
+  desa: string;
   kecamatan: string;
   kabupaten: string;
   provinsi: string;
@@ -48,22 +48,28 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
 
       setLoading(true);
       const db = getFirestore();
-      const desaRef = collection(db, 'profilDesa');
-      const q = query(desaRef, where('kategoriDesa', '==', selectedCategory));
+      const desaRef = collection(db, 'villages');
+      const q = query(desaRef, where('kategori', '==', selectedCategory));
       const snapshot = await getDocs(q);
+
+      const capitalizeWords = (str: string) =>
+        str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
       const list: Implementation[] = snapshot.docs
         .map((doc) => {
           const d = doc.data();
+          const lokasi = d.lokasi ?? {};
+
           return {
-            namaDesa: d.namaDesa,
-            provinsi: d.provinsi,
-            kabupaten: d.kabupatenKota,
-            kecamatan: d.kecamatan,
-            potensi: d.potensi,
-            idm: String(d.idm),
+            desa: capitalizeWords(lokasi.desaKelurahan?.label ?? "-"),
+            provinsi: capitalizeWords(lokasi.provinsi?.label ?? "-"),
+            kabupaten: capitalizeWords(lokasi.kabupatenKota?.label ?? "-"),
+            kecamatan: capitalizeWords(lokasi.kecamatan?.label ?? "-"),
+            potensi: d.potensi ?? "-",
+            idm: String(d.idm) ?? "-",
           };
         })
-        .filter(d => d.namaDesa && d.provinsi && d.idm && d.idm !== 'ND' && d.idm !== '-' && d.idm !== '');
+        .filter(d => d.desa && d.provinsi && d.idm && d.idm !== 'ND' && d.idm !== '-' && d.idm !== '');
 
       setData(list);
       setCurrentPage(1);
@@ -119,7 +125,7 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
       head: [["No", "Nama Desa", "Kecamatan", "Kabupaten", "Provinsi", "Potensi Desa", "IDM"]],
       body: sortedData.map((item, i) => [
         i + 1,
-        item.namaDesa,
+        item.desa,
         item.kecamatan,
         item.kabupaten,
         item.provinsi,
@@ -152,7 +158,7 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
   const downloadXLSX = () => {
     const wsData = [
       ['No', 'Nama Desa', 'Provinsi', 'IDM'],
-      ...sortedData.map((item, i) => [i + 1, item.namaDesa, item.provinsi, item.idm])
+      ...sortedData.map((item, i) => [i + 1, item.desa, item.provinsi, item.idm])
     ];
 
     const worksheet = XLSX.utils.aoa_to_sheet(wsData);
@@ -235,11 +241,11 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
                     {currentData.map((item, i) => (
                       <Tr
                         key={i}
-                        onClick={() => onRowClick(item.namaDesa)}
+                        onClick={() => onRowClick(item.desa)}
                         style={{ cursor: 'pointer' }}
                       >
                         <Td sx={tableCellStyle}>{(currentPage - 1) * itemsPerPage + i + 1}</Td>
-                        <Td sx={tableCellStyle}>{item.namaDesa}</Td>
+                        <Td sx={tableCellStyle}>{item.desa}</Td>
                         <Td sx={tableCellStyle}>{item.provinsi}</Td>
                         <Td sx={tableCellStyle}>{item.idm}</Td>
                       </Tr>

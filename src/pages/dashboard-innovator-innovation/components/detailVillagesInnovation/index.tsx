@@ -4,8 +4,16 @@ import {
   Flex, Button, Image, Menu, MenuButton, MenuList, MenuItem, IconButton
 } from '@chakra-ui/react';
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from '@chakra-ui/icons';
-import { collection, getDocs, query, where, getFirestore } from 'firebase/firestore';
-import { getApp } from 'firebase/app';
+import { getAuth } from "firebase/auth";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  QueryDocumentSnapshot,
+  DocumentData
+} from "firebase/firestore";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
 import jsPDF from "jspdf";
@@ -23,9 +31,17 @@ import {
   paginationActiveButtonStyle,
 } from './_detailVillagesInnovationStyle';
 
+interface Implementation {
+  desaId: string;
+  namaDesa: string;
+  namaInovasi: string;
+  tahunKlaim: string;
+}
+
 interface VillageDetail {
   namaDesa: string;
-  tanggalPengajuan: string;
+  namaInovasi: string;
+  tanggalKlaim: string;
 }
 
 interface DetailVillagesProps {
@@ -39,27 +55,116 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
   namaInovasi,
   onBack,
 }) => {
+  const [implementationData, setImplementationData] = useState<Implementation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [villages, setVillages] = useState<VillageDetail[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const db = getFirestore(getApp());
+  const auth = getAuth();
+  const db = getFirestore();
+  const [userName, setUserName] = useState<string | null>(null);
+
+  const [inovatorProfile, setInovatorProfile] = useState({
+    namaInovator: "-",
+    kategoriInovator: "-",
+    tahunDibentuk: "-",
+    targetPengguna: "-",
+    produk: "-",
+    modelBisnis: "-",
+  });
 
   useEffect(() => {
-    const fetchVillages = async () => {
+    const user = auth.currentUser;
+
+    if (user) {
+      setUserName(user.displayName || user.email || "User");
+    } else {
+      setUserName(null);
+    }
+
+    if (!user) {
+      setImplementationData([]);
+      setLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
+      setLoading(true);
       try {
+        const profilInovatorRef = collection(db, "innovators");
+        const qProfil = query(profilInovatorRef, where("id", "==", user.uid));
+        const profilSnap = await getDocs(qProfil);
+        if (profilSnap.empty) {
+          setImplementationData([]);
+          setLoading(false);
+          return;
+        }
+        const inovatorIds = profilSnap.docs.map((doc) => doc.id);
+
+        const inovasiRef = collection(db, "innovations");
+        const chunkSize = 10;
+        let inovasiDocs: QueryDocumentSnapshot<DocumentData>[] = [];
+        for (let i = 0; i < inovatorIds.length; i += chunkSize) {
+          const chunk = inovatorIds.slice(i, i + chunkSize);
+          const qInovasi = query(inovasiRef, where("innovatorId", "in", chunk));
+          const snapInovasi = await getDocs(qInovasi);
+          inovasiDocs = inovasiDocs.concat(snapInovasi.docs);
+        }
+        if (inovasiDocs.length === 0) {
+          setImplementationData([]);
+          setLoading(false);
+          return;
+        }
+
+        const inovasiMap = new Map<
+          string,
+          { namaInovasi: string; inovatorId: string }
+        >();
+        inovasiDocs.forEach((doc) => {
+          const data = doc.data();
+          inovasiMap.set(doc.id, {
+            namaInovasi: data.namaInovasi,
+            inovatorId: data.innovatorId,
+          });
+        });
+
+        const inovasiIds = Array.from(inovasiMap.keys());
+
+        const produkInovator = inovasiDocs
+          .map((doc) => doc.data().namaInovasi)
+          .filter(Boolean)
+          .join(", ");
+        
+        const profileData = profilSnap.docs[0].data();
+        setInovatorProfile({
+          namaInovator: profileData?.namaInovator || "-",
+          kategoriInovator: profileData?.kategori || "-",
+          tahunDibentuk: profileData?.tahunDibentuk || "-",
+          targetPengguna: profileData?.targetPengguna || "-",
+          modelBisnis: profileData?.modelBisnis || "-",
+          produk: produkInovator,
+        });
+
+        // Get villages that claimed the innovation
         const villagesQuery = query(
-          collection(db, 'menerapkanInovasi'),
-          where('inovasiId', '==', innovationId)
+          collection(db, "claimInnovations"),
+          where("inovasiId", "==", innovationId)
         );
         const villagesSnapshot = await getDocs(villagesQuery);
 
         const villagesData: VillageDetail[] = villagesSnapshot.docs.map((doc) => {
           const data = doc.data();
+          const createdAt = data.createdAt?.toDate?.();
+          const tahunKlaim =
+            createdAt instanceof Date
+              ? String(createdAt.getFullYear())
+              : "Tidak tersedia";
 
           return {
-            namaDesa: data.namaDesa || 'Tidak tersedia',
-            tanggalPengajuan: data.tanggalPengajuan || 'Tidak tersedia',
+            namaDesa: data.namaDesa || "Tidak tersedia",
+            namaInovasi: data.namaInovasi,
+            tanggalKlaim: tahunKlaim,
           };
         });
 
@@ -67,12 +172,22 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
           villagesData.sort((a, b) => a.namaDesa.localeCompare(b.namaDesa))
         );
 
+        setImplementationData(
+          villagesData.map((item) => ({
+            desaId: "",
+            namaDesa: item.namaDesa,
+            namaInovasi: item.namaInovasi,
+            tahunKlaim: item.tanggalKlaim,
+          }))
+        );
       } catch (error) {
-        console.error('Error fetching villages:', error);
+        console.error("Error fetching villages or profile data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchVillages();
+    fetchData();
   }, [db, innovationId]);
 
   const totalPages = Math.ceil(villages.length / itemsPerPage);
@@ -85,60 +200,117 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
     setCurrentPage(page);
   };
 
-  // ===== Export to PDF function =====
   const exportToPDF = () => {
-    if (villages.length === 0) {
-      alert("Tidak ada data untuk diekspor.");
-      return;
-    }
-
     const doc = new jsPDF();
 
-    doc.setFontSize(14);
-    doc.text(`Daftar Desa ${namaInovasi}`, 14, 20);
-
-    const headers = [["No", "Nama Desa", "Tahun Pengajuan"]];
-    const rows = villages.map((item, index) => [
-      index + 1,
-      item.namaDesa,
-      item.tanggalPengajuan,
-    ]);
-
-    autoTable(doc, {
-      startY: 30,
-      head: headers,
-      body: rows,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [22, 160, 133] },
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     });
 
-    doc.save(`daftar_desa_${namaInovasi}.pdf`);
-  };
+    // Assuming `userName` is defined and `implementationData` is the list of innovations
+    const userProfile = {
+      nama: userName || "-",
+    };
 
-  // ===== Export to Excel function =====
-  const exportToExcel = () => {
-    if (villages.length === 0) {
-      alert("Tidak ada data untuk diekspor.");
-      return;
-    }
+    // Header with green background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 210, 30, "F");
 
-    const worksheetData = [
-      ["No", "Nama Desa", "Tahun Pengajuan"],
-      ...villages.map((item, index) => [
-        index + 1,
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Inovator", 14, 13);
+    doc.text(inovatorProfile.namaInovator, 190, 13, { align: "right" });
+
+    doc.setFontSize(12);
+    doc.text("KMS Inovasi Desa Digital", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+
+    // Reset styles for content
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(12);
+
+    // Inovator profile section
+    const profileStartY = 42;
+    let y = profileStartY;
+
+    const labelX = 14;
+    const valueX = 50;
+    const lineHeight = 8;
+
+    doc.text("Profil Inovator", 14, y);
+    y += lineHeight;
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+
+    doc.text("Nama", labelX, y);
+    doc.text(`: ${inovatorProfile.namaInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Kategori", labelX, y);
+    doc.text(`: ${inovatorProfile.kategoriInovator || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Tahun Dibentuk", labelX, y);
+    doc.text(`: ${inovatorProfile.tahunDibentuk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Target Pengguna", labelX, y);
+    doc.text(`: ${inovatorProfile.targetPengguna || "-"}`, valueX, y);
+    y += lineHeight;
+
+    doc.text("Model Bisnis", labelX, y);
+    doc.text(`: ${inovatorProfile.modelBisnis || "-"}`, valueX, y);
+    y += 10;
+
+    doc.text("Produk", labelX, y);
+    doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
+    y += lineHeight;
+
+    // Table title
+    y += 5;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Data Inovasi ${inovatorProfile.namaInovator}`, 14, y);
+    y += 6;
+
+    autoTable(doc, {
+      startY: y,
+      head: [["No", "Nama Desa", "Nama Inovasi", "Tahun Klaim"]],
+      body: implementationData.map((item, idx) => [
+        idx + 1,
         item.namaDesa,
-        item.tanggalPengajuan,
+        item.namaInovasi,
+        item.tahunKlaim,
       ]),
-    ];
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: 'bold',
+      },
+    });
 
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    doc.save("daftar-desa-inovasi.pdf");
+  };
+  
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      implementationData.map((item, idx) => ({
+        "No": idx + 1,
+        "Nama Desa": item.namaDesa,
+        "Nama Inovasi": item.namaInovasi,
+        "Tahun Klaim": item.tahunKlaim,
+      }))
+    );
+
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Daftar Desa");
-
-    const wbout = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([wbout], { type: "application/octet-stream" });
-
-    saveAs(blob, `daftar_desa_${namaInovasi}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Inovasi");
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, "daftar-desa-inovasi.xlsx");
   };
 
   return (
@@ -172,8 +344,8 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
           <Thead>
             <Tr>
               <Th sx={tableHeaderStyle} width="20%">No</Th>
-              <Th sx={tableHeaderStyle} width="30%">Nama Desa</Th>
-              <Th sx={tableHeaderStyle}>Tahun Pengajuan</Th>
+              <Th sx={tableHeaderStyle} width="40%">Nama Desa</Th>
+              <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -181,7 +353,7 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
               <Tr key={index}>
                 <Td sx={tableCellStyle}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
                 <Td sx={tableCellStyle}>{item.namaDesa}</Td>
-                <Td sx={tableCellStyle}>{item.tanggalPengajuan}</Td>
+                <Td sx={tableCellStyle}>{item.tanggalKlaim}</Td>
               </Tr>
             ))}
           </Tbody>

@@ -32,11 +32,7 @@ const TopVillages = () => {
       const auth = getAuth();
       const currentUser = auth.currentUser;
 
-      if (!currentUser) {
-        setTopVillages([]);
-        setLoading(false);
-        return;
-      }
+      if (!currentUser) return console.warn("User not authenticated");
 
       try {
         // Get profilInovator for current user
@@ -80,20 +76,20 @@ const TopVillages = () => {
         };
 
         const chunks = chunkArray(inovasiIds, 10);
-        let menerapkanDocs: { namaDesa?: string }[] = [];
+        let desaDocs: { namaDesa?: string }[] = [];
 
         for (const chunk of chunks) {
-          const menerapkanQuery = query(
+          const desaQuery = query(
             collection(db, "claimInnovations"),
             where("inovasiId", "in", chunk)
           );
-          const snapshot = await getDocs(menerapkanQuery);
-          menerapkanDocs.push(...snapshot.docs.map((doc) => doc.data()));
+          const snapshot = await getDocs(desaQuery);
+          desaDocs.push(...snapshot.docs.map((doc) => doc.data()));
         }
 
         // Count namaDesa occurrences
         const countMap: Record<string, number> = {};
-        menerapkanDocs.forEach((item) => {
+        desaDocs.forEach((item) => {
           const namaDesa = item.namaDesa;
           if (namaDesa) {
             countMap[namaDesa] = (countMap[namaDesa] || 0) + 1;

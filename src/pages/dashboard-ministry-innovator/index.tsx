@@ -6,7 +6,6 @@ import PieChartInnovator from "./components/categoryInnovator";
 import ChartInnovation from "./components/chartInnovator";
 import DetailInnovations from "./components/detailInnovationsInnovator";
 import DetailInnovators from "./components/detailInnovators";
-import DetailVillages from "./components/detailVillagesInnovation";
 import { getAuth } from "firebase/auth";
 import { useState } from "react";
 
@@ -56,12 +55,6 @@ const DashboardMinistryInnovator = () => {
           />
         </Box>
       )}
-
-      {/* {selectedVillage && (
-        <Box mt={6}>
-          <DetailVillages selectedNamaDesa={selectedVillage} />
-        </Box>
-      )} */}
 
       <Box mt={6}>
         <ChartInnovation />

@@ -30,6 +30,14 @@ import {
 } from "./_detailInnovationsInnovatorStyle";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
+
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
@@ -48,29 +56,66 @@ interface DetailInnovationsProps {
   onSelectVillage: (namaInovasi: string) => void;
 }
 
-// Static data
-const implementationData: Implementation[] = [
-  { namaInovasi: "eFeeder", inovator: "eFishery", namaDesa: "Desa Sukasari", tahun: 2017 },
-  { namaInovasi: "Habibi Garden", inovator: "Habibi Garden", namaDesa: "Desa Malabar", tahun: 2018 },
-  { namaInovasi: "FishGo", inovator: "FishGo", namaDesa: "Desa Babakan", tahun: 2019 },
-  { namaInovasi: "Petani Muda Keren (PMK)", inovator: "AA Gede Gunung", namaDesa: "Desa Sukatani", tahun: 2020 },
-  { namaInovasi: "JALA", inovator: "JALA", namaDesa: "Desa Indah", tahun: 2021 },
-  { namaInovasi: "Smart Tani", inovator: "AgroTech", namaDesa: "Desa Baranangsiang", tahun: 2022 },
-  { namaInovasi: "AgriDrone", inovator: "DroneIndo", namaDesa: "Desa Cilibende", tahun: 2023 },
-];
-
 const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovationsProps) => {
+  const [implementationData, setImplementationData] = useState<Implementation[]>([]);
+  const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  const filteredData = implementationData.filter(
-    (item) => item.inovator === filterInnovator
-  );
-
+  const filteredData = implementationData;
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   useEffect(() => {
-    setCurrentPage(1);
+    const fetchData = async () => {
+      const db = getFirestore();
+
+      if (!filterInnovator) return;
+      setLoading(true);
+
+      try {
+        const innovationsQuery = query(
+          collection(db, "innovations"),
+          where("namaInnovator", "==", filterInnovator)
+        );
+        const innovationsSnap = await getDocs(innovationsQuery);
+        const innovations = innovationsSnap.docs.map(doc => ({
+          id: doc.id,
+          namaInovasi: doc.data().namaInovasi,
+        }));
+
+        const allData: Implementation[] = [];
+
+        for (const innovation of innovations) {
+          const claimQuery = query(
+            collection(db, "claimInnovations"),
+            where("namaInovasi", "==", innovation.namaInovasi)
+          );
+          const claimSnap = await getDocs(claimQuery);
+
+          claimSnap.docs.forEach(doc => {
+            const data = doc.data();
+            const desa = (data.namaDesa || "").replace(/^Desa\s*/i, "");
+            const createdAt = data.createdAt?.toDate?.();
+            const tahun = createdAt?.getFullYear?.() || 0;
+
+            allData.push({
+              namaInovasi: innovation.namaInovasi,
+              inovator: filterInnovator,
+              namaDesa: desa,
+              tahun,
+            });
+          });
+        }
+
+        setImplementationData(allData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [filterInnovator]);
 
   const currentData = filteredData.slice(
@@ -198,7 +243,7 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
   }
 
   return (
-    <Box p={4} maxW="100%" mx="auto">
+    <Box px={4} maxW="100%" mx="auto" mt="10">
       <Flex justify="space-between" align="center" mb={2}>
         <Text {...titleStyle}>
           Daftar Desa Digital dari {filterInnovator}
@@ -224,10 +269,10 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
         <Table variant="simple" size="sm" sx={{ tableLayout: "fixed" }}>
           <Thead>
             <Tr>
-              <Th sx={tableHeaderStyle}>Inovator</Th>
+              <Th sx={tableHeaderStyle} width="10%">No</Th>
               <Th sx={tableHeaderStyle}>Nama Inovasi</Th>
               <Th sx={tableHeaderStyle}>Nama Desa</Th>
-              <Th sx={tableHeaderStyle}>Tahun Penerapan</Th>
+              <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
             </Tr>
           </Thead>
           <Tbody>
@@ -238,7 +283,9 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
                 onClick={() => onSelectVillage(item.namaInovasi)}
                 _hover={{ bg: "gray.100" }}
               >
-                <Td sx={tableCellStyle}>{item.inovator}</Td>
+                <Td sx={tableCellStyle}>
+                  {(currentPage - 1) * itemsPerPage + index + 1}
+                </Td>
                 <Td sx={tableCellStyle}>{item.namaInovasi}</Td>
                 <Td sx={tableCellStyle}>{item.namaDesa}</Td>
                 <Td sx={tableCellStyle}>{item.tahun}</Td>

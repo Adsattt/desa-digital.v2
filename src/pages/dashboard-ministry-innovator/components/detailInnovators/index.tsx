@@ -76,7 +76,7 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
     if (kategoriInovator) {
       q = query(
         collection(db, "innovators"),
-        where("kategoriInovator", "==", kategoriInovator)
+        where("kategori", "==", kategoriInovator)
       );
     } else {
       q = query(collection(db, "innovators"));
@@ -169,9 +169,9 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
       },
       columnStyles: {
         0: { cellWidth: 15 },  // No
-        1: { cellWidth: 70 },  // Nama Inovator
+        1: { cellWidth: 60 },  // Nama Inovator
         2: { cellWidth: 40 },  // Jumlah Inovasi
-        3: { cellWidth: 45 },  // Jumlah Desa Dampingan
+        3: { cellWidth: 60 },  // Jumlah Desa Dampingan
       },
     } as any);
 
@@ -229,7 +229,7 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
   };
 
   return (
-    <Box p={4} maxW="100%" mx="auto">
+    <Box px={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
         <Text {...titleStyle}>Daftar Inovator {kategoriInovator || '...'}</Text>
         {!kategoriInovator && (

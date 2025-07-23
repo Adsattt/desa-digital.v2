@@ -23,8 +23,8 @@ import {
   yAxisLabelStyle, yAxisWrapperStyle,
   chartBarContainerStyle, barAndLineWrapperStyle,
 } from "./_chartInnovationStyle";
-import YearFilter from "./dateFilter";
 
+import YearFilter from "./dateFilter";
 import filterIcon from "../../../../assets/icons/icon-filter.svg";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
@@ -76,13 +76,13 @@ const ChartInnovation3 = () => {
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        if (!data.kategoriInovasi || !data.tahunDibuat) return;
+        if (!data.kategori || !data.tahunDibuat) return;
         if (data.tahunDibuat > selectedYear) return;
 
-        const kategori = data.kategoriInovasi;
+        const kategori = data.kategori;
         countPerCategory[kategori] = (countPerCategory[kategori] || 0) + 1;
 
-        allData.push(data); // Save full data for export
+        allData.push(data);
       });
 
       const sortedEntries = Object.entries(countPerCategory).sort(
@@ -106,7 +106,7 @@ const ChartInnovation3 = () => {
 
       setChartData(formattedData);
       setMaxValue(maxCount);
-      setInovasiDetails(allData); // Store full data for export
+      setInovasiDetails(allData);
       setLoading(false);
     };
 
@@ -148,7 +148,7 @@ const ChartInnovation3 = () => {
     const labelX = 14;
 
     const grouped: Record<string, any[]> = data.reduce((acc, curr) => {
-      const key = curr.kategoriInovasi || "Tidak Diketahui";
+      const key = curr.kategori || "Tidak Diketahui";
       if (!acc[key]) acc[key] = [];
       acc[key].push(curr);
       return acc;
@@ -167,7 +167,7 @@ const ChartInnovation3 = () => {
         body: entries.map((item, i) => [
           i + 1,
           item.namaInovasi || "-",
-          item.namaInovator || "-",
+          item.namaInnovator || "-",
           item.tahunDibuat || "-",
         ]),
         headStyles: {

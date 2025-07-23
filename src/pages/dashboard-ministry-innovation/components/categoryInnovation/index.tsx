@@ -23,12 +23,12 @@ const PieChartInnovation = ({ onSliceClick }: { onSliceClick: (categoryName: str
   useEffect(() => {
     const fetchData = async () => {
     const db = getFirestore();
-    const snapshot = await getDocs(collection(db, 'inovasi'));
+    const snapshot = await getDocs(collection(db, 'innovations'));
 
     const counts: Record<string, number> = {};
 
     snapshot.forEach(doc => {
-        const kategori = doc.data()?.kategoriInovasi;
+        const kategori = doc.data()?.kategori;
 
         if (kategori && kategori !== 'ND' && kategori !== '-') {
         counts[kategori] = (counts[kategori] || 0) + 1;
