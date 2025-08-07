@@ -348,7 +348,7 @@ const BarChartInovasi = () => {
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Perkembangan Inovasi {userName}</Text>
+        <Text {...titleStyle}>Jumlah Desa Dampingan {profil?.namaInovator || "Inovator"}</Text>
         <Flex align="center" gap={2}>
           <Image
             onClick={() => setShowFilter(true)}
@@ -463,6 +463,8 @@ const BarChartInovasi = () => {
         isOpen={showFilter}
         onClose={() => setShowFilter(false)}
         onApply={(from, to) => setYearRange([from, to])}
+        initialFrom={yearRange[0]}
+        initialTo={yearRange[1]}
       />
     </Box>
   );

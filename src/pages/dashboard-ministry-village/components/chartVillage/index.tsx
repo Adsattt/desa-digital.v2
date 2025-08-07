@@ -201,7 +201,7 @@ const ChartVillage = () => {
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center">
-        <Text {...titleStyle}>Perkembangan Desa Digital - Tahun {selectedYear}</Text>
+        <Text {...titleStyle}>Jumlah Desa Digital Tahun {selectedYear}</Text>
         <Flex justify="flex-end" align="center">
           <Image src={filterIcon} alt="Filter" boxSize="16px" cursor="pointer" ml={2} onClick={onOpen} />
           <Menu>

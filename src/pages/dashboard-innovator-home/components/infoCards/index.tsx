@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import {
-  collection, getDocs, query, where, Timestamp, getFirestore, doc, getDoc
+  collection,
+  getDocs,
+  query,
+  where,
+  Timestamp,
+  getFirestore,
 } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { Box, Flex, Text, Image } from "@chakra-ui/react";
@@ -26,25 +31,24 @@ const InfoCards = () => {
   const [trendInovasi, setTrendInovasi] = useState(0);
   const [trendDesa, setTrendDesa] = useState(0);
 
-  const db = getFirestore();
-
   const calculateData = async (fromDate: Date, toDate: Date) => {
+    const db = getFirestore();
     const auth = getAuth();
-    const user = auth.currentUser;
-    if (!user) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
 
-    const fromTimestamp = Timestamp.fromDate(fromDate);
-    const toTimestamp = Timestamp.fromDate(toDate);
-    const diff = toDate.getTime() - fromDate.getTime();
-    const prevFrom = new Date(fromDate.getTime() - diff);
-    const prevTo = new Date(toDate.getTime() - diff);
-    const prevFromTimestamp = Timestamp.fromDate(prevFrom);
-    const prevToTimestamp = Timestamp.fromDate(prevTo);
+    // Gunakan UTC-safe Timestamp dari Date.UTC
+    const fromUTC = Timestamp.fromMillis(Date.UTC(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate(), 0, 0, 0));
+    const toUTC = Timestamp.fromMillis(Date.UTC(toDate.getFullYear(), toDate.getMonth(), toDate.getDate(), 23, 59, 59));
+
+    const diffMs = toUTC.toMillis() - fromUTC.toMillis();
+    const prevFromUTC = Timestamp.fromMillis(fromUTC.toMillis() - diffMs);
+    const prevToUTC = Timestamp.fromMillis(toUTC.toMillis() - diffMs);
 
     try {
       const inovatorQuery = query(
         collection(db, "innovators"),
-        where("id", "==", user.uid)
+        where("id", "==", currentUser.uid)
       );
       const inovatorSnap = await getDocs(inovatorQuery);
       if (inovatorSnap.empty) return;
@@ -69,7 +73,9 @@ const InfoCards = () => {
         const inovasiIds = inovasiSnap.docs
           .filter((doc) => {
             const createdAt = doc.data().createdAt;
-            return createdAt?.toDate() >= fromT.toDate() && createdAt?.toDate() <= toT.toDate();
+            if (!createdAt) return false;
+            const time = createdAt.toMillis();
+            return time >= fromT.toMillis() && time <= toT.toMillis();
           })
           .map((doc) => doc.id);
 
@@ -89,17 +95,16 @@ const InfoCards = () => {
       };
 
       const [currInovasi, prevInovasi, currDesa, prevDesa] = await Promise.all([
-        getInovasiCount(fromTimestamp, toTimestamp),
-        getInovasiCount(prevFromTimestamp, prevToTimestamp),
-        getDesaCount(fromTimestamp, toTimestamp),
-        getDesaCount(prevFromTimestamp, prevToTimestamp),
+        getInovasiCount(fromUTC, toUTC),
+        getInovasiCount(prevFromUTC, prevToUTC),
+        getDesaCount(fromUTC, toUTC),
+        getDesaCount(prevFromUTC, prevToUTC),
       ]);
 
       setInovasiCount(currInovasi);
       setDesaCount(currDesa);
       setTrendInovasi(currInovasi - prevInovasi);
       setTrendDesa(currDesa - prevDesa);
-
     } catch (err) {
       console.error("Failed to calculate data:", err);
     }
@@ -107,8 +112,8 @@ const InfoCards = () => {
 
   useEffect(() => {
     const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const endOfYear = new Date(now.getFullYear(), 11, 31);
+    const startOfYear = new Date(Date.UTC(now.getFullYear(), 0, 1));
+    const endOfYear = new Date(Date.UTC(now.getFullYear(), 11, 31));
     setFrom(startOfYear);
     setTo(endOfYear);
     calculateData(startOfYear, endOfYear);
@@ -165,6 +170,8 @@ const InfoCards = () => {
             calculateData(fromDate, toDate);
             setShowFilter(false);
           }}
+          initialFromDate={from}
+          initialToDate={to}
         />
       )}
     </Box>

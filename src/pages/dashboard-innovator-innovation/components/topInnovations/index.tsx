@@ -1,11 +1,17 @@
 import { useEffect, useState } from "react";
-import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs
+} from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { podiumStyles } from "./_topInnovationsStyle";
 
 const TopInnovations = () => {
   const [topInnovations, setTopInnovations] = useState<
-    { name: string; count: number }[]
+    { name: string; count: number; rank?: number }[]
   >([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +56,8 @@ const TopInnovations = () => {
           }
         });
 
-        const sortedByCount = Object.entries(countMap)
+        const entries = Object.entries(countMap);
+        const sortedByCount = entries
           .sort((a, b) => {
             if (b[1] === a[1]) {
               return a[0].localeCompare(b[0]);
@@ -60,7 +67,32 @@ const TopInnovations = () => {
           .slice(0, 3)
           .map(([name, count]) => ({ name, count }));
 
-        setTopInnovations(sortedByCount);
+        // Cek apakah semua count sama
+        const allSame =
+          sortedByCount.length > 1 &&
+          sortedByCount.every((item) => item.count === sortedByCount[0].count);
+
+        let ranked: { name: string; count: number; rank: number }[] = [];
+
+        if (allSame) {
+          ranked = sortedByCount.map((item) => ({
+            ...item,
+            rank: 1
+          }));
+        } else {
+          let rank = 1;
+          let lastCount = -1;
+
+          ranked = sortedByCount.map((item, index) => {
+            if (item.count !== lastCount) {
+              rank = index + 1;
+            }
+            lastCount = item.count;
+            return { ...item, rank };
+          });
+        }
+
+        setTopInnovations(ranked);
       } catch (error) {
         console.error("Error fetching innovations:", error);
       } finally {
@@ -71,19 +103,28 @@ const TopInnovations = () => {
     fetchTopInnovations();
   }, []);
 
-  const podiumOrder = [
-    topInnovations[1],
-    topInnovations[0],
-    topInnovations[2],
-  ];
+  // Custom order for 3 items (rank 2 - rank 1 - rank 3)
+const allRanksAreOne =
+  topInnovations.length > 1 &&
+  topInnovations.every((item) => item.rank === 1);
 
-  const getBarColor = (index: number) => {
-    switch (index) {
+const podiumOrder = allRanksAreOne
+  ? [...topInnovations].sort((a, b) => a.name.localeCompare(b.name))
+  : topInnovations.length === 3
+    ? [
+        topInnovations.find((i) => i.rank === 2) || topInnovations[1],
+        topInnovations.find((i) => i.rank === 1) || topInnovations[0],
+        topInnovations.find((i) => i.rank === 3) || topInnovations[2]
+      ]
+    : topInnovations;
+
+  const getBarColor = (rank: number) => {
+    switch (rank) {
       case 1:
         return podiumStyles.colors.first;
-      case 0:
-        return podiumStyles.colors.second;
       case 2:
+        return podiumStyles.colors.second;
+      case 3:
         return podiumStyles.colors.third;
       default:
         return "#ccc";
@@ -104,7 +145,14 @@ const TopInnovations = () => {
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "15px" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        marginBottom: "15px"
+      }}
+    >
       <h2 style={podiumStyles.title}>Inovasi Unggulan</h2>
       <div style={podiumStyles.container}>
         {loading ? (
@@ -112,24 +160,31 @@ const TopInnovations = () => {
         ) : (
           podiumOrder.map((item, index) => {
             if (!item) return null;
-            const actualRank = topInnovations.indexOf(item) + 1;
-            const height = 100 - (index === 1 ? 0 : 20);
+
+            const height = allRanksAreOne
+              ? 100
+              : item.rank === 1
+              ? 100
+              : item.rank === 2
+              ? 80
+              : 60;
+
             return (
               <div key={item.name} style={podiumStyles.item}>
                 <div style={podiumStyles.name}>{item.name}</div>
                 <div
                   style={{
                     ...podiumStyles.barBase,
-                    backgroundColor: getBarColor(index),
+                    backgroundColor: getBarColor(item.rank ?? 0),
                     height: `${height}px`,
-                    position: "relative", 
-                    boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)",
+                    position: "relative",
+                    boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)"
                   }}
                 >
                   <div style={podiumStyles.rankLabel}>
-                    <span style={{ fontSize: "18pt" }}>{actualRank}</span>
+                    <span style={{ fontSize: "18pt" }}>{item.rank}</span>
                     <span style={{ fontSize: "10pt" }}>
-                      {getRankLabel(actualRank).replace(/[0-9]/g, "")}
+                      {getRankLabel(item.rank ?? 0).replace(/[0-9]/g, "")}
                     </span>
                   </div>
                 </div>
@@ -143,7 +198,7 @@ const TopInnovations = () => {
           width: "90%",
           borderBottom: "2px solid #244E3B",
           marginTop: "-2px",
-          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.15)",
+          boxShadow: "0 2px 4px rgba(0, 0, 0, 0.15)"
         }}
       />
     </div>

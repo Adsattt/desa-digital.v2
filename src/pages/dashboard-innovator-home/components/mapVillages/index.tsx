@@ -358,12 +358,13 @@ const MapVillages = () => {
     saveAs(dataBlob, "data_sebaran_inovasi.xlsx");
   };
 
+  const inovatorProfile = exportData.length > 0 ? exportData[0] : null;
   console.log("GeoJSON render totals:", totals);
 
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2} mt={2}>
-        <Text {...headerTextStyle}>Peta Sebaran Inovasi Digital</Text>
+        <Text {...headerTextStyle}>Peta Sebaran Inovasi {inovatorProfile?.namaInovator || "Inovator"}</Text>
         <Flex gap={2} align="center">
           <Image
             src={filterIcon}

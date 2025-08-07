@@ -7,20 +7,23 @@ import "react-datepicker/dist/react-datepicker.css";
 interface DateRangeFilterProps {
   onClose: () => void;
   onApply: (from: Date, to: Date) => void;
+  initialFromDate: Date | null;
+  initialToDate: Date | null;
 }
 
-const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ onClose, onApply }) => {
+const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
+  onClose,
+  onApply,
+  initialFromDate,
+  initialToDate,
+}) => {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
 
-  useEffect(() => {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const endOfYear = new Date(now.getFullYear(), 11, 31);
-
-    setFromDate(startOfYear);
-    setToDate(endOfYear);
-  }, []);
+useEffect(() => {
+  if (initialFromDate) setFromDate(initialFromDate);
+  if (initialToDate) setToDate(initialToDate);
+}, [initialFromDate, initialToDate]);
 
   const handleApply = () => {
     if (fromDate && toDate) {
@@ -65,10 +68,16 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ onClose, onApply }) =
           <Text fontSize="sm" mb={2}>Dari tanggal</Text>
           <DatePicker
             selected={fromDate}
-            onChange={(date) => setFromDate(date)}
+            onChange={(date) => {
+              setFromDate(date);
+              if (toDate && date && toDate < date) {
+                setToDate(date); // Reset toDate kalau sebelum fromDate
+              }
+            }}
             dateFormat="dd/MM/yyyy"
             placeholderText="Pilih tanggal"
             className="chakra-input css-1c6b688"
+            maxDate={toDate ?? undefined}
           />
         </Box>
 
@@ -80,6 +89,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({ onClose, onApply }) =
             dateFormat="dd/MM/yyyy"
             placeholderText="Pilih tanggal"
             className="chakra-input"
+            minDate={fromDate ?? undefined}
           />
         </Box>
 

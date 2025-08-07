@@ -7,8 +7,9 @@ import {
   ModalFooter,
   ModalCloseButton,
   Button,
-  Select,
-  Flex,
+  Checkbox,
+  CheckboxGroup,
+  Stack,
   Text,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
@@ -16,9 +17,9 @@ import { useState, useEffect } from "react";
 interface CategoryFilterProps {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (kategori: string) => void;
+  onApply: (kategori: string[]) => void;
   kategoriList: string[];
-  defaultKategori?: string;
+  defaultKategori?: string[];
 }
 
 const CategoryFilter = ({
@@ -26,9 +27,9 @@ const CategoryFilter = ({
   onClose,
   onApply,
   kategoriList,
-  defaultKategori = "Semua",
+  defaultKategori = [],
 }: CategoryFilterProps) => {
-  const [selectedKategori, setSelectedKategori] = useState(defaultKategori);
+  const [selectedKategori, setSelectedKategori] = useState<string[]>(defaultKategori);
 
   useEffect(() => {
     setSelectedKategori(defaultKategori);
@@ -42,13 +43,15 @@ const CategoryFilter = ({
         <ModalCloseButton mt={2} mr={2} />
         <ModalBody>
           <Text mb={2}>Pilih kategori:</Text>
-          <Select value={selectedKategori} onChange={(e) => setSelectedKategori(e.target.value)}>
-            {kategoriList.map((kategori) => (
-              <option key={kategori} value={kategori}>
-                {kategori}
-              </option>
-            ))}
-          </Select>
+          <CheckboxGroup value={selectedKategori} onChange={(val) => setSelectedKategori(val as string[])}>
+            <Stack spacing={2}>
+              {kategoriList.map((kategori) => (
+                <Checkbox key={kategori} value={kategori}>
+                  {kategori}
+                </Checkbox>
+              ))}
+            </Stack>
+          </CheckboxGroup>
         </ModalBody>
         <ModalFooter>
           <Button

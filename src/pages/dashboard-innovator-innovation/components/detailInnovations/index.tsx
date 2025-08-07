@@ -381,7 +381,7 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Daftar Inovasi {userName || "User"}</Text>
+        <Text {...titleStyle}>Daftar Inovasi {inovatorProfile?.namaInovator || "Inovator"}</Text>
         <Flex justify="flex-end" align="center">
           <Menu>
             <MenuButton

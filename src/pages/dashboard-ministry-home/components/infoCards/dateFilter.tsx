@@ -21,24 +21,26 @@ interface DateRangeFilterProps {
   isOpen: boolean;
   onClose: () => void;
   onApply: (from: Date, to: Date) => void;
+  initialFromDate: Date | null;
+  initialToDate: Date | null;
 }
 
 const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   isOpen,
   onClose,
   onApply,
+  initialFromDate,
+  initialToDate,
 }) => {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
 
   useEffect(() => {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const endOfYear = new Date(now.getFullYear(), 11, 31);
-
-    setFromDate(startOfYear);
-    setToDate(endOfYear);
-  }, [isOpen]); // reset dates when modal opens
+    if (isOpen) {
+      setFromDate(initialFromDate);
+      setToDate(initialToDate);
+    }
+  }, [isOpen, initialFromDate, initialToDate]);
 
   const handleApply = () => {
     if (fromDate && toDate) {
@@ -54,33 +56,38 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
         <ModalHeader>Filter</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-            <Flex gap={4}>
-                <Box flex="1">
-                <Text fontSize="sm" mb={1}>
-                    Dari tanggal
-                </Text>
-                <DatePicker
-                    selected={fromDate}
-                    onChange={(date) => setFromDate(date)}
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Pilih tanggal"
-                    customInput={<CustomInput />}
-                />
-                </Box>
+          <Box flex="1" mb={4}>
+            <Text fontSize="sm" mb={2}>
+                Dari tanggal
+            </Text>
+              <DatePicker
+                selected={fromDate}
+                onChange={(date) => {
+                  setFromDate(date);
+                  if (toDate && date && toDate < date) {
+                    setToDate(date); // Reset toDate kalau sebelum fromDate
+                  }
+                }}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Pilih tanggal"
+                className="chakra-input css-1c6b688"
+                maxDate={toDate ?? undefined}
+              />
+          </Box>
 
-                <Box flex="1">
-                <Text fontSize="sm" mb={1}>
-                    Hingga tanggal
-                </Text>
-                <DatePicker
-                    selected={toDate}
-                    onChange={(date) => setToDate(date)}
-                    dateFormat="dd/MM/yyyy"
-                    placeholderText="Pilih tanggal"
-                    customInput={<CustomInput />}
-                />
-                </Box>
-            </Flex>
+          <Box flex="1">
+            <Text fontSize="sm" mb={2}>
+                Hingga tanggal
+            </Text>
+              <DatePicker
+                selected={toDate}
+                onChange={(date) => setToDate(date)}
+                dateFormat="dd/MM/yyyy"
+                placeholderText="Pilih tanggal"
+                className="chakra-input"
+                minDate={fromDate ?? undefined}
+              />
+          </Box>
         </ModalBody>
         <ModalFooter>
           <Button colorScheme="blue" width="100%" onClick={handleApply}>
