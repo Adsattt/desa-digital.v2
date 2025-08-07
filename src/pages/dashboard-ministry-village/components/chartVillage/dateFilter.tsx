@@ -23,8 +23,8 @@ const YearFilter = ({ isOpen, onClose, onApply }: YearFilterProps) => {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 200 }, (_, i) => currentYear - 100 + i);
-
+  const years = Array.from({ length: 50 }, (_, i) => currentYear - 49 + i);
+  
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="sm">
       <ModalOverlay />

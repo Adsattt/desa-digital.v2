@@ -272,7 +272,7 @@ const routes = [
     path: "/search",
     element: <SearchPage />,
   },
-    {
+  {
     path: paths.DASHBOARD_INNOVATOR_HOME,
     element: <DashboardInnovator />,
     exact: true,

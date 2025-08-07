@@ -366,7 +366,7 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({ onSelectVillage }) => {
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
         <Text {...titleStyle}>
-          Daftar Desa {userName ? ` ${userName}` : ""}
+          Daftar Desa Dampingan {inovatorProfile?.namaInovator || "Inovator"}
         </Text>
         <Flex justify="flex-end" align="center">
           <Menu>

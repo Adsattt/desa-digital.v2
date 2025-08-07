@@ -255,7 +255,7 @@ const TableInnovator = () => {
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2} mt={2}>
-        <Text {...titleStyle}>Daftar Inovasi {userName}</Text>
+        <Text {...titleStyle}>Daftar Inovasi {inovatorProfile?.namaInovator || "Inovator"}</Text>
         <Menu>
           <MenuButton>
             <Image src={downloadIcon} alt="Download" boxSize="16px" cursor="pointer" marginRight={2} />

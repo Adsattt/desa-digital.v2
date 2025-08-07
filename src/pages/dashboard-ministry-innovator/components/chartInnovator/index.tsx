@@ -66,7 +66,7 @@ const ChartInnovator = () => {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [kategoriList, setKategoriList] = useState<string[]>(["Semua"]);
-  const [selectedKategori, setSelectedKategori] = useState("Semua");
+  const [selectedKategori, setSelectedKategori] = useState<string[]>([]);
 
   const chartBarRef = useRef<HTMLDivElement>(null);
 
@@ -92,9 +92,13 @@ const ChartInnovator = () => {
       });
 
       const filteredCategoryMap =
-        selectedKategori === "Semua"
+        selectedKategori.length === 0 || selectedKategori.includes("Semua")
           ? categoryMap
-          : { [selectedKategori]: categoryMap[selectedKategori] };
+          : Object.fromEntries(
+              Object.entries(categoryMap).filter(([kategori]) =>
+                selectedKategori.includes(kategori)
+              )
+            );
 
       const formattedData: ChartGroup[] = Object.entries(filteredCategoryMap)
         .map(([category, { count }]) => ({
@@ -258,7 +262,7 @@ const ChartInnovator = () => {
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Perkembangan Inovator</Text>
+        <Text {...titleStyle}>Jumlah Inovator per Kategori</Text>
         <Flex justify="flex-end" align="center">
           <Image
             src={filterIcon}
@@ -350,7 +354,7 @@ const ChartInnovator = () => {
       <CategoryFilter
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
-        onApply={(kategori) => setSelectedKategori(kategori)}
+        onApply={(kategoriArray) => setSelectedKategori(kategoriArray)}
         kategoriList={kategoriList}
         defaultKategori={selectedKategori}
       />

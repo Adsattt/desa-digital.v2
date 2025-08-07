@@ -216,7 +216,7 @@ const ChartInnovation3 = () => {
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Perkembangan Inovasi Tahun {selectedYear}</Text>
+        <Text {...titleStyle}>Jumlah Inovasi Tahun {selectedYear}</Text>
         <Flex justify="flex-end" align="center">
           <Image
             src={filterIcon}

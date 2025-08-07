@@ -30,7 +30,6 @@ export const cardStyle = (rank: number) => ({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  // position: "relative",
   pt: "12px",
   textAlign: "center" as const,
 });

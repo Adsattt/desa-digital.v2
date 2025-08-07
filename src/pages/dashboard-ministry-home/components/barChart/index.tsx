@@ -101,7 +101,18 @@ const BarChartInovasi = () => {
           }
         });
 
-        setDataByYear(counts);
+        const sortedYears = Object.keys(counts)
+          .map(Number)
+          .sort((a, b) => a - b);
+
+        const cumulativeCounts: Record<number, number> = {};
+        let cumulativeTotal = 0;
+        for (const year of sortedYears) {
+          cumulativeTotal += counts[year] || 0;
+          cumulativeCounts[year] = cumulativeTotal;
+        }
+
+        setDataByYear(cumulativeCounts);
         setDetailedData(detailed);
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -205,7 +216,7 @@ const BarChartInovasi = () => {
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Perkembangan Desa Digital</Text>
+        <Text {...titleStyle}>Pertumbuhan Desa Digital</Text>
         <Flex align="center" gap={2}>
           <Image
             onClick={() => setShowFilter(true)}
@@ -232,7 +243,7 @@ const BarChartInovasi = () => {
         <Flex {...legendContainerStyle}>
           <Flex {...legendItemStyle}>
             <Box {...legendDotStyle} bg="#4C73C7" />
-            <Text>Jumlah Pertumbuhan Desa</Text>
+            <Text>Jumlah Desa</Text>
           </Flex>
         </Flex>
 
@@ -295,6 +306,8 @@ const BarChartInovasi = () => {
         isOpen={showFilter}
         onClose={() => setShowFilter(false)}
         onApply={(from, to) => setYearRange([from, to])}
+        initialFrom={yearRange[0]}
+        initialTo={yearRange[1]}
       />
     </Box>
   );

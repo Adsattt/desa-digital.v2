@@ -11,22 +11,33 @@ import {
   Flex,
   Text
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const YearRangeFilter = ({
   isOpen,
   onClose,
-  onApply
+  onApply,
+  initialFrom,
+  initialTo
 }: {
   isOpen: boolean;
   onClose: () => void;
   onApply: (from: number, to: number) => void;
+  initialFrom: number;
+  initialTo: number;
 }) => {
-  const [from, setFrom] = useState(2020);
-  const [to, setTo] = useState(2025);
+  const [from, setFrom] = useState(initialFrom);
+  const [to, setTo] = useState(initialTo);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFrom(initialFrom);
+      setTo(initialTo);
+    }
+  }, [isOpen, initialFrom, initialTo]);
   
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 200 }, (_, i) => currentYear - 100 + i); // 150 years back & forward
+  const years = Array.from({ length: 50 }, (_, i) => currentYear - 49 + i);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="sm">  
@@ -38,18 +49,23 @@ const YearRangeFilter = ({
           <Text mb={2}>Pilih rentang tahun:</Text>
           <Flex gap={2}>
             <Select value={from} onChange={(e) => setFrom(+e.target.value)}>
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
+              {years
+                .filter((year) => year <= to) // hanya tampilkan tahun <= to
+                .map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
             </Select>
+
             <Select value={to} onChange={(e) => setTo(+e.target.value)}>
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
+              {years
+                .filter((year) => year >= from) // hanya tampilkan tahun >= from
+                .map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
             </Select>
           </Flex>
         </ModalBody>

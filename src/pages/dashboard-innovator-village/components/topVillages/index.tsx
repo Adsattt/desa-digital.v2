@@ -12,38 +12,38 @@ import { getAuth } from "firebase/auth";
 import { podiumStyles } from "./_topVillagesStyle";
 
 const TopVillages = () => {
-  const [topInnovations, setTopInnovations] = useState<{ name: string; count: number }[]>([]);
+  const [topVillages, setTopVillages] = useState<
+    { name: string; count: number; rank?: number }[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTopInnovations = async () => {
+    const fetchTopVillages = async () => {
       setLoading(true);
       const db = getFirestore();
       const auth = getAuth();
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
-        setTopInnovations([]);
+        setTopVillages([]);
         setLoading(false);
         return;
       }
 
       try {
-        // 1. Get profilInovator doc(s) for current user
         const profilQuery = query(
           collection(db, "innovators"),
           where("id", "==", currentUser.uid)
         );
         const profilSnapshot = await getDocs(profilQuery);
         if (profilSnapshot.empty) {
-          setTopInnovations([]);
+          setTopVillages([]);
           setLoading(false);
           return;
         }
         const profilDoc = profilSnapshot.docs[0];
         const inovatorId = profilDoc.id;
 
-        // 2. Get inovasi documents for that inovatorId
         const inovasiQuery = query(
           collection(db, "innovations"),
           where("innovatorId", "==", inovatorId)
@@ -51,15 +51,12 @@ const TopVillages = () => {
         const inovasiSnapshot = await getDocs(inovasiQuery);
 
         if (inovasiSnapshot.empty) {
-          setTopInnovations([]);
+          setTopVillages([]);
           setLoading(false);
           return;
         }
 
-        // Collect all inovasi document IDs
         const inovasiIds = inovasiSnapshot.docs.map((doc) => doc.id);
-
-        // 3. Query klaimInovasi where inovasiId IN inovasiIds in chunks (max 10 per query)
         const chunkSize = 10;
         let allKlaimDocs: QueryDocumentSnapshot<DocumentData>[] = [];
 
@@ -74,12 +71,11 @@ const TopVillages = () => {
         }
 
         if (allKlaimDocs.length === 0) {
-          setTopInnovations([]);
+          setTopVillages([]);
           setLoading(false);
           return;
         }
 
-        // Count namaDesa occurrences
         const countMap: Record<string, number> = {};
         allKlaimDocs.forEach((doc) => {
           const data = doc.data();
@@ -89,39 +85,76 @@ const TopVillages = () => {
           }
         });
 
-        // Sort by count descending and pick top 3
-        const sortedByCount = Object.entries(countMap)
+        const entries = Object.entries(countMap);
+        const sortedByCount = entries
           .sort((a, b) => {
             if (b[1] === a[1]) {
-              return a[0].localeCompare(b[0]); // Alphabetical sort (ascending)
+              return a[0].localeCompare(b[0]);
             }
-            return b[1] - a[1]; // Sort by count (descending)
+            return b[1] - a[1];
           })
           .slice(0, 3)
           .map(([name, count]) => ({ name, count }));
 
-        setTopInnovations(sortedByCount);
+        // Determine ranks
+        const allSame = sortedByCount.every((item) => item.count === sortedByCount[0].count);
+
+        let ranked: { name: string; count: number; rank: number }[] = [];
+
+        if (allSame) {
+          ranked = sortedByCount.map((item) => ({ ...item, rank: 1 }));
+        } else {
+          let rank = 1;
+          let lastCount = -1;
+          ranked = sortedByCount.map((item, index) => {
+            if (item.count !== lastCount) {
+              rank = index + 1;
+            }
+            lastCount = item.count;
+            return { ...item, rank };
+          });
+        }
+
+        setTopVillages(ranked);
       } catch (error) {
         console.error("Error fetching innovations:", error);
-        setTopInnovations([]);
+        setTopVillages([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTopInnovations();
+    fetchTopVillages();
   }, []);
 
-  // Podium order: 2nd place (index 1), 1st place (index 0), 3rd place (index 2)
-  const podiumOrder = [topInnovations[1], topInnovations[0], topInnovations[2]];
+  const allRanksAreOne =
+    topVillages.length > 1 &&
+    topVillages.every((item) => item.rank === 1);
 
-  const getBarColor = (index: number) => {
-    switch (index) {
+  let podiumOrder = [...topVillages];
+
+  if (allRanksAreOne) {
+    podiumOrder.sort((a, b) => a.name.localeCompare(b.name));
+  } else if (topVillages.length === 2) {
+    podiumOrder = [
+      topVillages.find((i) => i.rank === 1) || topVillages[0],
+      topVillages.find((i) => i.rank === 2) || topVillages[1],
+    ];
+  } else if (topVillages.length === 3) {
+    podiumOrder = [
+      topVillages.find((i) => i.rank === 2) || topVillages[1],
+      topVillages.find((i) => i.rank === 1) || topVillages[0],
+      topVillages.find((i) => i.rank === 2 && i !== podiumOrder[0]) || topVillages[2],
+    ];
+  }
+
+  const getBarColor = (rank: number) => {
+    switch (rank) {
       case 1:
         return podiumStyles.colors.first;
-      case 0:
-        return podiumStyles.colors.second;
       case 2:
+        return podiumStyles.colors.second;
+      case 3:
         return podiumStyles.colors.third;
       default:
         return "#ccc";
@@ -157,24 +190,23 @@ const TopVillages = () => {
         ) : (
           podiumOrder.map((item, index) => {
             if (!item) return null;
-            const actualRank = topInnovations.indexOf(item) + 1;
-            const height = 100 - (index === 1 ? 0 : 20);
+            const height = item.rank === 1 ? 100 : item.rank === 2 ? 80 : 60;
             return (
               <div key={item.name} style={podiumStyles.item}>
                 <div style={podiumStyles.name}>{item.name}</div>
                 <div
                   style={{
                     ...podiumStyles.barBase,
-                    backgroundColor: getBarColor(index),
+                    backgroundColor: getBarColor(item.rank ?? 0),
                     height: `${height}px`,
                     position: "relative",
                     boxShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)",
                   }}
                 >
                   <div style={podiumStyles.rankLabel}>
-                    <span style={{ fontSize: "18pt" }}>{actualRank}</span>
+                    <span style={{ fontSize: "18pt" }}>{item.rank}</span>
                     <span style={{ fontSize: "10pt" }}>
-                      {getRankLabel(actualRank).replace(/[0-9]/g, "")}
+                      {getRankLabel(item.rank ?? 0).replace(/[0-9]/g, "")}
                     </span>
                   </div>
                 </div>

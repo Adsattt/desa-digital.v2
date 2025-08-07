@@ -190,6 +190,8 @@ const InfoCards = () => {
             calculateTrends(fromDate, toDate);
             setShowFilter(false);
           }}
+          initialFromDate={from}
+          initialToDate={to}
         />
       )}
     </Box>

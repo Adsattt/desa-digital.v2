@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Box, Text, Flex, Link, Spinner } from "@chakra-ui/react";
-import { NavLink } from "react-router-dom";
 import { getFirestore, collection, query, where, getDocs } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { NavLink } from "react-router-dom";
 import { paths } from "Consts/path";
 import {
   podiumWrapperStyle,
@@ -13,7 +13,6 @@ import {
   podiumContainerStyle,
 } from "./_topVillagesStyle";
 
-// Optional type for better clarity
 type TopItem = {
   name: string;
   count: number;
@@ -24,6 +23,7 @@ type TopItem = {
 const TopVillages = () => {
   const [topVillages, setTopVillages] = useState<TopItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [inovatorProfile, setInovatorProfile] = useState<{ namaInovator?: string } | null>(null);
 
   useEffect(() => {
     const fetchTopVillages = async () => {
@@ -35,23 +35,22 @@ const TopVillages = () => {
       if (!currentUser) return console.warn("User not authenticated");
 
       try {
-        // Get profilInovator for current user
-        const profilQuery = query(
+        const innovatorQuery = query(
           collection(db, "innovators"),
           where("id", "==", currentUser.uid)
         );
-        const profilSnapshot = await getDocs(profilQuery);
+        const innovatorSnapshot = await getDocs(innovatorQuery);
 
-        if (profilSnapshot.empty) {
+        if (innovatorSnapshot.empty) {
           setTopVillages([]);
           setLoading(false);
           return;
         }
 
-        const profilDoc = profilSnapshot.docs[0];
+        const profilDoc = innovatorSnapshot.docs[0];
         const inovatorId = profilDoc.id;
+        setInovatorProfile(profilDoc.data());
 
-        // Get inovasi where inovatorId matches
         const inovasiQuery = query(
           collection(db, "innovations"),
           where("innovatorId", "==", inovatorId)
@@ -66,7 +65,6 @@ const TopVillages = () => {
 
         const inovasiIds = inovasiSnapshot.docs.map((doc) => doc.id);
 
-        // Chunk inovasiIds into groups of 10
         const chunkArray = <T,>(arr: T[], size: number): T[][] => {
           const chunks: T[][] = [];
           for (let i = 0; i < arr.length; i += size) {
@@ -87,7 +85,6 @@ const TopVillages = () => {
           desaDocs.push(...snapshot.docs.map((doc) => doc.data()));
         }
 
-        // Count namaDesa occurrences
         const countMap: Record<string, number> = {};
         desaDocs.forEach((item) => {
           const namaDesa = item.namaDesa;
@@ -96,23 +93,56 @@ const TopVillages = () => {
           }
         });
 
-        // Sort and get top 3
-        const sortedByFrequency = Object.entries(countMap)
+        const sorted = Object.entries(countMap)
           .sort((a, b) => {
-            if (b[1] === a[1]) {
-              return a[0].localeCompare(b[0]); // Alphabetical ascending
-            }
-            return b[1] - a[1]; // Descending by count
+            if (b[1] === a[1]) return a[0].localeCompare(b[0]);
+            return b[1] - a[1];
           })
           .slice(0, 3)
-          .map(([name, count], index) => ({
-            name,
-            count,
-            rank: index + 1,
-            label: `${index + 1}${["st", "nd", "rd"][index] || "th"}`,
-          }));
+          .map(([name, count]) => ({ name, count }));
 
-        setTopVillages(sortedByFrequency);
+        if (sorted.length === 0) {
+          setTopVillages([]);
+          setLoading(false);
+          return;
+        }
+
+        // Detect if all counts are the same
+        const allSameCount = sorted.every((item) => item.count === sorted[0].count);
+
+        let ranked: TopItem[];
+
+        if (allSameCount) {
+          ranked = sorted.map((item) => ({
+            ...item,
+            rank: 1,
+            label: "1st",
+          }));
+        } else {
+          // Assign equal ranks where applicable
+          let currentRank = 1;
+          let lastCount: number | null = null;
+          let sameRankCount = 0;
+
+          ranked = sorted.map((item, index) => {
+            if (lastCount === null || item.count !== lastCount) {
+              currentRank += sameRankCount;
+              sameRankCount = 1;
+            } else {
+              sameRankCount++;
+            }
+
+            lastCount = item.count;
+
+            return {
+              ...item,
+              rank: currentRank,
+              label: `${currentRank}${["st", "nd", "rd"][currentRank - 1] || "th"}`,
+            };
+          });
+        }
+
+        setTopVillages(ranked);
       } catch (error) {
         console.error("Error fetching top villages:", error);
         setTopVillages([]);
@@ -127,7 +157,7 @@ const TopVillages = () => {
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center" mb="10px">
-        <Text {...titleText}>Desa Unggulan</Text>
+        <Text {...titleText}>Desa Unggulan {inovatorProfile?.namaInovator || "Inovator"}</Text>
         <Link as={NavLink} to={paths.DASHBOARD_INNOVATOR_VILLAGE} {...linkText}>
           Lihat Dashboard
         </Link>
@@ -139,10 +169,36 @@ const TopVillages = () => {
             <Spinner size="lg" />
           </Flex>
         ) : (
-          <Flex {...podiumWrapperStyle}>
-            {topVillages.map((item) => {
-              const height = item.rank === 1 ? "120px" : item.rank === 2 ? "100px" : "80px";
-              const order = item.rank === 1 ? 2 : item.rank === 2 ? 1 : 3;
+          <Flex
+            {...podiumWrapperStyle}
+            justify={
+              topVillages.length === 1
+                ? "center"
+                : topVillages.length === 2
+                ? "space-around"
+                : "center"
+            }
+          >
+            {topVillages.map((item, _, arr) => {
+              const allSameRank = arr.every((el) => el.rank === 1);
+
+              const height = allSameRank
+                ? "100px"
+                : item.rank === 1
+                ? "120px"
+                : item.rank === 2
+                ? "100px"
+                : "80px";
+
+              // Terapkan order hanya jika ada 3 item
+              const order =
+                arr.length === 3
+                  ? item.rank === 1
+                    ? 2
+                    : item.rank === 2
+                    ? 1
+                    : 3
+                  : undefined;
 
               const bgColor =
                 item.rank === 1
@@ -156,16 +212,12 @@ const TopVillages = () => {
                   key={item.name}
                   direction="column"
                   align="center"
-                  order={order}
+                  {...(order ? { order } : {})}
                 >
                   <Text fontWeight="semibold" mb={2} textAlign="center" fontSize="15">
                     {item.name}
                   </Text>
-                  <Box
-                    {...cardStyle(item.rank)}
-                    height={height}
-                    bg={bgColor}
-                  >
+                  <Box {...cardStyle(item.rank)} height={height} bg={bgColor}>
                     <Text {...rankText}>
                       <Box as="span" fontSize="25" fontWeight="bold">
                         {item.rank}
