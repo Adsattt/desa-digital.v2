@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
-import SearchPage from "./pages/home/components/search/SearchPage";
 import Navbar from "./components/navbar";
 import Home from "./pages/home";
 import Innovation from "./pages/innovation";
@@ -47,7 +46,8 @@ import KlaimInovasiManual from "./pages/village/klaimInovasi/manual";
 import DetailKlaim from "./pages/village/detailKlaim";
 import PengajuanKlaim from "./pages/village/pengajuanKlaim";
 import ProfileVillage from "./pages/village/profile";
-import { Bounce, ToastContainer } from "react-toastify";
+import SearchPage from "./pages/home/components/search/SearchPage";
+import { Bounce, ToastContainer } from "react-toastify"; 
 import InovationForm from "./pages/innovation/add/InovationForm";
 import DashboardInnovator from "./pages/dashboard-innovator-home";
 import DashboardInnovatorInnovation from "./pages/dashboard-innovator-innovation";
@@ -56,6 +56,7 @@ import DashboardMinistry from "./pages/dashboard-ministry-home";
 import DashboardMinistryInnovation from "./pages/dashboard-ministry-innovation";
 import DashboardMinistryInnovator from "./pages/dashboard-ministry-innovator";
 import DashboardMinistryVillage from "./pages/dashboard-ministry-village";
+
 
 const queryClient = new QueryClient();
 

@@ -4,39 +4,60 @@ import first from "@public/icons/first.svg";
 import second from "@public/icons/seccond.svg";
 import third from "@public/icons/third.svg";
 import banner from "@public/images/banner-unggulan.svg";
-import { collection, DocumentData, getDocs } from "firebase/firestore";
+import {
+  collection,
+  DocumentData,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { firestore } from "../../firebase/clientApp";
 
 const BestBanner: React.FC = () => {
   const [visibleBox, setVisibleBox] = useState(0);
   const [villages, setVillages] = useState<DocumentData[]>([]);
+  const [innovators, setInnovators] = useState<DocumentData[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const villagesRef = collection(firestore, "villages");
-      const snapShot = await getDocs(villagesRef);
-      const villagesData = snapShot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          ...data,
-          namaDesa: data.lokasi?.desaKelurahan?.label || "",
-          jumlahInovasiDiterapkan: data.jumlahInovasiDiterapkan || 0,
-        };
-      });
+    const fetchTopData = async () => {
+      const innovatorQuery = query(
+        collection(firestore, "innovators"),
+        // where("status", "==", "Terverifikasi"),
+        orderBy("jumlahDesaDampingan", "desc"),
+        limit(3)
+      )
+
+      const villageQuery = query(
+        collection(firestore, "villages"),
+        // where("status", "==", "Terverifikasi"),
+        orderBy("jumlahInovasiDiterapkan", "desc"),
+        limit(3)  
+      )
+
+      const [innovatorSnapshot, villageSnapshot] = await Promise.all([
+        getDocs(innovatorQuery),
+        getDocs(villageQuery),
+      ]);
+
+      const innovatorsData = innovatorSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      const villagesData = villageSnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setInnovators(innovatorsData);
       setVillages(villagesData);
-    };
-    fetchData();
+    }
+    fetchTopData();
   }, []);
 
-  const top3Villages = [...villages]
-    .sort((a, b) => {
-          if (b.jumlahInovasiDiterapkan !== a.jumlahInovasiDiterapkan) {
-            return b.jumlahInovasiDiterapkan - a.jumlahInovasiDiterapkan; 
-          }
-          return a.namaDesa.localeCompare(b.namaDesa); 
-        })
-    .slice(0, 3);
-
+  console.log("Innovators:", innovators);
+  console.log("Villages:", villages);
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setVisibleBox((prev) => (prev === 0 ? 1 : 0));
@@ -61,6 +82,7 @@ const BestBanner: React.FC = () => {
               position="absolute"
             >
               <Flex justifyContent="space-between">
+                {innovators[1] && (
                 <Box justifyItems="center" mt="21px">
                   <Image src={second} />
                   <Text
@@ -72,9 +94,12 @@ const BestBanner: React.FC = () => {
                     height="auto"
                     color="#1F2937"
                   >
-                    Habibi Garden
+                    {innovators[1].namaInovator}
                   </Text>
                 </Box>
+                )}
+
+                {innovators[0] && (
                 <Box justifyItems="center">
                   <Image src={first} />
                   <Text
@@ -83,12 +108,14 @@ const BestBanner: React.FC = () => {
                     lineHeight="140%"
                     textAlign="center"
                     width="90px"
-                    height="auto"
                     color="#1F2937"
                   >
-                    eFishery
+                    {innovators[0].namaInovator}
                   </Text>
                 </Box>
+                )}
+
+                {innovators[2] && (
                 <Box justifyItems="center" mt="21px">
                   <Image src={third} />
                   <Text
@@ -97,12 +124,12 @@ const BestBanner: React.FC = () => {
                     lineHeight="140%"
                     textAlign="center"
                     width="90px"
-                    height="auto"
                     color="#1F2937"
                   >
-                    Inagria
+                    {innovators[2].namaInovator}
                   </Text>
                 </Box>
+              )}
               </Flex>
             </Box>
           </Fade>
@@ -117,7 +144,7 @@ const BestBanner: React.FC = () => {
             position="absolute"
           >
             <Flex justifyContent="space-between">
-              {top3Villages[1] && (
+              {villages[1] && (
                 <Box justifyItems="center" mt="21px">
                   <Image src={second} />
                   <Text
@@ -128,12 +155,12 @@ const BestBanner: React.FC = () => {
                     width="90px"
                     color="#1F2937"
                   >
-                    {top3Villages[1].namaDesa}
+                    {villages[1].namaDesa}
                   </Text>
                 </Box>
               )}
 
-              {top3Villages[0] && (
+              {villages[0] && (
                 <Box justifyItems="center">
                   <Image src={first} />
                   <Text
@@ -144,12 +171,12 @@ const BestBanner: React.FC = () => {
                     width="90px"
                     color="#1F2937"
                   >
-                    {top3Villages[0].namaDesa}
+                    {villages[0].namaDesa}
                   </Text>
                 </Box>
               )}
 
-              {top3Villages[2] && (
+              {villages[2] && (
                 <Box justifyItems="center" mt="21px">
                   <Image src={third} />
                   <Text
@@ -160,7 +187,7 @@ const BestBanner: React.FC = () => {
                     width="90px"
                     color="#1F2937"
                   >
-                    {top3Villages[2].namaDesa}
+                    {villages[2].namaDesa}
                   </Text>
                 </Box>
               )}

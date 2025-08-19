@@ -300,7 +300,7 @@ const KlaimInovasi: React.FC = () => {
         draggable: true,
         progress: undefined,
       });
-      // onRecOpen();
+      onRecOpen();
     } catch (error) {
       setError("Failed to submit claim");
     } finally {
