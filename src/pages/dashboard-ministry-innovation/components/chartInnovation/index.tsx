@@ -1,30 +1,31 @@
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Text,
   Flex,
   Image,
   Spinner,
-  Tooltip,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
   IconButton,
+  useDisclosure,
 } from "@chakra-ui/react";
 
-import { useEffect, useState } from "react";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
-
 import {
-  chartContainerStyle, chartWrapperStyle,
-  barGroupStyle, barStyle, labelStyle,
-  legendContainerStyle, legendItemStyle, legendDotStyle,
-  titleStyle, xAxisStyle, yAxisStyle,
-  yAxisLabelStyle, yAxisWrapperStyle,
-  chartBarContainerStyle, barAndLineWrapperStyle,
-} from "./_chartInnovationStyle";
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
-import YearFilter from "./dateFilter";
+import { getFirestore, collection, getDocs } from "firebase/firestore";
+import YearRangeFilter from "./dateFilter";
 import filterIcon from "../../../../assets/icons/icon-filter.svg";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
@@ -59,68 +60,93 @@ const truncateLabel = (label: string, maxLength = 5): string => {
   return label.length > maxLength ? label.slice(0, maxLength) + "..." : label;
 };
 
-const ChartInnovation3 = () => {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [chartData, setChartData] = useState<ChartGroup[]>([]);
+const innovationCategories = [
+  "Pertanian Cerdas",
+  "Sistem Informasi",
+  "Pemasaran Agri-Food dan E-Commerce",
+  "E-Government",
+  "E-Tourism",
+  "Layanan Keuangan", 
+  "Layanan Sosial",
+  "Pengembangan Masyarakat dan Ekonomi",
+  "UMKM",
+  "Pengelolaan Sumber Daya",
+];
+
+const colors = [
+  "#244E3B",
+  "#347357",
+  "#009670ff",
+  "#3a5da8ff",
+  "#5772a0ff",
+  "#73922aff",
+  "#bd7517ff",
+  "#F26419",
+  "#B33F62",
+  "#690d5dff",
+];
+
+// --- import statements tetap sama seperti sebelumnya ---
+
+const ChartInnovation = () => {
+  const currentYear = new Date().getFullYear();
+  const [fromYear, setFromYear] = useState(currentYear - 5);
+  const [toYear, setToYear] = useState(currentYear);
+  const [chartData, setChartData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [maxValue, setMaxValue] = useState(0);
   const [inovasiDetails, setInovasiDetails] = useState<any[]>([]);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       const snapshot = await getDocs(collection(db, "innovations"));
-      const countPerCategory: Record<string, number> = {};
+      const dataPerYear: Record<number, Record<string, number>> = {};
       const allData: any[] = [];
 
       snapshot.forEach((doc) => {
         const data = doc.data();
-        if (!data.kategori || !data.tahunDibuat) return;
-        if (data.tahunDibuat > selectedYear) return;
-
+        const year = data.tahunDibuat;
         const kategori = data.kategori;
-        countPerCategory[kategori] = (countPerCategory[kategori] || 0) + 1;
+
+        if (!year || !kategori) return;
+        if (year < fromYear || year > toYear) return;
+
+        if (!dataPerYear[year]) {
+          dataPerYear[year] = {};
+          innovationCategories.forEach((cat) => {
+            dataPerYear[year][cat] = 0;
+          });
+        }
+        if (innovationCategories.includes(kategori)) {
+          dataPerYear[year][kategori] += 1;
+        }
 
         allData.push(data);
       });
 
-      const sortedEntries = Object.entries(countPerCategory).sort(
-        (a, b) => b[1] - a[1]
-      );
+      const formatted = Object.entries(dataPerYear)
+        .map(([year, counts]) => ({ year: +year, ...counts }))
+        .sort((a, b) => a.year - b.year);
 
-      const formattedData = sortedEntries.map(
-        ([category, count], index) => ({
-          category,
-          values: [
-            {
-              id: 1,
-              value: count,
-              color: "#568A73",
-            },
-          ],
-        })
-      );
-
-      const maxCount = Math.max(...Object.values(countPerCategory), 10);
-
-      setChartData(formattedData);
-      setMaxValue(maxCount);
+      setChartData(formatted);
       setInovasiDetails(allData);
       setLoading(false);
     };
 
     fetchData();
-  }, [selectedYear]);
+  }, [fromYear, toYear]);
 
-  const isEmpty =
-    chartData.length === 0 ||
-    chartData.every(group =>
-      group.values.every(item => item.value === 0)
-    );
+  const isEmpty = chartData.length === 0;
 
-  // Export to PDF
-  const exportToPDF = (data: any[], selectedYear: number) => {
+  const handleFilterApply = (from: number, to: number) => {
+    setFromYear(from);
+    setToYear(to);
+  };
+
+  // --- Export to PDF per range tahun ---
+  const exportToPDF = () => {
     const doc = new jsPDF();
     const downloadDate = new Date().toLocaleDateString("id-ID", {
       day: "numeric",
@@ -147,76 +173,108 @@ const ChartInnovation3 = () => {
     let y = 42;
     const labelX = 14;
 
-    const grouped: Record<string, any[]> = data.reduce((acc, curr) => {
-      const key = curr.kategori || "Tidak Diketahui";
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(curr);
-      return acc;
-    }, {});
-
-    for (const [kategori, entries] of Object.entries(grouped)) {
-      doc.setFont("helvetica", "bold");
-      doc.text(`Data Inovasi Tahun ${selectedYear}, Kategori: ${kategori}`, labelX, y);
+    // Loop per tahun
+    for (const yearData of chartData) {
+      doc.text(`Data Inovasi Tahun ${yearData.year}`, labelX, y);
       y += 6;
+
+      const body: any[] = [];
+      innovationCategories.forEach((cat) => {
+        const filtered = inovasiDetails.filter(
+          (item) => item.kategori === cat && Number(item.tahunDibuat) === Number(yearData.year)
+        );
+        filtered.forEach((item: any, idx: number) => {
+          body.push([
+            idx + 1,
+            item.namaInovasi || "-",
+            item.namaInnovator || "-",
+            item.tahunDibuat || "-",
+          ]);
+        });
+      });
+
+      if (body.length === 0) {
+        body.push(["-", "-", "-", "-"]);
+      }
 
       autoTable(doc, {
         startY: y,
-        head: [
-          ["No", "Nama Inovasi", "Nama Inovator", "Tahun Dibuat"],
-        ],
-        body: entries.map((item, i) => [
-          i + 1,
-          item.namaInovasi || "-",
-          item.namaInnovator || "-",
-          item.tahunDibuat || "-",
-        ]),
-        headStyles: {
-          fillColor: [0, 128, 0],
-          textColor: 255,
-          fontStyle: "bold",
-        },
-        styles: {
-          fontSize: 10,
-        },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 70 },
-          2: { cellWidth: 60 },
-          3: { cellWidth: 30 },
-        },
+        head: [["No", "Nama Inovasi", "Nama Inovator", "Tahun Dibuat"]],
+        body: body,
+        headStyles: { fillColor: [0, 128, 0], textColor: 255, fontStyle: "bold" },
+        styles: { fontSize: 10 },
+        columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 70 }, 2: { cellWidth: 60 }, 3: { cellWidth: 30 } },
         margin: { top: 10 },
       } as any);
 
       y = (doc as any).lastAutoTable.finalY + 15;
     }
 
-    doc.save(`inovasi_per_kategori_${selectedYear}.pdf`);
+    doc.save(`inovasi_per_kategori_${fromYear}-${toYear}.pdf`);
   };
 
-  // Export to Excel
+  // --- Export to Excel per range tahun ---
   const exportToXLSX = () => {
-    const worksheetData = chartData.map((group) => ({
-      Kategori: group.category,
-      Jumlah: group.values[0].value,
-    }));
+    const worksheetData: any[] = [];
+    chartData.forEach((yearData) => {
+      const row: any = { Tahun: yearData.year };
+      innovationCategories.forEach((cat) => {
+        row[cat] = yearData[cat] || 0;
+      });
+      worksheetData.push(row);
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Inovasi");
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, `inovasi_desa_${selectedYear}.xlsx`);
+    saveAs(blob, `inovasi_desa_${fromYear}-${toYear}.xlsx`);
+  };
+
+  // Custom tooltip, hanya ambil kategori yang sedang di-hover
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length && activeKey) {
+      const item = payload.find((p: any) => p.dataKey === activeKey);
+      if (!item) return null;
+
+      return (
+        <Box
+          p={2}
+          bg="white"
+          borderRadius="md"
+          boxShadow="md"
+          fontSize="11px"
+          border="1px solid #E2E8F0"
+        >
+          <Text fontWeight="semibold" color="gray.700">
+            Tahun {label}
+          </Text>
+          <Flex align="center" mt={1}>
+            <Box
+              w="10px"
+              h="10px"
+              borderRadius="full"
+              bg={item.color}
+              mr={2}
+            />
+            <Text color="gray.600">
+              {item.name}: <b>{item.value}</b>
+            </Text>
+          </Flex>
+        </Box>
+      );
+    }
+    return null;
   };
 
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Jumlah Inovasi Tahun {selectedYear}</Text>
+        <Text fontSize="m" fontWeight="bold" whiteSpace="pre-line">
+          Pertumbuhan Inovasi Tahun {"\n"} {fromYear} – {toYear}
+        </Text>
         <Flex justify="flex-end" align="center">
           <Image
             src={filterIcon}
@@ -224,92 +282,108 @@ const ChartInnovation3 = () => {
             boxSize="16px"
             cursor="pointer"
             ml={2}
-            onClick={() => setIsFilterOpen(true)}
+            onClick={onOpen}
           />
           <Menu>
             <MenuButton
               as={IconButton}
-              aria-label="Download Options"
+              aria-label="Download"
               icon={<Image src={downloadIcon} alt="Download" boxSize="16px" />}
               variant="ghost"
-              ml={2}
+              _hover={{ bg: 'gray.100' }}
             />
-            <MenuList fontSize="sm">
-              <MenuItem onClick={() => exportToPDF(inovasiDetails, selectedYear)}>
-                Download PDF
-              </MenuItem>
+            <MenuList>
+              <MenuItem onClick={exportToPDF}>Download PDF</MenuItem>
               <MenuItem onClick={exportToXLSX}>Download Excel</MenuItem>
             </MenuList>
           </Menu>
         </Flex>
       </Flex>
 
-      {loading ? (
-        <Flex justify="center" align="center" height="200px">
-          <Spinner size="lg" />
-        </Flex>
-      ) : (
-        <Box {...chartContainerStyle}>
-          <Flex {...legendContainerStyle}>
-            <Flex {...legendItemStyle}>
-              <Box {...legendDotStyle} bg="#568A73" />
-              <Text>Jumlah Inovasi</Text>
-            </Flex>
+      <Box
+        bg="#D1EDE1"
+        borderRadius="lg"
+        pt="5px"
+        pb="1px"
+        boxShadow="lg"
+        border="2px solid"
+        borderColor="gray.200"
+        mt={3}
+        height="350px"
+      >
+
+        {loading ? (
+          <Flex justify="center" align="center" h="200px">
+            <Spinner size="lg" />
           </Flex>
-
-          {isEmpty ? (
-            <Text textAlign="center" mt={10} fontWeight="medium" fontSize="15">
-              Belum ada data untuk tahun yang dipilih.
+        ) : isEmpty ? (
+          <Flex justify="center" align="center" h="100%">
+            <Text fontSize="sm" textAlign="center">
+              Belum ada data untuk rentang tahun ini
             </Text>
-          ) : (
-            <Box {...chartWrapperStyle}>
-              <Flex {...yAxisWrapperStyle}>
-                {getYAxisLabels(maxValue, 5).map((label, index) => (
-                  <Text key={index} {...yAxisLabelStyle}>
-                    {label}
-                  </Text>
-                ))}
-              </Flex>
+          </Flex>
+        ) : (
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart
+              data={chartData}
+              margin={{ top: 20, right: 40, left: 1, bottom: 15}}
+              barSize={25}
+            >
+              <CartesianGrid stroke="#E2E8F0" vertical={false} />
+              <XAxis
+                dataKey="year"
+                label={{ value: "Tahun", position: "insideBottom", fontSize: 10, dy: 5 }}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis
+                label={{
+                  value: "Jumlah Inovasi",
+                  angle: -90, position: "insideLeft", fontSize: 10, dx: 10, dy: 30
+                }}
+                tick={{ fontSize: 10 }}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "transparent" }}
+              />
+              <Legend
+                verticalAlign="top"
+                align="center"
+                iconType="circle"
+                iconSize={10}
+                wrapperStyle={{
+                  fontSize: 12,
+                  color: "#000",
+                  paddingBottom: "20px",
+                  marginTop: "-10px",
+                  marginLeft: "20px",
+                }}
+              />
+              {innovationCategories.map((cat, i) => (
+                <Bar
+                  key={cat}
+                  dataKey={cat}
+                  stackId="a"
+                  fill={colors[i]}
+                  radius={[4, 4, 0, 0]}
+                  onMouseOver={() => setActiveKey(cat)}
+                  onMouseOut={() => setActiveKey(null)}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </Box>
 
-              <Flex {...chartBarContainerStyle}>
-                <Box {...yAxisStyle} />
-                <Flex {...barAndLineWrapperStyle}>
-                  {chartData.map((group, groupIndex) => (
-                    <Box key={groupIndex} {...barGroupStyle}>
-                      {group.values.map((item: BarValue) => (
-                        <Tooltip
-                          key={item.id}
-                          label={`${group.category}: ${item.value} inovasi`}
-                          placement="top"
-                          openDelay={300}
-                          hasArrow
-                        >
-                          <Box
-                            {...barStyle}
-                            height={`${(item.value / maxValue) * 100}%`}
-                            bg={item.color}
-                            cursor="pointer"
-                          />
-                        </Tooltip>
-                      ))}
-                      <Text {...labelStyle}>{truncateLabel(group.category)}</Text>
-                    </Box>
-                  ))}
-                  <Box {...xAxisStyle} />
-                </Flex>
-              </Flex>
-            </Box>
-          )}
-        </Box>
-      )}
-
-      <YearFilter
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        onApply={(year) => setSelectedYear(year)}
+      <YearRangeFilter
+        isOpen={isOpen}
+        onClose={onClose}
+        onApply={handleFilterApply}
+        initialFrom={fromYear}
+        initialTo={toYear}
       />
     </Box>
   );
 };
 
-export default ChartInnovation3;
+export default ChartInnovation;

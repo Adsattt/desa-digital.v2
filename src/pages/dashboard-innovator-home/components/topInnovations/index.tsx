@@ -53,20 +53,61 @@ const TopInnovations = () => {
         );
         const inovasiSnapshot = await getDocs(inovasiQuery);
 
-        const inovasiData = inovasiSnapshot.docs.map((doc) => doc.data());
-
-        const countInovasi = inovasiData
-          .filter((item) => item.namaInovasi && typeof item.jumlahKlaim === "number")
-          .map((item) => ({
-            name: item.namaInovasi,
-            count: item.jumlahKlaim,
-          }));
-
-        if (countInovasi.length === 0) {
+        if (inovasiSnapshot.empty) {
           setTopInnovations([]);
+          setLoading(false);
           return;
         }
 
+        // Map inovasiId -> namaInovasi
+        const inovasiMap: Record<string, string> = {};
+        const inovasiIds = inovasiSnapshot.docs.map((doc) => {
+          inovasiMap[doc.id] = doc.data().namaInovasi;
+          return doc.id;
+        });
+
+        // Query claimInnovations berdasarkan inovasiId
+        const chunkArray = <T,>(arr: T[], size: number): T[][] => {
+          const chunks: T[][] = [];
+          for (let i = 0; i < arr.length; i += size) {
+            chunks.push(arr.slice(i, i + size));
+          }
+          return chunks;
+        };
+
+        const chunks = chunkArray(inovasiIds, 10);
+        let claimDocs: { inovasiId?: string }[] = [];
+
+        for (const chunk of chunks) {
+          const claimQuery = query(
+            collection(db, "claimInnovations"),
+            where("inovasiId", "in", chunk)
+          );
+          const claimSnapshot = await getDocs(claimQuery);
+          claimDocs.push(...claimSnapshot.docs.map((doc) => doc.data()));
+        }
+
+        // Hitung frekuensi inovasiId
+        const countMap: Record<string, number> = {};
+        claimDocs.forEach((item) => {
+          const inovasiId = item.inovasiId;
+          if (inovasiId) {
+            countMap[inovasiId] = (countMap[inovasiId] || 0) + 1;
+          }
+        });
+
+        const countInovasi = Object.entries(countMap).map(([id, count]) => ({
+          name: inovasiMap[id] || "Unknown",
+          count,
+        }));
+
+        if (countInovasi.length === 0) {
+          setTopInnovations([]);
+          setLoading(false);
+          return;
+        }
+
+        // Sorting & ranking
         const sorted = [...countInovasi].sort((a, b) => {
           if (b.count === a.count) return a.name.localeCompare(b.name);
           return b.count - a.count;
@@ -87,23 +128,18 @@ const TopInnovations = () => {
             label: "1st",
           }));
         } else {
-          // Rank manual dengan dukungan equal rank
+          // Saat nilai count berbeda
           let currentRank = 1;
           let lastCount: number | null = null;
-          let sameRankCount = 0;
 
-          ranked = topThree.map((item, index) => {
-            if (lastCount === null || item.count !== lastCount) {
-              currentRank += sameRankCount;
-              sameRankCount = 1;
-            } else {
-              sameRankCount++;
+          ranked = topThree.map((item) => {
+            if (lastCount !== null && item.count !== lastCount) {
+              currentRank++;
             }
-
             lastCount = item.count;
 
             return {
-              ...item,
+              ...item, //spread operator, menyalin data dalam ke dalam data baru
               rank: currentRank,
               label: `${currentRank}${["st", "nd", "rd"][currentRank - 1] || "th"}`
             };
@@ -138,41 +174,84 @@ const TopInnovations = () => {
         ) : (
           <Flex
             {...podiumWrapperStyle}
-            justify={
-              topInnovations.length === 1
-                ? "center"
-                : topInnovations.length === 2
-                ? "space-around"
-                : "center"
-            }
+            justify="center"
           >
             {topInnovations.map((item, idx, arr) => {
-              const allSameRank = arr.every((el) => el.rank === 1);
+              const allSameRank = arr.every(el => el.rank === arr[0].rank);
+              let height = "100px";
 
-              const height = allSameRank
-                ? "100px"
-                : item.rank === 1
-                ? "120px"
-                : item.rank === 2
-                ? "100px"
-                : "80px";
-                
-              // Terapkan order hanya jika ada 3 item
-              const order =
-                arr.length === 3
-                  ? item.rank === 1
-                    ? 2
-                    : item.rank === 2
-                    ? 1
-                    : 3
-                  : undefined;
+              // Tinggi podium
+              if (arr.length === 1) {
+                height = "120px";
+              } else if (arr.length === 2) {
+                if (allSameRank) {
+                  height = "100px";
+                } else {
+                  height = item.rank === 1 ? "120px" : "100px";
+                }
+              } else if (arr.length === 3) {
+                if (allSameRank) {
+                  height = "100px";
+                } else {
+                  height =
+                    item.rank === 1 ? "120px" :
+                    item.rank === 2 ? "100px" : "80px";
+                }
+              }
+
+              // Urutan/order untuk posisi podium
+              let order: number | undefined;
+              if (arr.length === 1) {
+                // Kasus satu data
+                order = 2; // tengah
+              } else if (arr.length === 2) {
+                // Kasus dua data
+                if (allSameRank) {
+                  // Data sama, di kiri & kanan
+                  order = idx === 0 ? 1 : 3;
+                } else {
+                  // #1 di kiri, #2 di kanan
+                  order = item.rank === 1 ? 1 : 3;
+                }
+              } else if (arr.length === 3) {
+                // Kasus tiga data
+                if (allSameRank) {
+                  // 3 data #1
+                  order = idx + 1; // urut default kiri-tengah-kanan
+                } else {
+                  const rank1Count = arr.filter(el => el.rank === 1).length;
+                  if (rank1Count === 1) {
+                    // 1 data #1 di tengah
+                    if (item.rank === 1) {
+                      order = 2;
+                    } else {
+                      // 2 data #2: satu di kiri (1) dan satu di kanan (3)
+                      const rank2Items = arr.filter(el => el.rank === 2);
+                      const thisIndexInRank2 = rank2Items.indexOf(item);
+                      order = thisIndexInRank2 === 0 ? 1 : 3;
+                    }
+                  } else if (rank1Count === 2) {
+                    // 2 data #1 di kiri & tengah
+                    if (item.rank === 1) {
+                      order = arr.indexOf(item) === 0 ? 1 : 2;
+                    } else {
+                      order = 3; // 1 data #2 di kanan
+                    }
+                  } else {
+                    // Rank 1, 2, 3 berbeda semua
+                    order =
+                      item.rank === 1
+                        ? 2 // tengah
+                        : item.rank === 2
+                        ? 1 // kiri
+                        : 3 // kanan
+                  }
+                }
+              }
 
               const bgColor =
-                item.rank === 1
-                  ? "#244E3B"
-                  : item.rank === 2
-                  ? "#347357"
-                  : "#568A73";
+                item.rank === 1 ? "#244E3B" :
+                item.rank === 2 ? "#347357" : "#568A73";
 
               return (
                 <Flex
@@ -180,6 +259,7 @@ const TopInnovations = () => {
                   direction="column"
                   align="center"
                   {...(order ? { order } : {})}
+                  mx={arr.length === 1 ? 4 : 2}
                 >
                   <Text fontWeight="semibold" mb={2} textAlign="center" fontSize="15">
                     {item.name}

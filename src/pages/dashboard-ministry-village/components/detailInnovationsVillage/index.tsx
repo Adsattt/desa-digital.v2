@@ -122,6 +122,14 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
           };
         });
 
+        combinedList.sort((a, b) => {
+          const tahunA = typeof a.tahun === "number" ? a.tahun : 0;
+          const tahunB = typeof b.tahun === "number" ? b.tahun : 0;
+
+          if (tahunB !== tahunA) return tahunB - tahunA; // tahun desc
+          return a.namaInovasi.localeCompare(b.namaInovasi); // nama inovasi asc
+        });
+
         setData(combinedList);
         setCurrentPage(1);
       } catch (error) {
@@ -280,18 +288,19 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
         <Text {...titleStyle}>
           Daftar Inovasi Desa {selectedVillage ? `${selectedVillage}` : ""}
         </Text>
-
-        <Flex justify="flex-end" align="center">
-          <Menu>
-            <MenuButton display="flex" alignItems="center" mr={2}>
-              <img src={downloadIcon} alt="Download" style={{ width: 16, height: 16 }} />
-            </MenuButton>
-            <MenuList>
-              <MenuItem onClick={handleDownloadPDF}>Download PDF</MenuItem>
-              <MenuItem onClick={handleDownloadXLSX}>Download Excel</MenuItem>
-            </MenuList>
-          </Menu>
-        </Flex>
+        {hasRowClicked && (
+          <Flex justify="flex-end" align="center">
+            <Menu>
+              <MenuButton display="flex" alignItems="center" mr={2}>
+                <img src={downloadIcon} alt="Download" style={{ width: 16, height: 16 }} />
+              </MenuButton>
+              <MenuList>
+                <MenuItem onClick={handleDownloadPDF}>Download PDF</MenuItem>
+                <MenuItem onClick={handleDownloadXLSX}>Download Excel</MenuItem>
+              </MenuList>
+            </Menu>
+          </Flex>
+        )}
       </Flex>
 
       {loading ? (
@@ -300,7 +309,7 @@ const DetailInnovationsVillage = ({ selectedVillage, hasRowClicked }: Props) => 
         </Flex>
       ) : !hasRowClicked ? (
         <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
-          Pilih baris pada tabel untuk melihat data tabel
+          Pilih baris pada tabel Daftar Desa untuk melihat data
         </Text>
       ) : data.length === 0 ? (
         <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">

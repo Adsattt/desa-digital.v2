@@ -200,7 +200,7 @@ const DetailVillages = ({ selectedCategory, onRowClick }: Props) => {
           </Text>
           {!selectedCategory && (
             <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
-              Pilih kategori pada diagram untuk melihat data tabel
+              Pilih kategori pada diagram Kategori Desa untuk melihat data
             </Text>
           )}
         </Box>

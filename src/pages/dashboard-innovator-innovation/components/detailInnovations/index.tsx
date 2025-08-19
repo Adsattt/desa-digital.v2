@@ -200,8 +200,16 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({ onSelectInnovatio
         );
 
         setImplementationData(
-          result.sort((a, b) => a.namaInovasi.localeCompare(b.namaInovasi))
+          result.sort((a, b) => {
+            if (b.jumlahDesa === a.jumlahDesa) {
+              // Kalau jumlahDesa sama, urutkan berdasarkan namaInovasi (A-Z)
+              return a.namaInovasi.localeCompare(b.namaInovasi);
+            }
+            // Kalau jumlahDesa berbeda, urutkan dari nilai yang terbesar
+            return b.jumlahDesa - a.jumlahDesa;
+          })
         );
+        
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

@@ -51,9 +51,9 @@ interface DesaPin {
   namaDesa: string;
   lat: number;
   lng: number;
-  inovasiId: string;
-  inovasiName?: string;
   provinsi: string;
+  inovasiId: string | null;
+  inovasiList: string[];
 }
 
 const cleanName = (name: string) => {
@@ -138,71 +138,117 @@ const MapVillages = () => {
       });
 
       const desaSnap = await getDocs(collection(db, "villages"));
+      const villages: any[] = [];
+
       const desaMap = new Map<string, any>();
       desaSnap.docs.forEach(doc => {
         const d = doc.data();
         const lokasi = d.lokasi || {};
 
-        desaMap.set(d.namaDesa, {
-          ...d,
+        const desaObj = {
+          desaId: d.userId,
+          namaDesa: d.namaDesa ?? "-",
+          latitude: d.latitude,
+          longitude: d.longitude,
+          kategori: d.kategori ?? "-",
+          idm: d.idm ?? "-",
+          potensiDesa: d.potensiDesa ?? "-",
           lokasi: {
             desaKelurahan: lokasi.desaKelurahan?.label ?? "-",
             kabupatenKota: lokasi.kabupatenKota?.label ?? "-",
             kecamatan: lokasi.kecamatan?.label ?? "-",
             provinsi: lokasi.provinsi?.label ?? "-",
           }
-        });
+        };
+
+        villages.push(desaObj);
+        desaMap.set(d.userId, desaObj);
+      });
+
+      const countByProvince: Record<string, number> = {};
+
+      villages.forEach((desa) => {
+        const provinsi = desa.lokasi.provinsi || "Unknown";
+        const provKey = cleanName(provinsi);
+        countByProvince[provKey] = (countByProvince[provKey] || 0) + 1;
       });
 
       const claimSnap = await getDocs(collection(db, "claimInnovations"));
+      const claimInnovations: any[] = claimSnap.docs.map(doc => doc.data());
+
       const exportTemp: any[] = [];
-      const pinsTemp: DesaPin[] = [];
-      const countByProvince: Record<string, number> = {};
 
-      for (const doc of claimSnap.docs) {
-        const d = doc.data();
-        const desaData = desaMap.get(d.namaDesa);
-        if (!desaData || desaData.latitude == null || desaData.longitude == null) continue;
+      const capitalizeWords = (str: string) =>
+        str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
 
-        const provinsi = desaData.lokasi.provinsi || "Unknown";
-        const provKey = cleanName(provinsi);
-        countByProvince[provKey] = (countByProvince[provKey] || 0) + 1;
+      villages.forEach((desa) => {
+        // Cek apakah desa X memiliki klaim inovasi 
+        const desaClaims = claimInnovations.filter(c => c.desaId === desa.desaId);
 
-        const inovasiInfo = inovasiMap.get(d.namaInovasi) || {
-          namaInovator: "-",
-          kategoriInovasi: "-",
-        };
+        if (desaClaims.length > 0) {
+          // Kalau ada klaim, buat data (1 desa per row)
+          const inovasiNames = desaClaims.map(c => c.namaInovasi).join(", ");
+          const inovatorNames = desaClaims.map(c => inovasiMap.get(c.namaInovasi)?.namaInovator || "-").join(", ");
+          const kategoriList = desaClaims.map(c => inovasiMap.get(c.namaInovasi)?.kategoriInovasi || "-").join(", ");
+          const tanggalList = desaClaims.map(c => c.tanggalPengajuan ?? "-").join(", ");
 
-        const capitalizeWords = (str: string) =>
-          str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+          exportTemp.push({
+            namaDesa: desa.namaDesa,
+            desaKelurahan: capitalizeWords(desa.lokasi?.desaKelurahan),
+            kecamatan: capitalizeWords(desa.lokasi?.kecamatan),
+            kabupatenKota: capitalizeWords(desa.lokasi?.kabupatenKota),
+            provinsi: capitalizeWords(desa.lokasi?.provinsi),
+            kategoriDesa: desa.kategori,
+            idm: desa.idm,
+            potensi: desa.potensiDesa,
+            namaInovasi: inovasiNames,
+            tanggalPengajuan: tanggalList,
+            namaInovator: inovatorNames,
+            kategoriInovasi: kategoriList,
+          });
+        } else {
+          // Kalau tidak ada klaim, tetap export dengan kolom inovasi kosong
+          exportTemp.push({
+            namaDesa: desa.namaDesa,
+            desaKelurahan: capitalizeWords(desa.lokasi?.desaKelurahan),
+            kecamatan: capitalizeWords(desa.lokasi?.kecamatan),
+            kabupatenKota: capitalizeWords(desa.lokasi?.kabupatenKota),
+            provinsi: capitalizeWords(desa.lokasi?.provinsi),
+            kategoriDesa: desa.kategori,
+            idm: desa.idm,
+            potensi: desa.potensiDesa,
+            namaInovasi: "-",
+            tanggalPengajuan: "-",
+            namaInovator: "-",
+            kategoriInovasi: "-",
+          });
+        }
+      });
 
-        exportTemp.push({
-          namaDesa: desaData.namaDesa ?? "-",
-          desaKelurahan: capitalizeWords(desaData.lokasi?.desaKelurahan ?? "-"),
-          kecamatan: capitalizeWords(desaData.lokasi?.kecamatan ?? "-"),
-          kabupatenKota: capitalizeWords(desaData.lokasi?.kabupatenKota ?? "-"),
-          provinsi: capitalizeWords(desaData.lokasi?.provinsi ?? "-"),
-          kategoriDesa: desaData.kategori ?? "-",
-          idm: desaData.idm ?? "-",
-          potensi: desaData.potensiDesa ?? "-",
-          namaInovasi: d.namaInovasi ?? "-",
-          tanggalPengajuan: d.tanggalPengajuan ?? "-",
-          namaInovator: inovasiInfo.namaInovator,
-          kategoriInovasi: inovasiInfo.kategoriInovasi,
-        });
+      exportTemp.sort((a, b) => a.namaDesa.localeCompare(b.namaDesa));
+      console.log("Exported Data:", exportTemp);
 
-        console.log("Exported Data:", exportTemp);
+      const pinsTemp: DesaPin[] = villages.map((desa) => ({
+        desaId: desa.desaId,
+        namaDesa: desa.namaDesa,
+        desaKelurahan: capitalizeWords(desa.lokasi?.desaKelurahan),
+        kecamatan: capitalizeWords(desa.lokasi?.kecamatan),
+        kabupatenKota: capitalizeWords(desa.lokasi?.kabupatenKota),
+        provinsi: capitalizeWords(desa.lokasi?.provinsi),
+        lat: desa.latitude,
+        lng: desa.longitude,
+        inovasiId: null,
+        inovasiList: [],
+      }));
 
-        pinsTemp.push({
-          desaId: doc.id,
-          namaDesa: desaData.namaDesa,
-          lat: desaData.latitude,
-          lng: desaData.longitude,
-          inovasiId: d.inovasiId || "",
-          inovasiName: d.namaInovasi,
-          provinsi: provinsi,
-        });
-      }
+      // Update kalau ada klaim inovasi
+      claimInnovations.forEach((claim) => {
+        const idx = pinsTemp.findIndex((p) => p.desaId === claim.desaId);
+        if (idx !== -1) {
+          pinsTemp[idx].inovasiId = claim.inovasiId ?? null;
+          pinsTemp[idx].inovasiList.push(claim.namaInovasi);
+        }
+      });
 
       setExportData(exportTemp);
       setDesaPins(pinsTemp);
@@ -348,11 +394,6 @@ const MapVillages = () => {
               attribution="&copy; OpenStreetMap contributors"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            {/* <GeoJSON
-              data={geoData as any}
-              style={(feature) => provinceStyle(feature, totals)}
-              onEachFeature={(feature, layer) => onEachFeature(feature, layer, totals)}
-            /> */}
             {Object.keys(totals).length > 0 && (
               <GeoJSON
                 data={geoData as any}
@@ -361,15 +402,16 @@ const MapVillages = () => {
               />
             )}
             {desaPins
-              .filter((desa) => selectedProvince ? desa.provinsi === selectedProvince : true)
-              .map((desa) => (
-                <Marker key={desa.desaId} position={[desa.lat, desa.lng]}>
-                  <Popup>
-                    <strong>{desa.namaDesa}</strong><br />
-                    Inovasi: {desa.inovasiName ?? "-"}
-                  </Popup>
-                </Marker>
-              ))}
+            .filter((desa) => !selectedProvince || cleanName(desa.provinsi) === cleanName(selectedProvince))
+            .map((desa) => (
+              <Marker key={desa.desaId} position={[desa.lat, desa.lng]}>
+                <Popup>
+                  <strong>{desa.namaDesa}</strong>
+                  <br />
+                  Inovasi: {desa.inovasiList.length > 0 ? desa.inovasiList.join(", ") : "-"}
+                </Popup>
+              </Marker>
+            ))}
           </MapContainer>
         </StyledMapBox>
         <Legend />
@@ -379,7 +421,7 @@ const MapVillages = () => {
         isOpen={isOpen}
         onClose={onClose}
         onApply={(province) => setSelectedProvince(province)}
-        provinces={[...new Set(exportData.map((item) => item.provinsi))].sort()}
+        provinces={[...new Set(desaPins.map((item) => item.provinsi))].sort()}
       />
     </Box>
   );

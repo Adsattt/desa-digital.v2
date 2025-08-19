@@ -55,34 +55,47 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
         return;
       }
 
-      setLoading(true);
-      const db = getFirestore();
+      try{
+        setLoading(true);
+        const db = getFirestore();
 
-      const inovasiSnap = await getDocs(collection(db, 'innovations'));
-      const inovasiList: Innovation[] = inovasiSnap.docs.map(doc => doc.data() as Innovation);
+        const inovasiSnap = await getDocs(collection(db, 'innovations'));
+        const inovasiList: Innovation[] = inovasiSnap.docs.map(doc => doc.data() as Innovation);
 
-      const normalize = (str: string) => str.replace(/\s+/g, '').toLowerCase();
-      const normalizedSelected = normalize(selectedCategory);
+        const normalize = (str?: string) => (str || '').replace(/\s+/g, '').toLowerCase();
+        const normalizedSelected = normalize(selectedCategory);
 
-      const matchingInovasi = inovasiList.filter(i =>
-        normalize(i.kategori).includes(normalizedSelected)
-      );
+        const matchingInovasi = inovasiList.filter(i =>
+          normalize(i.kategori) === normalizedSelected
+        );
 
-      const joinedData: JoinedData[] = matchingInovasi.map(i => ({
-        namaInovasi: i.namaInovasi,
-        namaInovator: i.namaInnovator,
-        jumlahKlaim: i.jumlahKlaim,
-        kategori: i.kategori,
-      }));
+        const joinedData: JoinedData[] = matchingInovasi.map(i => ({
+          namaInovasi: i.namaInovasi,
+          namaInovator: i.namaInnovator,
+          jumlahKlaim: i.jumlahKlaim ?? 0, // jika data kosong, set 0
+          kategori: i.kategori,
+        }));
 
-      setData(joinedData);
-      setCurrentPage(1);
-      setLoading(false);
+        // Sorting berdasarkan jumlahDesaDampingan, lalu namaInovasi
+        joinedData.sort((a, b) => {
+          if (b.jumlahKlaim !== a.jumlahKlaim) {
+            return b.jumlahKlaim - a.jumlahKlaim; // jumlah desa descending
+          }
+          return a.namaInovasi.localeCompare(b.namaInovasi); // nama inovasi ascending
+        });
+
+        setData(joinedData);
+        setCurrentPage(1);
+      } catch (err) {
+        console.error("Error fetching innovations:", err);
+        setData([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
   }, [selectedCategory]);
-
 
   const totalPages = Math.ceil(data.length / itemsPerPage);
   const currentData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -196,10 +209,10 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
     <Box p={4}>
       <Flex justify="space-between" mb={2}>
         <Box>
-          <Text {...titleStyle}>Daftar Inovasi {selectedCategory || '...'}</Text>
+          <Text {...titleStyle}>Daftar Inovasi {selectedCategory || ''}</Text>
           {!selectedCategory && (
             <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
-              Pilih kategori pada diagram untuk melihat data tabel
+              Pilih kategori pada diagram Kategori Inovasi untuk melihat data
             </Text>
           )}
         </Box>
@@ -211,6 +224,7 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
                 alt="Download"
                 boxSize="16px"
                 cursor="pointer"
+                mr={2}
               />
             </MenuButton>
             <MenuList fontSize="sm">
@@ -284,7 +298,11 @@ const DetailInnovations = ({ selectedCategory, onInnovationSelect }: Props) => {
                     )
                   )}
 
-                  <Button onClick={() => goToPage(currentPage + 1)} isDisabled={currentPage === totalPages} {...paginationButtonStyle}>
+                  <Button onClick={() =>
+                    goToPage(currentPage + 1)}
+                    isDisabled={currentPage === totalPages}
+                    {...paginationButtonStyle}
+                  >
                     <ChevronRightIcon />
                   </Button>
                 </Flex>

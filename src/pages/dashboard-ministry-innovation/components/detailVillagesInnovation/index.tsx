@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import {
-  Box, Flex, Text, Table, Thead, Tbody, Tr, Th, Td,
+  Box, Flex, Text, Table, Thead, Tbody, Tr, Th, Td, Button,
   TableContainer, Menu, MenuButton, MenuList, MenuItem, Image
 } from "@chakra-ui/react";
 import { getFirestore, collection, getDocs, query, where } from "firebase/firestore";
+import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import {
   titleStyle, tableHeaderStyle, tableCellStyle,
   tableContainerStyle, paginationContainerStyle,
@@ -18,17 +19,18 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 interface DetailVillagesInnovationProps {
-  selectedInovasi: string;
+  selectedInovasi: string | null;
+  hasRowClicked: boolean;
 }
 
 interface VillageRecord {
-  namaInovasi: string;
+  namaInovasi: string | null;
   namaInovator: string;
   namaDesa: string;
   tanggalPengajuan: string;
 }
 
-const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationProps) => {
+const DetailVillagesInnovation = ({ selectedInovasi, hasRowClicked }: DetailVillagesInnovationProps) => {
   const [data, setData] = useState<VillageRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -78,6 +80,14 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
             namaDesa: namaDesaCleaned,
             tanggalPengajuan: doc.data().createdAt?.toDate().getFullYear(),
           };
+        });
+
+        records.sort((a, b) => {
+          const tahunA = typeof a.tanggalPengajuan === "number" ? a.tanggalPengajuan : 0;
+          const tahunB = typeof b.tanggalPengajuan === "number" ? b.tanggalPengajuan : 0;
+
+          if (tahunB !== tahunA) return tahunB - tahunA; // tahun desc
+          return a.namaDesa.localeCompare(b.namaDesa); // nama desa asc
         });
 
         setData(records);
@@ -216,7 +226,7 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
         <Text {...titleStyle}>
-          Daftar Desa Digital dari {selectedInovasi || '...'}
+          Daftar Desa Digital {selectedInovasi || ''}
         </Text>
         <Flex>
           {selectedInovasi && (
@@ -227,6 +237,7 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
                   alt="Download"
                   boxSize="16px"
                   cursor="pointer"
+                  mr={2}
                 />
               </MenuButton>
               <MenuList>
@@ -238,28 +249,34 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
         </Flex>
       </Flex>
 
-      {!data.length ? (
-        <Text fontStyle="italic" color="gray.500" textAlign="center" mt={6}>
-          Pilih baris pada tabel untuk melihat data tabel
+      {!hasRowClicked ? (
+        <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
+          Pilih baris pada tabel Daftar Inovasi untuk melihat data
         </Text>
       ) : loading ? (
         <Text>Loading...</Text>
+      ) : data.length === 0 ? (
+        <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
+          Data tidak tersedia
+        </Text>
       ) : (
         <>
           <TableContainer {...tableContainerStyle}>
             <Table variant="simple" size="sm" sx={{ tableLayout: "fixed" }}>
               <Thead>
                 <Tr>
-                  <Th sx={tableHeaderStyle}>Nama Inovasi</Th>
+                  <Th sx={tableHeaderStyle}>No</Th>
                   <Th sx={tableHeaderStyle}>Inovator</Th>
                   <Th sx={tableHeaderStyle}>Nama Desa</Th>
-                  <Th sx={tableHeaderStyle}>Tanggal Pengajuan</Th>
+                  <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
                 </Tr>
               </Thead>
               <Tbody>
                 {currentData.map((item, index) => (
                   <Tr key={index}>
-                    <Td sx={tableCellStyle}>{item.namaInovasi}</Td>
+                    <Td sx={tableCellStyle}>
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </Td>
                     <Td sx={tableCellStyle}>{item.namaInovator}</Td>
                     <Td sx={tableCellStyle}>{item.namaDesa}</Td>
                     <Td sx={tableCellStyle}>{item.tanggalPengajuan}</Td>
@@ -271,7 +288,32 @@ const DetailVillagesInnovation = ({ selectedInovasi }: DetailVillagesInnovationP
 
           {totalPages > 1 && (
             <Flex sx={paginationContainerStyle}>
-              {/* Pagination buttons logic here */}
+              <Button onClick={() => goToPage(currentPage - 1)} isDisabled={currentPage === 1} {...paginationButtonStyle}>
+                <ChevronLeftIcon />
+              </Button>
+
+              {getPageNumbers().map((page, i) =>
+                page === '...' ? (
+                  <Box key={`ellipsis-${i}`} {...paginationEllipsisStyle}>...</Box>
+                ) : (
+                  <Button
+                    key={`page-${page}`}
+                    onClick={() => goToPage(Number(page))}
+                    {...paginationButtonStyle}
+                    {...(currentPage === page ? paginationActiveButtonStyle : {})}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+
+              <Button onClick={() =>
+                goToPage(currentPage + 1)}
+                isDisabled={currentPage === totalPages}
+                {...paginationButtonStyle}
+              >
+                <ChevronRightIcon />
+              </Button>
             </Flex>
           )}
         </>

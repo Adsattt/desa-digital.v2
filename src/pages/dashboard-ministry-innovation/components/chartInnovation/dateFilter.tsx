@@ -9,18 +9,32 @@ import {
   Button,
   Select,
   Flex,
-  Text,
+  Text
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-interface YearFilterProps {
+const YearRangeFilter = ({
+  isOpen,
+  onClose,
+  onApply,
+  initialFrom,
+  initialTo
+}: {
   isOpen: boolean;
   onClose: () => void;
-  onApply: (year: number) => void;
-}
+  onApply: (from: number, to: number) => void;
+  initialFrom: number;
+  initialTo: number;
+}) => {
+  const [from, setFrom] = useState(initialFrom);
+  const [to, setTo] = useState(initialTo);
 
-const YearFilter = ({ isOpen, onClose, onApply }: YearFilterProps) => {
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  useEffect(() => {
+    if (isOpen) {
+      setFrom(initialFrom);
+      setTo(initialTo);
+    }
+  }, [isOpen, initialFrom, initialTo]);
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 50 }, (_, i) => currentYear - 49 + i);
@@ -29,24 +43,40 @@ const YearFilter = ({ isOpen, onClose, onApply }: YearFilterProps) => {
     <Modal isOpen={isOpen} onClose={onClose} isCentered size="sm">
       <ModalOverlay />
       <ModalContent maxW="300px">
-        <ModalHeader>Filter Tahun</ModalHeader>
+        <ModalHeader>Filter</ModalHeader>
         <ModalCloseButton mt={2} mr={2} />
         <ModalBody>
-          <Text mb={2}>Pilih tahun:</Text>
-          <Select value={selectedYear} onChange={(e) => setSelectedYear(+e.target.value)}>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </Select>
+          <Text mb={2}>Pilih rentang tahun:</Text>
+          <Flex gap={2}>
+            <Select value={from} onChange={(e) => setFrom(+e.target.value)}>
+              {years
+                .filter((year) => year <= to) // hanya tampilkan tahun <= to
+                .map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+            </Select>
+
+            <Select value={to} onChange={(e) => setTo(+e.target.value)}>
+              {years
+                .filter((year) => year >= from) // hanya tampilkan tahun >= from
+                .map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+            </Select>
+          </Flex>
         </ModalBody>
         <ModalFooter>
           <Button
             colorScheme="blue"
             width="100%"
+            maxWidth="100%"
+            mx="auto"
             onClick={() => {
-              onApply(selectedYear);
+              onApply(from, to);
               onClose();
             }}
           >
@@ -58,4 +88,4 @@ const YearFilter = ({ isOpen, onClose, onApply }: YearFilterProps) => {
   );
 };
 
-export default YearFilter;
+export default YearRangeFilter;

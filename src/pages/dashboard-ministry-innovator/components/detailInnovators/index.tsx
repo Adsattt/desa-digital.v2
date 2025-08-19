@@ -96,6 +96,16 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
         });
       });
 
+      results.sort((a, b) => {
+        if (b.jumlahDesaDampingan !== a.jumlahDesaDampingan) {
+          return b.jumlahDesaDampingan - a.jumlahDesaDampingan; // jumlah desa descending
+        }
+        if (b.jumlahInovasi !== a.jumlahInovasi) {
+          return b.jumlahInovasi - a.jumlahInovasi; // jumlah inovasi descending
+        }
+        return a.namaInovator.localeCompare(b.namaInovator); // nama inovator ascending
+      });
+
       setData(results);
       setCurrentPage(1);
     } catch (error) {
@@ -229,26 +239,27 @@ const DetailInnovators = ({ kategoriInovator, onSelectInovator }: DetailInnovato
   };
 
   return (
-    <Box px={4} maxW="100%" mx="auto">
+    <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Daftar Inovator {kategoriInovator || '...'}</Text>
-        {!kategoriInovator && (
-          <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
-            Pilih kategori pada diagram untuk melihat data tabel
-          </Text>
+        <Text {...titleStyle}>Daftar Inovator {kategoriInovator || ''}</Text>
+        {kategoriInovator && (
+          <Menu>
+            <MenuButton as={Button} variant="ghost" size="sm" px={2} py={1}>
+              <Image src={downloadIcon} alt="Download" boxSize="16px" />
+            </MenuButton>
+            <MenuList>
+              <MenuItem onClick={handleDownloadPDF}>Download PDF</MenuItem>
+              <MenuItem onClick={handleDownloadXLSX}>Download Excel</MenuItem>
+            </MenuList>
+          </Menu>
         )}
-        <Menu>
-          <MenuButton as={Button} variant="ghost" size="sm" px={2} py={1}>
-            <Image src={downloadIcon} alt="Download" boxSize="16px" />
-          </MenuButton>
-          <MenuList>
-            <MenuItem onClick={handleDownloadPDF}>Download PDF</MenuItem>
-            <MenuItem onClick={handleDownloadXLSX}>Download Excel</MenuItem>
-          </MenuList>
-        </Menu>
       </Flex>
 
-      {loading ? (
+      {!kategoriInovator ? (
+        <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
+          Pilih kategori pada diagram Kategori Inovator untuk melihat data
+        </Text>
+      ) : loading ? (
         <Text p={4}>Loading data...</Text>
       ) : data.length === 0 ? (
         <Text p={4}>No data found for this category.</Text>

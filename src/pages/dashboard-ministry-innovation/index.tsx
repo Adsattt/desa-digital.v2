@@ -16,27 +16,26 @@ const DashboardMinistryInnovation = () => {
     const navigate = useNavigate();
 
     const [selectedInovator, setSelectedInovator] = useState<string | null>(null);
+    const [selectedInovasi, setSelectedInovasi] = useState<string | null>(null);
+    const [hasRowClicked, setHasRowClicked] = useState(false);
 
     const handleSliceClick = (inovatorName: string) => {
         setSelectedInovator(inovatorName);
+        setSelectedInovasi(null);
+        setHasRowClicked(false);
     };
 
-    const [selectedInovasi, setSelectedInovasi] = useState<string | null>(null);
+    const handleInnovationSelect = (inovasi: string) => {
+        setSelectedInovasi(inovasi);
+        setHasRowClicked(true);
+    };
 
     return (
         <Container page>
-        <TopBar
-            title={`Dashboard ${userName} - Inovasi`}
-            onBack={() => navigate(-1)}
-        />
-
+        <TopBar title={`Dashboard ${userName} - Inovasi`} onBack={() => navigate(-1)} />
         <CategoryInnovation onSliceClick={handleSliceClick} />
-        <DetailInnovations
-        selectedCategory={selectedInovator}
-        onInnovationSelect={setSelectedInovasi}
-        />
-        {selectedInovasi && <DetailVillagesInnovation selectedInovasi={selectedInovasi} />}
-
+        <DetailInnovations selectedCategory={selectedInovator} onInnovationSelect={handleInnovationSelect} />
+        <DetailVillagesInnovation selectedInovasi={selectedInovasi} hasRowClicked={hasRowClicked} />
         <ChartInnovation />
         </Container>
     );

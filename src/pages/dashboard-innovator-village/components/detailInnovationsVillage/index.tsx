@@ -45,13 +45,13 @@ interface InnovationDetail {
 }
 
 interface DetailInnovationsProps {
-  innovationId: string;
+  villageId: string;
   namaDesa: string;
   onBack: () => void;
 }
 
 const DetailInnovations: React.FC<DetailInnovationsProps> = ({
-  innovationId,
+  villageId,
   namaDesa,
   onBack,
 }) => {
@@ -148,7 +148,7 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({
 
         const innovationsQuery = query(
           collection(db, "claimInnovations"),
-          where("inovasiId", "==", innovationId)
+          where("desaId", "==", villageId)
         );
         const innovationsSnapshot = await getDocs(innovationsQuery);
 
@@ -159,7 +159,7 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({
             createdAt instanceof Date
               ? String(createdAt.getFullYear())
               : "Tidak tersedia";
-              
+            
           return {
             namaDesa: data.namaDesa || "Tidak tersedia",
             namaInovasi: data.namaInovasi || "Tidak tersedia",
@@ -180,7 +180,7 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({
           }))
         );
         
-        console.log("Innovation ID:", innovationId);
+        console.log("Desa ID:", villageId);
         console.log("Claim Innovations Data:", innovationsData);
 
       } catch (error) {
@@ -191,7 +191,7 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({
     };
 
     fetchData();
-  }, [db, innovationId]);
+  }, [db, villageId]);
 
   const totalPages = Math.ceil(innovations.length / itemsPerPage);
   const currentData = innovations.slice(
@@ -319,9 +319,18 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={4}>
-        <Text sx={titleStyle}>
-          {namaDesa ? `Daftar Inovasi ${namaDesa}` : "Daftar Desa"}
-        </Text>
+        <Box>
+          <Text sx={titleStyle}>
+            {namaDesa ? `Daftar Inovasi ${namaDesa}` : "Daftar Inovasi"}
+          </Text>
+          {!villageId && (
+            <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
+              Pilih baris pada tabel Daftar Desa untuk melihat data
+            </Text>
+          )}
+        </Box>
+        
+        {villageId && (
           <Menu>
             <MenuButton
                 as={IconButton}
@@ -333,69 +342,74 @@ const DetailInnovations: React.FC<DetailInnovationsProps> = ({
                 <MenuItem onClick={exportToPDF}>Download PDF</MenuItem>
                 <MenuItem onClick={exportToExcel}>Download Excel</MenuItem>
             </MenuList>
-        </Menu>    
+          </Menu>
+        )}
       </Flex>
 
-      {/* {!namaInovasi && (
-        <Text fontSize="sm" color="gray.500" mt={1}>
-          Pilih baris pada tabel Daftar Inovasi untuk melihat data
-        </Text>
-      )} */}
+      {villageId && (
+        <>
+          {loading ? (
+            <Text p={2}>Loading data...</Text>
+          ) : (
+            <>
+              <TableContainer sx={tableContainerStyle}>
+                <Table variant="simple" size="sm">
+                  <Thead>
+                    <Tr>
+                      <Th sx={tableHeaderStyle} width="20%">No</Th>
+                      <Th sx={tableHeaderStyle} width="40%">Nama Inovasi</Th>
+                      <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {currentData.map((item, index) => (
+                      <Tr key={index}>
+                        <Td sx={tableCellStyle}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
+                        <Td sx={tableCellStyle}>{item.namaInovasi}</Td>
+                        <Td sx={tableCellStyle}>{item.tanggalKlaim}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </TableContainer>
 
-      <TableContainer sx={tableContainerStyle}>
-        <Table variant="simple" size="sm">
-          <Thead>
-            <Tr>
-              <Th sx={tableHeaderStyle} width="20%">No</Th>
-              <Th sx={tableHeaderStyle} width="40%">Nama Inovasi</Th>
-              <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {currentData.map((item, index) => (
-              <Tr key={index}>
-                <Td sx={tableCellStyle}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
-                <Td sx={tableCellStyle}>{item.namaInovasi}</Td>
-                <Td sx={tableCellStyle}>{item.tanggalKlaim}</Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </TableContainer>
+              {totalPages > 1 && (
+                <Flex sx={paginationContainerStyle}>
+                  <Button
+                    onClick={() => goToPage(Math.max(1, currentPage - 1))}
+                    isDisabled={currentPage === 1}
+                    {...paginationButtonStyle}
+                    leftIcon={<ChevronLeftIcon />}
+                    mr={2}
+                  >
+                    Sebelumnya
+                  </Button>
 
-      {totalPages > 1 && (
-        <Flex sx={paginationContainerStyle}>
-          <Button
-            onClick={() => goToPage(Math.max(1, currentPage - 1))}
-            isDisabled={currentPage === 1}
-            {...paginationButtonStyle}
-            leftIcon={<ChevronLeftIcon />}
-            mr={2}
-          >
-            Sebelumnya
-          </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      {...(page === currentPage ? paginationActiveButtonStyle : paginationButtonStyle)}
+                      mx={1}
+                    >
+                      {page}
+                    </Button>
+                  ))}
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              onClick={() => goToPage(page)}
-              {...(page === currentPage ? paginationActiveButtonStyle : paginationButtonStyle)}
-              mx={1}
-            >
-              {page}
-            </Button>
-          ))}
-
-          <Button
-            onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
-            isDisabled={currentPage === totalPages}
-            {...paginationButtonStyle}
-            rightIcon={<ChevronRightIcon />}
-            ml={2}
-          >
-            Berikutnya
-          </Button>
-        </Flex>
+                  <Button
+                    onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
+                    isDisabled={currentPage === totalPages}
+                    {...paginationButtonStyle}
+                    rightIcon={<ChevronRightIcon />}
+                    ml={2}
+                  >
+                    Berikutnya
+                  </Button>
+                </Flex>
+              )}
+            </>
+          )}
+        </>
       )}
     </Box>
   );
