@@ -265,7 +265,7 @@ const DetailVillagesInnovation = ({ selectedInovasi, hasRowClicked }: DetailVill
             <Table variant="simple" size="sm" sx={{ tableLayout: "fixed" }}>
               <Thead>
                 <Tr>
-                  <Th sx={tableHeaderStyle}>No</Th>
+                  <Th sx={tableHeaderStyle} width="10%">No</Th>
                   <Th sx={tableHeaderStyle}>Inovator</Th>
                   <Th sx={tableHeaderStyle}>Nama Desa</Th>
                   <Th sx={tableHeaderStyle}>Tahun Klaim</Th>

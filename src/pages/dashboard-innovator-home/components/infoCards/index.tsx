@@ -63,6 +63,7 @@ const InfoCards = () => {
           where("createdAt", "<=", toT)
         );
         return (await getDocs(q)).size;
+
       };
 
       const getDesaCount = async (fromT: Timestamp, toT: Timestamp) => {
@@ -91,8 +92,13 @@ const InfoCards = () => {
           }
         });
 
+        console.log("klaimSnap", klaimSnap);
+        console.log("matchedDesa", matchedDesa);
+        console.log("matchedDesasize", matchedDesa.size);
+
         return matchedDesa.size;
       };
+
 
       const [currInovasi, prevInovasi, currDesa, prevDesa] = await Promise.all([
         getInovasiCount(fromUTC, toUTC),
@@ -105,6 +111,7 @@ const InfoCards = () => {
       setDesaCount(currDesa);
       setTrendInovasi(currInovasi - prevInovasi);
       setTrendDesa(currDesa - prevDesa);
+      
     } catch (err) {
       console.error("Failed to calculate data:", err);
     }
