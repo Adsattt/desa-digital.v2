@@ -7,7 +7,7 @@ export const podiumContainerStyle = {
   mx: "auto",
   borderRadius: "lg",
   boxShadow: "lg",
-  height: "170px",
+  height: "180px",
   display: "flex",
   alignItems: "flex-end",
   justifyContent: "center",

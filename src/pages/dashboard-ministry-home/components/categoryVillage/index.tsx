@@ -107,36 +107,42 @@ const PieChartVillage = () => {
         const snapshot = await getDocs(collection(db, 'villages'));
         const kategoriCounts: Record<string, number> = {};
 
+        // Mengambil data kategori desa
         snapshot.forEach(doc => {
           const data = doc.data();
           const kategori = data.kategori || 'Tidak diketahui';
           kategoriCounts[kategori] = (kategoriCounts[kategori] || 0) + 1;
         });
 
-        const allowedCategories = ['Maju', 'Berkembang', 'Tertinggal', 'Sangat Tertinggal', 'Mandiri'];
+        // Mengubah & mengurutkan jumlah kategori ke dalam array
+        let sortedCategories = Object.entries(kategoriCounts)
+          .sort(([, a], [, b]) => b - a);
 
-        let knownCategories: [string, number][] = [];
-        let lainnyaCount = 0;
+        // Ambil 4 terbesar
+        const top4 = sortedCategories.slice(0, 4);
+        const others = sortedCategories.slice(4);
 
-        Object.entries(kategoriCounts).forEach(([key, value]) => {
-          if (allowedCategories.includes(key)) {
-            knownCategories.push([key, value]);
-          } else {
-            lainnyaCount += value;
-          }
+        let formattedData: { name: string; value: number; percentage: string }[] = [];
+
+        const totalTop4 = top4.reduce((acc, [, val]) => acc + val, 0);
+        const totalOthers = others.reduce((acc, [, val]) => acc + val, 0);
+        const totalAll = totalTop4 + totalOthers;
+
+        top4.forEach(([name, value]) => {
+          formattedData.push({
+            name,
+            value,
+            percentage: ((value / totalAll) * 100).toFixed(1),
+          });
         });
 
-        if (lainnyaCount > 0) {
-          knownCategories.push(['Lainnya', lainnyaCount]);
+        if (totalOthers > 0) {
+          formattedData.push({
+            name: 'Lainnya',
+            value: totalOthers,
+            percentage: ((totalOthers / totalAll) * 100).toFixed(1),
+          });
         }
-
-        const total = knownCategories.reduce((acc, [, val]) => acc + val, 0);
-
-        const formattedData = knownCategories.map(([name, value]) => ({
-          name,
-          value,
-          percentage: ((value / total) * 100).toFixed(1),
-        }));
 
         setChartData(formattedData);
       } catch (error) {

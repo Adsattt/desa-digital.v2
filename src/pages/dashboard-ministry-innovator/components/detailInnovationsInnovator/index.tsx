@@ -107,6 +107,15 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
           });
         }
 
+        allData.sort((a, b) => {
+          if (b.tahun !== a.tahun) return b.tahun - a.tahun; // tahun klaim desc
+
+          const namaInovasiCompare = a.namaInovasi.localeCompare(b.namaInovasi); // nama inovasi asc
+          if (namaInovasiCompare !== 0) return namaInovasiCompare;
+
+          return a.namaDesa.localeCompare(b.namaDesa); // nama desa asc
+        });
+
         setImplementationData(allData);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -232,104 +241,108 @@ const DetailInnovations = ({ filterInnovator, onSelectVillage }: DetailInnovatio
     return pageNumbers;
   };
 
-  if (filteredData.length === 0) {
-    return (
-      <Box p={4} maxW="100%" mx="auto">
-        <Text {...titleStyle}>
-          Tidak ada data untuk inovator: {filterInnovator}
-        </Text>
-      </Box>
-    );
-  }
-
   return (
-    <Box px={4} maxW="100%" mx="auto" mt="10">
+    <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
         <Text {...titleStyle}>
-          Daftar Desa Digital dari {filterInnovator}
+          Daftar Desa Digital {filterInnovator}
         </Text>
-        <Menu>
-          <MenuButton>
-            <Image
-              src={downloadIcon}
-              alt="Download"
-              boxSize="16px"
-              cursor="pointer"
-              ml={2}
-            />
-          </MenuButton>
-          <MenuList fontSize="sm">
-            <MenuItem onClick={downloadPDF}>Download PDF</MenuItem>
-            <MenuItem onClick={downloadXLSX}>Download Excel</MenuItem>
-          </MenuList>
-        </Menu>
+        {filterInnovator && (
+          <Menu>
+            <MenuButton>
+              <Image
+                src={downloadIcon}
+                alt="Download"
+                boxSize="16px"
+                cursor="pointer"
+                mr={2}
+              />
+            </MenuButton>
+            <MenuList fontSize="sm">
+              <MenuItem onClick={downloadPDF}>Download PDF</MenuItem>
+              <MenuItem onClick={downloadXLSX}>Download Excel</MenuItem>
+            </MenuList>
+          </Menu>
+        )}
       </Flex>
 
-      <TableContainer {...tableContainerStyle}>
-        <Table variant="simple" size="sm" sx={{ tableLayout: "fixed" }}>
-          <Thead>
-            <Tr>
-              <Th sx={tableHeaderStyle} width="10%">No</Th>
-              <Th sx={tableHeaderStyle}>Nama Inovasi</Th>
-              <Th sx={tableHeaderStyle}>Nama Desa</Th>
-              <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {currentData.map((item, index) => (
-              <Tr
-                key={index}
-                cursor="pointer"
-                onClick={() => onSelectVillage(item.namaInovasi)}
-                _hover={{ bg: "gray.100" }}
-              >
-                <Td sx={tableCellStyle}>
-                  {(currentPage - 1) * itemsPerPage + index + 1}
-                </Td>
-                <Td sx={tableCellStyle}>{item.namaInovasi}</Td>
-                <Td sx={tableCellStyle}>{item.namaDesa}</Td>
-                <Td sx={tableCellStyle}>{item.tahun}</Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </TableContainer>
+      {!filterInnovator ? (
+        <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
+          Pilih baris pada tabel Daftar Inovator untuk melihat data
+        </Text>
+      ) : loading ? (
+        <Text p={4}>Loading data...</Text>
+      ) : filteredData.length === 0 ? (
+        <Text p={4}>Tidak ada data untuk inovator: {filterInnovator}</Text>
+      ) : (
+        <>
+          <TableContainer {...tableContainerStyle}>
+            <Table variant="simple" size="sm" sx={{ tableLayout: "fixed" }}>
+              <Thead>
+                <Tr>
+                  <Th sx={tableHeaderStyle} width="10%">No</Th>
+                  <Th sx={tableHeaderStyle}>Nama Inovasi</Th>
+                  <Th sx={tableHeaderStyle}>Nama Desa</Th>
+                  <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {currentData.map((item, index) => (
+                  <Tr
+                    key={index}
+                    cursor="pointer"
+                    onClick={() => onSelectVillage(item.namaInovasi)}
+                    _hover={{ bg: "gray.100" }}
+                  >
+                    <Td sx={tableCellStyle}>
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </Td>
+                    <Td sx={tableCellStyle}>{item.namaInovasi}</Td>
+                    <Td sx={tableCellStyle}>{item.namaDesa}</Td>
+                    <Td sx={tableCellStyle}>{item.tahun}</Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </TableContainer>
 
-      {totalPages > 1 && (
-        <Flex sx={paginationContainerStyle}>
-          <Button
-            aria-label="Previous page"
-            onClick={() => goToPage(Math.max(1, currentPage - 1))}
-            isDisabled={currentPage === 1}
-            {...paginationButtonStyle}
-          >
-            <ChevronLeftIcon />
-          </Button>
-
-          {getPageNumbers().map((page, index) =>
-            page === "..." ? (
-              <Box key={`ellipsis-${index}`} sx={paginationEllipsisStyle}>...</Box>
-            ) : (
+          {totalPages > 1 && (
+            <Flex sx={paginationContainerStyle}>
               <Button
-                key={`page-${page}`}
-                onClick={() => goToPage(Number(page))}
+                aria-label="Previous page"
+                onClick={() => goToPage(Math.max(1, currentPage - 1))}
+                isDisabled={currentPage === 1}
                 {...paginationButtonStyle}
-                {...(page === currentPage ? paginationActiveButtonStyle : {})}
               >
-                {page}
+                <ChevronLeftIcon />
               </Button>
-            )
-          )}
 
-          <Button
-            aria-label="Next page"
-            onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
-            isDisabled={currentPage === totalPages}
-            {...paginationButtonStyle}
-          >
-            <ChevronRightIcon />
-          </Button>
-        </Flex>
+              {getPageNumbers().map((page, index) =>
+                page === "..." ? (
+                  <Box key={`ellipsis-${index}`} sx={paginationEllipsisStyle}>...</Box>
+                ) : (
+                  <Button
+                    key={`page-${page}`}
+                    onClick={() => goToPage(Number(page))}
+                    {...paginationButtonStyle}
+                    {...(page === currentPage ? paginationActiveButtonStyle : {})}
+                  >
+                    {page}
+                  </Button>
+                )
+              )}
+
+              <Button
+                aria-label="Next page"
+                onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
+                isDisabled={currentPage === totalPages}
+                {...paginationButtonStyle}
+              >
+                <ChevronRightIcon />
+              </Button>
+            </Flex>
+          )}
+        </>
       )}
     </Box>
   );

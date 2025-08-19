@@ -168,12 +168,20 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
           };
         });
 
-        setVillages(
-          villagesData.sort((a, b) => a.namaDesa.localeCompare(b.namaDesa))
-        );
+        const sortedVillages = villagesData.sort((a, b) => {
+          const yearA = parseInt(a.tanggalKlaim) || 0;
+          const yearB = parseInt(b.tanggalKlaim) || 0;
+
+          if (yearB === yearA) {
+            return a.namaDesa.localeCompare(b.namaDesa);
+          }
+          return yearB - yearA;
+        });
+
+        setVillages(sortedVillages);
 
         setImplementationData(
-          villagesData.map((item) => ({
+          sortedVillages.map((item) => ({
             desaId: "",
             namaDesa: item.namaDesa,
             namaInovasi: item.namaInovasi,
@@ -315,84 +323,98 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({
 
   return (
     <Box p={4} maxW="100%" mx="auto">
-      <Flex justify="space-between" align="center" mb={4}>
-        <Text sx={titleStyle}>
-          {namaInovasi ? `Daftar Desa ${namaInovasi}` : "Daftar Desa"}
-        </Text>
+      <Flex justify="space-between" align="center" mb={2}>
+        <Box>
+          <Text sx={titleStyle}>
+            {namaInovasi ? `Daftar Desa ${namaInovasi}` : "Daftar Desa"}
+          </Text>
+          {!innovationId && (
+            <Text fontSize="12" color="gray.500" mt={1} fontStyle="italic">
+              Pilih baris pada tabel Daftar Inovasi untuk melihat data
+            </Text>
+          )}
+        </Box>
+
+        {innovationId && (
           <Menu>
             <MenuButton
-                as={IconButton}
-                aria-label="Download options"
-                icon={<Image src={downloadIcon} alt="Download" boxSize="16px" />}
-                variant="ghost"
+              as={IconButton}
+              aria-label="Download options"
+              icon={<Image src={downloadIcon} alt="Download" boxSize="16px" />}
+              variant="ghost"
             />
             <MenuList>
-                <MenuItem onClick={exportToPDF}>Download PDF</MenuItem>
-                <MenuItem onClick={exportToExcel}>Download Excel</MenuItem>
+              <MenuItem onClick={exportToPDF}>Download PDF</MenuItem>
+              <MenuItem onClick={exportToExcel}>Download Excel</MenuItem>
             </MenuList>
-        </Menu>    
+          </Menu>
+        )}
       </Flex>
 
-      {!namaInovasi && (
-        <Text fontSize="sm" color="gray.500" mt={1}>
-          Pilih baris pada tabel Daftar Inovasi untuk melihat data
-        </Text>
-      )}
+      {innovationId && (
+        <>
+          {loading ? (
+            <Text p={2}>Loading data...</Text>
+          ) : (
+            <>
+              <TableContainer sx={tableContainerStyle}>
+                <Table variant="simple" size="sm">
+                  <Thead>
+                    <Tr>
+                      <Th sx={tableHeaderStyle} width="20%">No</Th>
+                      <Th sx={tableHeaderStyle} width="40%">Nama Desa</Th>
+                      <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {currentData.map((item, index) => (
+                      <Tr key={index}>
+                        <Td sx={tableCellStyle}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
+                        <Td sx={tableCellStyle}>{item.namaDesa}</Td>
+                        <Td sx={tableCellStyle}>{item.tanggalKlaim}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </TableContainer>
 
-      <TableContainer sx={tableContainerStyle}>
-        <Table variant="simple" size="sm">
-          <Thead>
-            <Tr>
-              <Th sx={tableHeaderStyle} width="20%">No</Th>
-              <Th sx={tableHeaderStyle} width="40%">Nama Desa</Th>
-              <Th sx={tableHeaderStyle}>Tahun Klaim</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {currentData.map((item, index) => (
-              <Tr key={index}>
-                <Td sx={tableCellStyle}>{(currentPage - 1) * itemsPerPage + index + 1}</Td>
-                <Td sx={tableCellStyle}>{item.namaDesa}</Td>
-                <Td sx={tableCellStyle}>{item.tanggalKlaim}</Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
-      </TableContainer>
+              {totalPages > 1 && (
+                <Flex sx={paginationContainerStyle}>
+                  <Button
+                    onClick={() => goToPage(Math.max(1, currentPage - 1))}
+                    isDisabled={currentPage === 1}
+                    {...paginationButtonStyle}
+                    leftIcon={<ChevronLeftIcon />}
+                    mr={2}
+                  >
+                    Sebelumnya
+                  </Button>
 
-      {totalPages > 1 && (
-        <Flex sx={paginationContainerStyle}>
-          <Button
-            onClick={() => goToPage(Math.max(1, currentPage - 1))}
-            isDisabled={currentPage === 1}
-            {...paginationButtonStyle}
-            leftIcon={<ChevronLeftIcon />}
-            mr={2}
-          >
-            Sebelumnya
-          </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      {...(page === currentPage ? paginationActiveButtonStyle : paginationButtonStyle)}
+                      mx={1}
+                    >
+                      {page}
+                    </Button>
+                  ))}
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <Button
-              key={page}
-              onClick={() => goToPage(page)}
-              {...(page === currentPage ? paginationActiveButtonStyle : paginationButtonStyle)}
-              mx={1}
-            >
-              {page}
-            </Button>
-          ))}
-
-          <Button
-            onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
-            isDisabled={currentPage === totalPages}
-            {...paginationButtonStyle}
-            rightIcon={<ChevronRightIcon />}
-            ml={2}
-          >
-            Berikutnya
-          </Button>
-        </Flex>
+                  <Button
+                    onClick={() => goToPage(Math.min(totalPages, currentPage + 1))}
+                    isDisabled={currentPage === totalPages}
+                    {...paginationButtonStyle}
+                    rightIcon={<ChevronRightIcon />}
+                    ml={2}
+                  >
+                    Berikutnya
+                  </Button>
+                </Flex>
+              )}
+            </>
+          )}
+        </>
       )}
     </Box>
   );

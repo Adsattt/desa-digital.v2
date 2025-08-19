@@ -4,7 +4,6 @@ import {
   Flex,
   Image,
   Spinner,
-  Tooltip,
   Menu,
   MenuButton,
   MenuList,
@@ -17,36 +16,17 @@ import filterIcon from "../../../../assets/icons/icon-filter.svg";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import {
-  chartContainerStyle,
-  chartWrapperStyle,
-  barGroupStyle,
-  barStyle,
-  labelStyle,
-  legendContainerStyle,
-  legendItemStyle,
-  legendDotStyle,
-  titleStyle,
-  yAxisLabelStyle,
-  yAxisWrapperStyle,
-  chartBarContainerStyle,
-  barAndLineWrapperStyle,
-  xAxisStyle,
-  yAxisStyle,
-} from "./_barChartStyle";
-
-const getYAxisLabels = (max: number, step: number): number[] => {
-  const roundedMax = Math.ceil(max / step) * step;
-  const labels: number[] = [];
-  for (let i = roundedMax; i >= 0; i -= step) {
-    labels.push(i);
-  }
-  return labels;
-};
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const BarChartInovasi = () => {
   const db = getFirestore();
@@ -83,7 +63,6 @@ const BarChartInovasi = () => {
           const year = Number(desaData.tahunData);
 
           if (!isNaN(year) && year >= yearRange[0] && year <= yearRange[1]) {
-            // Count per year
             counts[year] = (counts[year] || 0) + 1;
 
             const foundClaim = claimData.find((m) => m.namaDesa === namaDesa);
@@ -101,15 +80,13 @@ const BarChartInovasi = () => {
           }
         });
 
-        const sortedYears = Object.keys(counts)
-          .map(Number)
-          .sort((a, b) => a - b);
-
+        // cumulative counts
+        const sortedYears = Object.keys(counts).map(Number).sort((a, b) => a - b);
         const cumulativeCounts: Record<number, number> = {};
-        let cumulativeTotal = 0;
+        let total = 0;
         for (const year of sortedYears) {
-          cumulativeTotal += counts[year] || 0;
-          cumulativeCounts[year] = cumulativeTotal;
+          total += counts[year];
+          cumulativeCounts[year] = total;
         }
 
         setDataByYear(cumulativeCounts);
@@ -117,15 +94,21 @@ const BarChartInovasi = () => {
       } catch (error) {
         console.error("Failed to fetch data:", error);
       }
-
       setLoading(false);
     };
 
     fetchData();
   }, [yearRange]);
 
-  const maxValue = Math.max(...Object.values(dataByYear), 10);
-  const rotateLabels = Object.keys(dataByYear).length > 8;
+  const isEmpty = detailedData.length === 0;
+
+  // Konversi ke format Recharts
+  const chartData = Object.keys(dataByYear)
+    .map((year) => ({
+      name: year,
+      value: dataByYear[Number(year)],
+    }))
+    .sort((a, b) => Number(a.name) - Number(b.name));
 
   const exportToExcel = (data: any[]) => {
     const wsData = [
@@ -140,83 +123,84 @@ const BarChartInovasi = () => {
   };
 
   const exportToPDF = (data: any[]) => {
-      const doc = new jsPDF;
-      const downloadDate = new Date().toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-      });
+    const doc = new jsPDF;
+    const downloadDate = new Date().toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    });
 
-      // Green header background
-      doc.setFillColor(0, 128, 0);
-      doc.rect(0, 0, 1000, 30, "F");
+    // Green header background
+    doc.setFillColor(0, 128, 0);
+    doc.rect(0, 0, 1000, 30, "F");
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
 
-      doc.setFontSize(15);
-      doc.text("Dokumen Laporan Kementerian", 14, 13);
-      doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
+    doc.setFontSize(15);
+    doc.text("Dokumen Laporan Kementerian", 14, 13);
+    doc.text("KMS Inovasi Desa Digital", 190, 13, { align: "right" });
 
-      doc.setFontSize(12);
-      doc.text("Diambil dari: Grafik Perkembangan Desa Digital", 14, 22);
-      doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
+    doc.setFontSize(12);
+    doc.text("Diambil dari: Grafik Perkembangan Desa Digital", 14, 22);
+    doc.text(`Diunduh pada: ${downloadDate}`, 190, 22, { align: "right" });
 
-      // Reset text styles for table content
-      doc.setTextColor(0, 0, 0);
-      doc.setFontSize(14);
-      doc.setFont("helvetica", "normal");
+    // Reset text styles for table content
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "normal");
 
-      // Add section title
-      let y = 42;
-      const labelX = 14;
-      doc.setFont("helvetica", "bold");
-      doc.text(`Data Perkembangan Desa Digital`, labelX, y);
-      y += 6;
+    // Add section title
+    let y = 42;
+    const labelX = 14;
+    doc.setFont("helvetica", "bold");
+    doc.text(`Data Perkembangan Desa Digital`, labelX, y);
+    y += 6;
 
-      // Sort data by year
-      const sortedData = [...data].sort((a, b) => a.year - b.year);
+    // Sort data by year
+    const sortedData = [...data].sort((a, b) => a.year - b.year);
 
-      // @ts-ignore
-      autoTable(doc, {
-        startY: y,
-        head: [[
-          "No",
-          "Nama Desa",
-          "Nama Inovasi",
-          "Nama Inovator",
-          "Tahun Pendataan",
-        ]],
-        body: sortedData.map((item, index) => [
-          index + 1,
-          item.namaDesa,
-          item.namaInovasi,
-          item.namaInovator,
-          item.year,
-        ]),
-        headStyles: {
-          fillColor: [0, 128, 0],
-          textColor: 255,
-          fontStyle: "bold",
-        },
-        columnStyles: {
-          0: { cellWidth: 15 },
-          1: { cellWidth: 40 },
-          2: { cellWidth: 40 },
-          3: { cellWidth: 40 },
-        },
-        styles: {
-          fontSize: 12,
-        },
-      } as any);
+    autoTable(doc, {
+      startY: y,
+      head: [[
+        "No",
+        "Nama Desa",
+        "Nama Inovasi",
+        "Nama Inovator",
+        "Tahun Pendataan",
+      ]],
+      body: sortedData.map((item, index) => [
+        index + 1,
+        item.namaDesa,
+        item.namaInovasi,
+        item.namaInovator,
+        item.year,
+      ]),
+      headStyles: {
+        fillColor: [0, 128, 0],
+        textColor: 255,
+        fontStyle: "bold",
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 40 },
+        3: { cellWidth: 40 },
+      },
+      styles: {
+        fontSize: 12,
+      },
+    } as any);
 
-      doc.save("data-perkembangan-desa-digital.pdf");
+    doc.save("data-perkembangan-desa-digital.pdf");
   };
 
   return (
     <Box p={4} maxW="100%" mx="auto">
       <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Pertumbuhan Desa Digital</Text>
+        <Text fontSize="m" fontWeight="bold" color="gray.800">
+          Pertumbuhan Desa Digital
+        </Text>
         <Flex align="center" gap={2}>
           <Image
             onClick={() => setShowFilter(true)}
@@ -224,11 +208,9 @@ const BarChartInovasi = () => {
             alt="Filter"
             boxSize="16px"
             cursor="pointer"
-            ml={2}
           />
-
           <Menu>
-            <MenuButton as={Box} cursor="pointer" marginRight={2} _hover={{ opacity: 0.8 }}>
+            <MenuButton as={Box} cursor="pointer" marginRight={2}>
               <Image src={downloadIcon} alt="Download" boxSize="16px" />
             </MenuButton>
             <MenuList>
@@ -239,67 +221,39 @@ const BarChartInovasi = () => {
         </Flex>
       </Flex>
 
-      <Box {...chartContainerStyle}>
-        <Flex {...legendContainerStyle}>
-          <Flex {...legendItemStyle}>
-            <Box {...legendDotStyle} bg="#4C73C7" />
-            <Text>Jumlah Desa</Text>
+      <Box bg="#D1EDE1" borderRadius="xl" p={2} boxShadow="md">
+        {loading ? (
+          <Flex justify="center" align="center" h="200px">
+            <Spinner size="lg" />
           </Flex>
-        </Flex>
-
-        <Box {...chartWrapperStyle}>
-          <Flex {...yAxisWrapperStyle}>
-            {getYAxisLabels(maxValue, 10).map((label) => (
-              <Text key={label} {...yAxisLabelStyle}>
-                {label === 0 ? "" : label}
-              </Text>
-            ))}
+        ) : isEmpty ? (
+          <Flex justify="center" align="center" h="100%">
+            <Text fontSize="sm" textAlign="center">
+              Belum ada data untuk rentang tahun ini
+            </Text>
           </Flex>
-
-          <Flex {...chartBarContainerStyle}>
-            <Box {...yAxisStyle} />
-            <Flex {...barAndLineWrapperStyle}>
-              {loading ? (
-                <Spinner mt={10} />
-              ) : (
-                Object.keys(dataByYear)
-                  .sort((a, b) => Number(a) - Number(b))
-                  .map((year) => (
-                    <Box key={year} {...barGroupStyle}>
-                      <Tooltip
-                        label={`Tahun ${year}: ${dataByYear[Number(year)]} desa`}
-                        hasArrow
-                        placement="top"
-                        bg="gray.700"
-                        color="white"
-                        fontSize="sm"
-                      >
-                        <Box
-                          {...barStyle}
-                          height={`${(dataByYear[Number(year)] / maxValue) * 100}%`}
-                          bg="#4C73C7"
-                          _hover={{ opacity: 0.8 }}
-                          transition="all 0.2s"
-                        />
-                      </Tooltip>
-                      <Text
-                        {...labelStyle}
-                        sx={
-                          rotateLabels
-                            ? { transform: "rotate(-45deg)", transformOrigin: "left bottom" }
-                            : {}
-                        }
-                        whiteSpace="nowrap"
-                      >
-                        {year}
-                      </Text>
-                    </Box>
-                  ))
-              )}
-              <Box {...xAxisStyle} />
-            </Flex>
-          </Flex>
-        </Box>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData} margin={{ top: 20, right: 40, left: 1, bottom: 15 }}>
+              <XAxis
+                dataKey="name"
+                label={{ value: "Tahun", position: "insideBottom", dy: 10, fontSize: 10 }}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis
+                label={{ value: "Jumlah Desa", angle: -90,
+                  position: "insideLeft", fontSize: 10, dx: 5, dy: 30,
+                }}
+                tick={{ fontSize: 10 }}
+              />
+              <Tooltip
+                cursor={{ fill: "transparent" }}
+                formatter={(value: any) => [`${value} desa`, "Jumlah"]}
+              />
+              <Bar dataKey="value" fill="#4C73C7" barSize={25} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </Box>
 
       <YearRangeFilter

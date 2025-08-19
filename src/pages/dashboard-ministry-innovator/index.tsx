@@ -19,14 +19,12 @@ const DashboardMinistryInnovator = () => {
   const [selectedInnovator, setSelectedInnovator] = useState<string | null>(null);
   const [selectedVillage, setSelectedVillage] = useState<string | null>(null);
 
-  // When a category is selected, reset innovator and village selection
   const handleCategorySelect = (category: string | null) => {
     setSelectedCategory(category);
     setSelectedInnovator(null);
     setSelectedVillage(null);
   };
 
-  // When innovator is selected, reset village selection
   const handleInnovatorSelect = (innovator: string | null) => {
     setSelectedInnovator(innovator);
     setSelectedVillage(null);
@@ -36,29 +34,17 @@ const DashboardMinistryInnovator = () => {
     <Container page>
       <TopBar title={`Dashboard ${userName} - Inovator`} onBack={() => navigate(-1)} />
 
-      <Box mb={6}>
-        <PieChartInnovator onSliceClick={handleCategorySelect} />
-      </Box>
+      <PieChartInnovator onSliceClick={handleCategorySelect} />
 
-      {selectedCategory && (
-        <DetailInnovators
-          kategoriInovator={selectedCategory}
-          onSelectInovator={handleInnovatorSelect}
-        />
-      )}
-
-      {selectedInnovator && (
-        <Box mt={6}>
-          <DetailInnovations
-            filterInnovator={selectedInnovator}
-            onSelectVillage={setSelectedVillage}
-          />
-        </Box>
-      )}
-
-      <Box mt={6}>
-        <ChartInnovation />
-      </Box>
+      <DetailInnovators
+        kategoriInovator={selectedCategory}
+        onSelectInovator={handleInnovatorSelect}
+      />
+      
+      <DetailInnovations
+        filterInnovator={selectedInnovator || ""}
+        onSelectVillage={setSelectedVillage}
+      />
     </Container>
   );
 };

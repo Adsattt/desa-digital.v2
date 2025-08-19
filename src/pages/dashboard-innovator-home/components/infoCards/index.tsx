@@ -150,12 +150,12 @@ const InfoCards = () => {
 
       <Flex direction={{ base: "column", md: "row" }} gap={4}>
         <Box flex="1" {...cardStyle}>
-          <Text {...numberTextStyle}>3</Text>
+          <Text {...numberTextStyle}>{inovasiCount}</Text>
           <Text {...labelTextStyle}>Inovasi</Text>
           {renderTrend(trendInovasi)}
         </Box>
         <Box flex="1" {...cardStyle}>
-          <Text {...numberTextStyle}>3</Text>
+          <Text {...numberTextStyle}>{desaCount}</Text>
           <Text {...labelTextStyle}>Desa Digital</Text>
           {renderTrend(trendDesa)}
         </Box>

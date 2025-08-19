@@ -24,13 +24,11 @@ const DashboardInnovatorInnovation = () => {
       <TopInnovations></TopInnovations>
       <>
         <DetailInnovations onSelectInnovation={(id, nama) => setSelectedInovasi({ id, nama })} />
-        {selectedInovasi && (
-          <DetailVillages
-            innovationId={selectedInovasi.id}
-            namaInovasi={selectedInovasi.nama}
-            onBack={() => setSelectedInovasi(null)}
-          />
-        )}
+        <DetailVillages
+          innovationId={selectedInovasi?.id || ""}
+          namaInovasi={selectedInovasi?.nama || ""}
+          onBack={() => setSelectedInovasi(null)}
+        />
       </>
     </Container>
   );

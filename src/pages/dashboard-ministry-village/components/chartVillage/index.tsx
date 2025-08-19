@@ -10,112 +10,108 @@ import {
   MenuList,
   MenuItem,
   IconButton,
-  Tooltip,
+  Spinner,
 } from "@chakra-ui/react";
-
 import {
-  chartContainerStyle,
-  chartWrapperStyle,
-  barGroupStyle,
-  barStyle,
-  labelStyle,
-  legendContainerStyle,
-  legendItemStyle,
-  legendDotStyle,
-  titleStyle,
-  xAxisStyle,
-  yAxisStyle,
-  yAxisLabelStyle,
-  yAxisWrapperStyle,
-  chartBarContainerStyle,
-  barAndLineWrapperStyle,
-} from "./_chartVillageStyle";
+  BarChart,
+  Bar,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 import filterIcon from "../../../../assets/icons/icon-filter.svg";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
 import { getFirestore, collection, getDocs } from "firebase/firestore";
-import YearFilter from "./dateFilter";
+import YearRangeFilter from "./dateFilter";
 
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-const categories = ["Maju", "Mandiri", "Berkembang", "Tertinggal", "Sangat Tertinggal"];
-const colors = ["#568A73", "#88A0CA", "#4C73C7", "#215B59", "#ECC600"];
+const categories = ["Mandiri", "Maju", "Berkembang", "Tertinggal", "Sangat Tertinggal"];
+const colors = ["#244E3B", "#337e5bff", "#347357", "#009670ff", "#3a5da8ff", "#5772a0ff", ];
 
 const ChartVillage = () => {
   const [barData, setBarData] = useState<any[]>([]);
   const [desaDetails, setDesaDetails] = useState<any[]>([]);
-  const [maxValue, setMaxValue] = useState(100);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [selectedYear, setSelectedYear] = useState<number>(2020);
+  const [loading, setLoading] = useState(true);
+
+  const currentYear = new Date().getFullYear();
+  const [fromYear, setFromYear] = useState(currentYear - 5);
+  const [toYear, setToYear] = useState(currentYear);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
-      const db = getFirestore();
-      const snapshot = await getDocs(collection(db, "villages"));
+      setLoading(true);
+      try{
+        const db = getFirestore();
+        const snapshot = await getDocs(collection(db, "villages"));
 
-      const categoryCounts: Record<string, number> = {
-        Maju: 0,
-        Mandiri: 0,
-        Berkembang: 0,
-        Tertinggal: 0,
-        "Sangat Tertinggal": 0,
-      };
+        // Buat array [tahun]: {Maju: x, Mandiri: x, dst} untuk visualisasi data stacked bar chart
+        const yearlyData: Record<number, any> = {};
+        const desaData: any[] = [];
 
-      const desaData: any[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const yearRaw = data.tahunData?.toString()?.trim();
+          const category = data.kategori;
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const yearRaw = data.tahunData?.toString()?.trim();
-        const category = data.kategori;
+          if (!yearRaw || yearRaw === "-" || yearRaw.toUpperCase() === "ND") return;
+          const yearNum = parseInt(yearRaw);
+          if (isNaN(yearNum)) return;
 
-        if (!yearRaw || yearRaw === "-" || yearRaw.toUpperCase() === "ND") return;
-        const yearNum = parseInt(yearRaw);
-        if (isNaN(yearNum) || yearNum > selectedYear) return;
-        if (!categories.includes(category)) return;
+          if (yearNum < fromYear || yearNum > toYear) return;
+          if (!categories.includes(category)) return;
 
-        categoryCounts[category]++;
-        desaData.push(data);
-      });
+          if (!yearlyData[yearNum]) {
+            yearlyData[yearNum] = { year: yearNum };
+            categories.forEach((c) => {
+              yearlyData[yearNum][c] = 0;
+            });
+          }
 
-      const formattedData = categories.map((category, index) => ({
-        category,
-        value: categoryCounts[category],
-        color: colors[index],
-      }));
+          yearlyData[yearNum][category] += 1;
+          desaData.push(data);
+        });
 
-      formattedData.sort((a, b) => b.value - a.value);
-      const values = formattedData.map((d) => d.value);
-      const max = Math.max(...values, 10);
-      setMaxValue(Math.ceil(max / 10) * 10);
-      setBarData(formattedData);
-      setDesaDetails(desaData); // Save for export
+        const formatted = Object.values(yearlyData).sort((a: any, b: any) => a.year - b.year);
+        setBarData(formatted);
+        setDesaDetails(desaData);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     }
-
     fetchData();
-  }, [selectedYear]);
+  }, [fromYear, toYear]);
 
-  const handleFilterApply = (year: number) => {
-    setSelectedYear(year);
+  const handleFilterApply = (from: number, to: number) => {
+    setFromYear(from);
+    setToYear(to);
+    setLoading(false);
   };
 
-  const isEmpty = barData.every((data) => data.value === 0);
+  const isEmpty = barData.length === 0;
 
   const exportToXLSX = () => {
-    const worksheet = XLSX.utils.json_to_sheet(
-      barData.map(({ category, value }) => ({ category, value }))
-    );
+    const worksheet = XLSX.utils.json_to_sheet(barData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, `Data_${selectedYear}`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, `Data_${fromYear}-${toYear}`);
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, `perkembangan_desa_digital_${selectedYear}.xlsx`);
+    saveAs(blob, `perkembangan_desa_digital_${fromYear}_${toYear}.xlsx`);
   };
 
-  const exportToPDF = (data: any[], selectedYear: number) => {
+  const exportToPDF = (data: any[], from: number, to: number) => {
     const doc = new jsPDF();
     const downloadDate = new Date().toLocaleDateString("id-ID", {
       day: "numeric",
@@ -152,23 +148,26 @@ const ChartVillage = () => {
     for (const [kategori, entries] of Object.entries(grouped)) {
       const sortedEntries = entries.sort((a, b) => a.tahunData - b.tahunData);
       doc.setFont("helvetica", "bold");
-      doc.text(`Data Perkembangan Desa Digital Tahun ${selectedYear} Kategori: ${kategori}`, labelX, y);
+      doc.text(
+        `Data Perkembangan Desa Digital ${from}–${to} Kategori: ${kategori}`,
+        labelX,
+        y
+      );
       y += 6;
 
       const capitalizeWords = (str: string) =>
-        str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+        str?.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase()) ||
+        "-";
 
       autoTable(doc, {
         startY: y,
-        head: [
-          ["No", "Nama Desa", "Kecamatan", "Kabupaten", "Provinsi", "IDM", "Tahun Data"],
-        ],
+        head: [["No", "Nama Desa", "Kecamatan", "Kabupaten", "Provinsi", "IDM", "Tahun Data"]],
         body: sortedEntries.map((item, i) => [
           i + 1,
-          capitalizeWords(item.lokasi.desaKelurahan?.label),
-          capitalizeWords(item.lokasi.kecamatan?.label),
-          capitalizeWords(item.lokasi.kabupatenKota?.label),
-          capitalizeWords(item.lokasi.provinsi?.label),
+          capitalizeWords(item.lokasi?.desaKelurahan?.label),
+          capitalizeWords(item.lokasi?.kecamatan?.label),
+          capitalizeWords(item.lokasi?.kabupatenKota?.label),
+          capitalizeWords(item.lokasi?.provinsi?.label),
           item.idm,
           item.tahunData,
         ]),
@@ -177,43 +176,70 @@ const ChartVillage = () => {
           textColor: 255,
           fontStyle: "bold",
         },
-        styles: {
-          fontSize: 10,
-        },
-        columnStyles: {
-          0: { cellWidth: 10 },
-          1: { cellWidth: 30 },
-          2: { cellWidth: 30 },
-          3: { cellWidth: 30 },
-          4: { cellWidth: 30 },
-          5: { cellWidth: 20 },
-          6: { cellWidth: 25 },
-        },
+        styles: { fontSize: 10 },
         margin: { top: 10 },
       } as any);
 
       y = (doc as any).lastAutoTable.finalY + 15;
     }
 
-    doc.save(`perkembangan_desa_digital_${selectedYear}.pdf`);
+    doc.save(`perkembangan_desa_digital_${from}_${to}.pdf`);
+  };
+
+  // Custom tooltip, hanya ambil kategori yang sedang di-hover
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length && activeKey) {
+      const item = payload.find((p: any) => p.dataKey === activeKey);
+      if (!item) return null;
+
+      return (
+        <Box
+          p={2}
+          bg="white"
+          borderRadius="md"
+          boxShadow="md"
+          fontSize="11px"
+          border="1px solid #E2E8F0"
+        >
+          <Text fontWeight="semibold" color="gray.700">
+            Tahun {label}
+          </Text>
+          <Flex align="center" mt={1}>
+            <Box
+              w="10px"
+              h="10px"
+              borderRadius="full"
+              bg={item.color}
+              mr={2}
+            />
+            <Text color="gray.600">
+              {item.name}: <b>{item.value}</b>
+            </Text>
+          </Flex>
+        </Box>
+      );
+    }
+    return null;
   };
 
   return (
     <Box p={4}>
       <Flex justify="space-between" align="center">
-        <Text {...titleStyle}>Jumlah Desa Digital Tahun {selectedYear}</Text>
+        <Text fontSize="m" fontWeight="bold" whiteSpace="pre-line">
+          Pertumbuhan Desa Digital {"\n"} Tahun {fromYear} – {toYear}
+        </Text>
         <Flex justify="flex-end" align="center">
           <Image src={filterIcon} alt="Filter" boxSize="16px" cursor="pointer" ml={2} onClick={onOpen} />
           <Menu>
             <MenuButton
               as={IconButton}
-              aria-label="Download Options"
+              aria-label="Download"
               icon={<Image src={downloadIcon} alt="Download" boxSize="16px" />}
               variant="ghost"
-              ml={2}
+              _hover={{ bg: 'gray.100' }}
             />
-            <MenuList fontSize="sm">
-              <MenuItem onClick={() => exportToPDF(desaDetails, selectedYear)}>
+            <MenuList>
+              <MenuItem onClick={() => exportToPDF(desaDetails, fromYear, toYear)}>
                 Download PDF
               </MenuItem>
               <MenuItem onClick={exportToXLSX}>Download Excel</MenuItem>
@@ -222,57 +248,84 @@ const ChartVillage = () => {
         </Flex>
       </Flex>
 
-      <Box {...chartContainerStyle}>
-        <Flex {...legendContainerStyle}>
-          {barData.map((d, idx) => (
-            <Flex key={d.category} {...legendItemStyle}>
-              <Box {...legendDotStyle} bg={d.color} />
-              <Text>{d.category}</Text>
-            </Flex>
-          ))}
-        </Flex>
-
-        {isEmpty ? (
-          <Text textAlign="center" mt={10} fontWeight="medium">
-            Belum ada data untuk tahun yang dipilih.
-          </Text>
+      <Box
+        bg="#D1EDE1"
+        borderRadius="lg"
+        pt="5px"
+        pb="1px"
+        boxShadow="lg"
+        border="2px solid"
+        borderColor="gray.200"
+        mt={3}
+        height="250px"
+      >
+        {loading ? (
+          <Flex justify="center" align="center" h="200px">
+            <Spinner size="lg" />
+          </Flex>
+        ) : isEmpty ? (
+          <Flex justify="center" align="center" h="100%">
+            <Text fontSize="sm" textAlign="center">
+              Belum ada data untuk rentang tahun ini
+            </Text>
+          </Flex>
         ) : (
-          <Box {...chartWrapperStyle}>
-            <Flex {...yAxisWrapperStyle}>
-              {[4, 3, 2, 1, 0].map((i) => {
-                const label = Math.round((maxValue / 4) * i);
-                return (
-                  <Text key={i} {...yAxisLabelStyle}>
-                    {label === 0 ? "" : label}
-                  </Text>
-                );
-              })}
-            </Flex>
-
-            <Flex {...chartBarContainerStyle}>
-              <Box {...yAxisStyle} />
-              <Flex {...barAndLineWrapperStyle}>
-                {barData.map((data, idx) => (
-                  <Flex key={data.category} flexDir="column" align="center" justify="flex-end" {...barGroupStyle}>
-                    <Tooltip label={`${data.category}: ${data.value} desa`} hasArrow placement="top">
-                      <Box
-                        {...barStyle}
-                        height={`${(data.value / maxValue) * 100}%`}
-                        bg={data.color}
-                        width="24px"
-                      />
-                    </Tooltip>
-                    <Text {...labelStyle}>{data.category}</Text>
-                  </Flex>
-                ))}
-                <Box {...xAxisStyle} />
-              </Flex>
-            </Flex>
-          </Box>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart
+              data={barData}
+              margin={{ top: 20, right: 40, left: 1, bottom: 15 }}
+              barSize={25}
+            >
+              <CartesianGrid stroke="#E2E8F0" vertical={false} />
+              <XAxis
+                dataKey="year"
+                label={{ value: "Tahun", position: "insideBottom", fontSize: 10, dy: 5 }}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis
+                label={{ value: "Jumlah Desa", angle: -90, position: "insideLeft", fontSize: 10, dx: 10, dy: 30 }}
+                tick={{ fontSize: 10 }}
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{ fill: "transparent" }}
+              />
+              <Legend
+                verticalAlign="top"
+                align="center"
+                iconType="circle"
+                iconSize={10}
+                wrapperStyle={{
+                  fontSize: 12,
+                  color: "#000",
+                  paddingBottom: "20px",
+                  marginTop: "-10px",
+                  marginLeft: "20px",
+                }}
+              />
+              {categories.map((cat, i) => (
+                <Bar
+                  key={cat}
+                  dataKey={cat}
+                  stackId="a"
+                  fill={colors[i]}
+                  radius={[4, 4, 0, 0]}
+                  onMouseOver={() => setActiveKey(cat)}
+                  onMouseOut={() => setActiveKey(null)}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         )}
       </Box>
 
-      <YearFilter isOpen={isOpen} onClose={onClose} onApply={handleFilterApply} />
+      <YearRangeFilter
+        isOpen={isOpen}
+        onClose={onClose}
+        onApply={handleFilterApply}
+        initialFrom={fromYear}
+        initialTo={toYear}
+      />
     </Box>
   );
 };

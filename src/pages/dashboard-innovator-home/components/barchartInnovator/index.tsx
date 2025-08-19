@@ -4,12 +4,10 @@ import {
   Flex,
   Image,
   Spinner,
-  Tooltip,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
-  Button,
 } from "@chakra-ui/react";
 import { useEffect, useState } from "react";
 import {
@@ -26,37 +24,39 @@ import filterIcon from "../../../../assets/icons/icon-filter.svg";
 import downloadIcon from "../../../../assets/icons/icon-download.svg";
 
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 import {
-  chartContainerStyle,
-  chartWrapperStyle,
-  barGroupStyle,
-  barStyle,
-  labelStyle,
-  legendContainerStyle,
-  legendItemStyle,
-  legendDotStyle,
-  titleStyle,
-  yAxisLabelStyle,
-  yAxisWrapperStyle,
-  chartBarContainerStyle,
-  barAndLineWrapperStyle,
-  xAxisStyle,
-  yAxisStyle,
-} from "./_barchartInnovatorStyle";
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
 const BarChartInovasi = () => {
   const db = getFirestore();
   const auth = getAuth();
-  const user = auth.currentUser;
-  const userName = user?.displayName || "Inovator";
+
   const [showFilter, setShowFilter] = useState(false);
   const [yearRange, setYearRange] = useState<[number, number]>([2010, 2025]);
   const [dataByYear, setDataByYear] = useState<Record<number, number>>({});
   const [loading, setLoading] = useState(true);
+
+  const [formattedData, setFormattedData] = useState<
+    { namaDesa: string; namaInovasi: string; namaInovator: string; year: number }[]
+  >([]);
+
+  const [profilInovator, setProfilInovator] = useState<{
+    namaInovator: string;
+    kategoriInovator: string;
+    tahunDibentuk: string | number;
+    targetPengguna: string;
+    produk: string;
+    modelBisnis: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,22 +69,12 @@ const BarChartInovasi = () => {
           return;
         }
 
-        const exportRows: {
-          namaDesa: string;
-          namaInovasi: string;
-          namaInovator: string;
-          year: number;
-        }[] = [];
-
         const inovatorQ = query(
           collection(db, "innovators"),
           where("id", "==", currentUser.uid)
         );
         const inovatorSnap = await getDocs(inovatorQ);
         const inovatorIds = inovatorSnap.docs.map((doc) => doc.id);
-
-        console.log("Inovator Snapshot:", inovatorSnap.docs.map(d => d.data()));
-        console.log("Inovator IDs:", inovatorIds);
 
         const inovatorMap: Record<string, string> = {};
         inovatorSnap.docs.forEach((doc) => {
@@ -97,7 +87,7 @@ const BarChartInovasi = () => {
           return;
         }
 
-        // 2. Get inovasi docs where inovatorId in inovatorId (batch in 10)
+        // ambil inovasi
         const inovasiIds: string[] = [];
         const inovasiMap: Record<string, { namaInovasi: string; inovatorId: string }> = {};
         const batchSize = 10;
@@ -119,21 +109,6 @@ const BarChartInovasi = () => {
           });
         }
 
-        const produkInovator = Object.values(inovasiMap)
-          .map((item) => item.namaInovasi)
-          .filter((name, index, self) => name && self.indexOf(name) === index)
-          .filter(Boolean)
-          .join(", ");
-
-        console.log("Inovasi Map:", inovasiMap);
-        console.log("Inovasi IDs:", inovasiIds);
-
-        if (inovasiIds.length === 0) {
-          setDataByYear({});
-          setLoading(false);
-          return;
-        }
-
         if (inovatorSnap.docs.length > 0) {
           const inovatorData = inovatorSnap.docs[0].data();
           setProfilInovator({
@@ -142,14 +117,21 @@ const BarChartInovasi = () => {
             tahunDibentuk: inovatorData.tahunDibentuk || "-",
             targetPengguna: inovatorData.targetPengguna || "-",
             modelBisnis: inovatorData.modelBisnis || "-",
-            produk: produkInovator || "-",
+            produk:
+              Object.values(inovasiMap)
+                .map((i) => i.namaInovasi)
+                .join(", ") || "-",
           });
-        } else {
-          setProfilInovator(null);
         }
 
-        // 3. Get klaimInovasi docs where inovasiId in inovasiIds and filter by yearRange
-        const counts: Record<number, number> = {};
+        // Hitung desa per tahun + data untuk export
+        const desaPerTahun: Record<number, Set<string>> = {};
+        const exportMap: Record<string, {
+          namaDesa: string;
+          namaInovator: string;
+          year: number;
+          inovasi: Set<string>;
+        }> = {};
 
         for (let i = 0; i < inovasiIds.length; i += batchSize) {
           const batchIds = inovasiIds.slice(i, i + batchSize);
@@ -161,42 +143,55 @@ const BarChartInovasi = () => {
 
           klaimSnap.forEach((doc) => {
             const data = doc.data();
-
-            // Extract year from Firestore Timestamp
             const createdAt = data.createdAt?.toDate?.();
             const year = createdAt?.getFullYear?.();
-
             const desa = data.namaDesa;
             const inovasiId = data.inovasiId;
 
-            if (!isNaN(year) && desa && year >= yearRange[0] && year <= yearRange[1]) {
-              counts[year] = (counts[year] || 0) + 1;
+            if (
+              !isNaN(year) &&
+              desa &&
+              year >= yearRange[0] &&
+              year <= yearRange[1]
+            ) {
+              if (!desaPerTahun[year]) desaPerTahun[year] = new Set();
+              desaPerTahun[year].add(desa);
 
               const inovasiData = inovasiMap[inovasiId] || {};
               const namaInovasi = inovasiData.namaInovasi || "-";
+              const namaInovator = inovatorMap[inovasiData.inovatorId] || "-";
 
-              // Try to get namaInovator from inovatorMap via inovatorId
-              const namaInovator =
-                inovatorMap[inovasiData.inovatorId] || "-";
-
-              exportRows.push({
-                namaDesa: desa,
-                namaInovasi,
-                namaInovator,
-                year,
-              });
+              // key unik desa + tahun
+              const key = `${desa}-${year}`;
+              if (!exportMap[key]) {
+                exportMap[key] = {
+                  namaDesa: desa,
+                  namaInovator,
+                  year,
+                  inovasi: new Set(),
+                };
+              }
+              exportMap[key].inovasi.add(namaInovasi);
             }
           });
         }
 
+        const exportRows = Object.values(exportMap).map((item) => ({
+          namaDesa: item.namaDesa,
+          namaInovator: item.namaInovator,
+          year: item.year,
+          namaInovasi: Array.from(item.inovasi).join(", "),
+        }));
+
+        const countsByYear: Record<number, number> = {};
+        Object.keys(desaPerTahun).forEach((year) => {
+          countsByYear[Number(year)] = desaPerTahun[Number(year)].size;
+        });
+
+        setDataByYear(countsByYear);
         setFormattedData(exportRows);
-        setDataByYear(counts);
-
-        console.log("Fetched dataByYear:", counts);
-        console.log("Formatted data for export:", exportRows);
-
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch (err) {
+        console.error("Error:", err);
         setDataByYear({});
       }
       setLoading(false);
@@ -205,59 +200,37 @@ const BarChartInovasi = () => {
     fetchData();
   }, [yearRange, auth.currentUser]);
 
-  const maxValue = Math.max(...Object.values(dataByYear), 10);
-  const rotateLabels = Object.keys(dataByYear).length > 8;
-
-  const [formattedData, setFormattedData] = useState<
-    { namaDesa: string; namaInovasi: string; namaInovator: string; year: number }[]
-  >([]);
-
-  const [profil, setProfilInovator] = useState<{
-    namaInovator: string;
-    kategoriInovator: string;
-    tahunDibentuk: string | number;
-    targetPengguna: string;
-    produk: string;
-    modelBisnis: string;
-  } | null>(null);
-
-  // Export Excel function
-  const exportToExcel = (data: any[]) => {
+  const isEmpty = formattedData.length === 0;
+  
+  // export excel
+  const exportToExcel = (
+    data: { namaDesa: string; namaInovasi: string; namaInovator: string; year: number }[]
+  ) => {
     const wsData = [
-      ["Tahun", "Jumlah Desa"],
-      ...data.map((item) => [item.year, item.count]),
+      ["No", "Nama Desa", "Nama Inovasi", "Nama Inovator", "Tahun"],
+      ...data.map((d, i) => [i + 1, d.namaDesa, d.namaInovasi, d.namaInovator, d.year]),
     ];
-
     const worksheet = XLSX.utils.aoa_to_sheet(wsData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data Perkembangan Inovasi");
     XLSX.writeFile(workbook, "data-perkembangan-inovasi.xlsx");
   };
 
+  // export PDF
   const exportToPDF = (
-    data: {
-      namaDesa: string;
-      namaInovasi: string;
-      namaInovator: string;
-      year: number;
-    }[],
-    profil: {
-      namaInovator: string;
-      kategoriInovator: string;
-      tahunDibentuk: string | number;
-      targetPengguna: string;
-      produk: string;
-      modelBisnis: string;
-    }
+    data: { namaDesa: string; namaInovasi: string; namaInovator: string; year: number }[],
+    profilInovator: any
   ) => {
     const doc = new jsPDF();
     const downloadDate = new Date().toLocaleDateString("id-ID", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
     });
 
-    // Header background and text
+    const inovatorProfile = formattedData[0];
+
+    // Header with green background
     doc.setFillColor(0, 128, 0);
     doc.rect(0, 0, 210, 30, "F");
 
@@ -266,7 +239,7 @@ const BarChartInovasi = () => {
 
     doc.setFontSize(15);
     doc.text("Dokumen Laporan Inovator", 14, 13);
-    doc.text(profil.namaInovator || "-", 190, 13, { align: "right" });
+    doc.text(inovatorProfile.namaInovator || "-", 190, 13, { align: "right" });
 
     doc.setFontSize(12);
     doc.text("KMS Inovasi Desa Digital", 14, 22);
@@ -291,91 +264,102 @@ const BarChartInovasi = () => {
     doc.setFont("helvetica", "normal");
 
     doc.text("Nama", labelX, y);
-    doc.text(`: ${profil.namaInovator || "-"}`, valueX, y);
+    doc.text(`: ${inovatorProfile.namaInovator || "-"}`, valueX, y);
     y += lineHeight;
 
     doc.text("Kategori", labelX, y);
-    doc.text(`: ${profil.kategoriInovator || "-"}`, valueX, y);
+    doc.text(`: ${profilInovator.kategoriInovator || "-"}`, valueX, y);
     y += lineHeight;
 
     doc.text("Tahun Dibentuk", labelX, y);
-    doc.text(`: ${profil.tahunDibentuk || "-"}`, valueX, y);
+    doc.text(`: ${profilInovator.tahunDibentuk || "-"}`, valueX, y);
     y += lineHeight;
 
     doc.text("Target Pengguna", labelX, y);
-    doc.text(`: ${profil.targetPengguna || "-"}`, valueX, y);
+    doc.text(`: ${profilInovator.targetPengguna || "-"}`, valueX, y);
     y += lineHeight;
 
     doc.text("Model Bisnis", labelX, y);
-    doc.text(`: ${profil.modelBisnis || "-"}`, valueX, y);
+    doc.text(`: ${profilInovator.modelBisnis || "-"}`, valueX, y);
     y += lineHeight;
 
     doc.text("Produk", labelX, y);
-    doc.text(`: ${profil.produk || "-"}`, valueX, y);
+    doc.text(`: ${profilInovator.produk || "-"}`, valueX, y);
     y += 10;
 
-    // Table title
+    // Table starts after profile
     y += 5;
     doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", "bold");
-    doc.text(`Data Perkembangan Desa Dampingan ${profil.namaInovator || "-"}`, 14, y);
-    y += 5;
+    doc.text(`Data Sebaran Inovasi ${inovatorProfile.namaInovator || "-"}`, 14, y);
+    y += 6;
 
-    // Table with data
     autoTable(doc, {
       startY: y,
-      head: [["No", "Nama Desa", "Nama Inovasi", "Nama Inovator", "Tahun Klaim"]],
-      body: data.map((item, idx) => [
-        idx + 1,
-        item.namaDesa,
-        item.namaInovasi,
-        item.namaInovator,
-        item.year,
+      head: [[
+        "No",
+        "Nama Desa",
+        "Nama Inovasi",
+        "Nama Inovator",
+        "Tahun"
+      ]],
+      body: data.map((d, i) => [
+        i + 1,
+        d.namaDesa,
+        d.namaInovasi,
+        d.namaInovator,
+        d.year
       ]),
       headStyles: {
         fillColor: [0, 128, 0],
         textColor: 255,
-        fontStyle: "bold",
+        fontStyle: 'bold',
       },
-      styles: { fontSize: 10 },
     });
 
     doc.save("data-perkembangan-inovasi.pdf");
   };
 
-  console.log("Rendering chart with dataByYear:", dataByYear);
+  const chartData = Object.keys(dataByYear)
+    .sort((a, b) => Number(a) - Number(b))
+    .map((year) => ({
+      name: year,
+      value: dataByYear[Number(year)],
+    }));
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length > 0) {
+      return (
+        <Box bg="white" p={2} border="1px solid #ccc">
+          <Text fontWeight="bold">{label}</Text>
+          <Text>Jumlah Desa: {payload[0].value}</Text>
+        </Box>
+      );
+    }
+    return null;
+  };
 
   return (
-    <Box p={4}>
-      <Flex justify="space-between" align="center" mb={2}>
-        <Text {...titleStyle}>Jumlah Desa Dampingan {profil?.namaInovator || "Inovator"}</Text>
-        <Flex align="center" gap={2}>
+    <Box>
+      <Flex justify="space-between" align="center" mt="24px" mx="15px">
+        <Text fontSize="m" fontWeight="bold" color="gray.800">
+          Pertumbuhan Desa Dampingan {profilInovator?.namaInovator || "Inovator"}
+        </Text>
+        <Flex gap={2}>
           <Image
-            onClick={() => setShowFilter(true)}
             src={filterIcon}
             alt="Filter"
             boxSize="16px"
             cursor="pointer"
-            ml={2}
+            onClick={() => setShowFilter(true)}
           />
           <Menu>
-            <MenuButton
-              as={Box}
-              cursor="pointer"
-              display="inline-block"
-              p={1}
-              _hover={{ opacity: 0.8 }}
-            >
-              <Image src={downloadIcon} alt="Download" boxSize="16px"/>
+            <MenuButton>
+              <Image src={downloadIcon} alt="Download" boxSize="16px" cursor="pointer" marginRight={2}/>
             </MenuButton>
             <MenuList>
-              <MenuItem
-                onClick={() => {
-                  if (profil) {
-                    exportToPDF(formattedData, profil);
-                  }
-                }}
-              >
+              <MenuItem onClick={() => { if(profilInovator) exportToPDF(formattedData, profilInovator); }}>
                 Download PDF
               </MenuItem>
               <MenuItem onClick={() => exportToExcel(formattedData)}>
@@ -386,77 +370,45 @@ const BarChartInovasi = () => {
         </Flex>
       </Flex>
 
-      <Box {...chartContainerStyle}>
-        <Flex {...legendContainerStyle}>
-          <Flex {...legendItemStyle}>
-            <Box {...legendDotStyle} bg="#4C73C7" />
-            <Text>Jumlah Desa</Text>
+      <Box
+        bg="#D1EDE1"
+        borderRadius="lg"
+        pt="5px"
+        pb="1px"
+        mx="15px"
+        boxShadow="lg"
+        border="2px solid"
+        borderColor="gray.200"
+        mt={3}
+        height="200px"
+      >
+        {loading ? (
+          <Flex justify="center" align="center" h="200px">
+            <Spinner size="lg" />
           </Flex>
-        </Flex>
-
-        <Box {...chartWrapperStyle}>
-          <Flex {...yAxisWrapperStyle}>
-            {(() => {
-              const stepSize = maxValue > 50 ? 10 : 5;
-              const niceMax = Math.ceil(maxValue / stepSize) * stepSize;
-              const steps = [];
-
-              for (let i = niceMax; i >= 0; i -= stepSize) {
-                steps.push(i);
-              }
-
-              return steps.map((label) => (
-                <Text key={label} {...yAxisLabelStyle}>
-                  {label === 0 ? "" : label}
-                </Text>
-              ));
-            })()}
+        ) : isEmpty ? (
+          <Flex justify="center" align="center" h="100%">
+            <Text fontSize="sm" textAlign="center">
+              Belum ada data untuk rentang tahun ini
+            </Text>
           </Flex>
-
-          <Flex {...chartBarContainerStyle}>
-            <Box {...yAxisStyle} />
-            <Flex {...barAndLineWrapperStyle}>
-              {loading ? (
-                <Spinner mt={10} />
-              ) : (
-                Object.keys(dataByYear)
-                  .sort((a, b) => Number(a) - Number(b))
-                  .map((year) => (
-                    <Box key={year} {...barGroupStyle}>
-                      <Tooltip
-                        label={`Tahun ${year}: ${dataByYear[Number(year)]} desa`}
-                        hasArrow
-                        placement="top"
-                        bg="gray.700"
-                        color="white"
-                        fontSize="sm"
-                      >
-                        <Box
-                          {...barStyle}
-                          height={`${(dataByYear[Number(year)] / maxValue) * 100}%`}
-                          bg="#4C73C7"
-                          _hover={{ opacity: 0.8 }}
-                          transition="all 0.2s"
-                        />
-                      </Tooltip>
-                      <Text
-                        {...labelStyle}
-                        sx={
-                          rotateLabels
-                            ? { transform: "rotate(-45deg)", transformOrigin: "left bottom" }
-                            : {}
-                        }
-                        whiteSpace="nowrap"
-                      >
-                        {year}
-                      </Text>
-                    </Box>
-                  ))
-              )}
-              <Box {...xAxisStyle} />
-            </Flex>
-          </Flex>
-        </Box>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData} barSize={25} margin={{ top: 20, right: 20, left: 10, bottom: 20 }}>
+              <XAxis
+                dataKey="name"
+                label={{ value: "Tahun", position: "insideBottom", fontSize: 10, dy: 10 }}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis
+                label={{ value: "Jumlah Desa", angle: -90, position: "insideLeft", fontSize: 10, dx: 5, dy: 30 }}
+                tick={{ fontSize: 10 }}
+              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "transparent" }} />
+              <Bar dataKey="value" fill="#4C73C7" radius={[2, 2, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </Box>
 
       <YearRangeFilter

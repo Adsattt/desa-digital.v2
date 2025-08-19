@@ -74,7 +74,7 @@ const TopVillages = () => {
         };
 
         const chunks = chunkArray(inovasiIds, 10);
-        let desaDocs: { namaDesa?: string }[] = [];
+        let desaDocs: { desaId: string; namaDesa: string }[] = [];
 
         for (const chunk of chunks) {
           const desaQuery = query(
@@ -82,24 +82,36 @@ const TopVillages = () => {
             where("inovasiId", "in", chunk)
           );
           const snapshot = await getDocs(desaQuery);
-          desaDocs.push(...snapshot.docs.map((doc) => doc.data()));
+          desaDocs.push(
+            ...snapshot.docs.map(
+              (doc) => doc.data() as { desaId: string; namaDesa: string }
+            )
+          );
         }
 
-        const countMap: Record<string, number> = {};
+        const countMap: Record<string, { namaDesa: string; count: number }> = {};
         desaDocs.forEach((item) => {
-          const namaDesa = item.namaDesa;
-          if (namaDesa) {
-            countMap[namaDesa] = (countMap[namaDesa] || 0) + 1;
+          if (item.desaId) {
+            if (!countMap[item.desaId]) {
+              countMap[item.desaId] = { namaDesa: item.namaDesa, count: 0 };
+            }
+            countMap[item.desaId].count++;
           }
         });
 
         const sorted = Object.entries(countMap)
           .sort((a, b) => {
-            if (b[1] === a[1]) return a[0].localeCompare(b[0]);
-            return b[1] - a[1];
+            if (b[1].count === a[1].count) {
+              return a[1].namaDesa.localeCompare(b[1].namaDesa);
+            }
+            return b[1].count - a[1].count;
           })
           .slice(0, 3)
-          .map(([name, count]) => ({ name, count }));
+          .map(([desaId, value]) => ({
+            id: desaId,
+            name: value.namaDesa,
+            count: value.count,
+          }));
 
         if (sorted.length === 0) {
           setTopVillages([]);
@@ -107,37 +119,35 @@ const TopVillages = () => {
           return;
         }
 
-        // Detect if all counts are the same
-        const allSameCount = sorted.every((item) => item.count === sorted[0].count);
+        const topThree = sorted.slice(0, 3);
 
-        let ranked: TopItem[];
+        // Cek apakah semua count sama
+        const allSameCount = topThree.every(item => item.count === topThree[0].count);
+
+        let ranked;
 
         if (allSameCount) {
-          ranked = sorted.map((item) => ({
+          // Semua rank 1
+          ranked = topThree.map((item) => ({
             ...item,
             rank: 1,
             label: "1st",
           }));
         } else {
-          // Assign equal ranks where applicable
+          // Saat nilai count berbeda
           let currentRank = 1;
           let lastCount: number | null = null;
-          let sameRankCount = 0;
 
-          ranked = sorted.map((item, index) => {
-            if (lastCount === null || item.count !== lastCount) {
-              currentRank += sameRankCount;
-              sameRankCount = 1;
-            } else {
-              sameRankCount++;
+          ranked = topThree.map((item) => {
+            if (lastCount !== null && item.count !== lastCount) {
+              currentRank++;
             }
-
             lastCount = item.count;
 
             return {
-              ...item,
+              ...item, //spread operator, menyalin data dalam ke dalam data baru
               rank: currentRank,
-              label: `${currentRank}${["st", "nd", "rd"][currentRank - 1] || "th"}`,
+              label: `${currentRank}${["st", "nd", "rd"][currentRank - 1] || "th"}`
             };
           });
         }
@@ -171,41 +181,84 @@ const TopVillages = () => {
         ) : (
           <Flex
             {...podiumWrapperStyle}
-            justify={
-              topVillages.length === 1
-                ? "center"
-                : topVillages.length === 2
-                ? "space-around"
-                : "center"
-            }
+            justify="center"
           >
-            {topVillages.map((item, _, arr) => {
-              const allSameRank = arr.every((el) => el.rank === 1);
+            {topVillages.map((item, idx, arr) => {
+              const allSameRank = arr.every(el => el.rank === arr[0].rank);
+              let height = "100px";
 
-              const height = allSameRank
-                ? "100px"
-                : item.rank === 1
-                ? "120px"
-                : item.rank === 2
-                ? "100px"
-                : "80px";
+              // Tinggi podium
+              if (arr.length === 1) {
+                height = "120px";
+              } else if (arr.length === 2) {
+                if (allSameRank) {
+                  height = "100px";
+                } else {
+                  height = item.rank === 1 ? "120px" : "100px";
+                }
+              } else if (arr.length === 3) {
+                if (allSameRank) {
+                  height = "100px";
+                } else {
+                  height =
+                    item.rank === 1 ? "120px" :
+                    item.rank === 2 ? "100px" : "80px";
+                }
+              }
 
-              // Terapkan order hanya jika ada 3 item
-              const order =
-                arr.length === 3
-                  ? item.rank === 1
-                    ? 2
-                    : item.rank === 2
-                    ? 1
-                    : 3
-                  : undefined;
+              // Urutan/order untuk posisi podium
+              let order: number | undefined;
+              if (arr.length === 1) {
+                // Kasus satu data
+                order = 2; // tengah
+              } else if (arr.length === 2) {
+                // Kasus dua data
+                if (allSameRank) {
+                  // Data sama, di kiri & kanan
+                  order = idx === 0 ? 1 : 3;
+                } else {
+                  // #1 di kiri, #2 di kanan
+                  order = item.rank === 1 ? 1 : 3;
+                }
+              } else if (arr.length === 3) {
+                // Kasus tiga data
+                if (allSameRank) {
+                  // 3 data #1
+                  order = idx + 1; // urut default kiri-tengah-kanan
+                } else {
+                  const rank1Count = arr.filter(el => el.rank === 1).length;
+                  if (rank1Count === 1) {
+                    // 1 data #1 di tengah
+                    if (item.rank === 1) {
+                      order = 2;
+                    } else {
+                      // 2 data #2: satu di kiri (1) dan satu di kanan (3)
+                      const rank2Items = arr.filter(el => el.rank === 2);
+                      const thisIndexInRank2 = rank2Items.indexOf(item);
+                      order = thisIndexInRank2 === 0 ? 1 : 3;
+                    }
+                  } else if (rank1Count === 2) {
+                    // 2 data #1 di kiri & tengah
+                    if (item.rank === 1) {
+                      order = arr.indexOf(item) === 0 ? 1 : 2;
+                    } else {
+                      order = 3; // 1 data #2 di kanan
+                    }
+                  } else {
+                    // Rank 1, 2, 3 berbeda semua
+                    order =
+                      item.rank === 1
+                        ? 2 // tengah
+                        : item.rank === 2
+                        ? 1 // kiri
+                        : 3 // kanan
+                  }
+                }
+              }
 
               const bgColor =
-                item.rank === 1
-                  ? "#244E3B"
-                  : item.rank === 2
-                  ? "#347357"
-                  : "#568A73";
+                item.rank === 1 ? "#244E3B" :
+                item.rank === 2 ? "#347357" : "#568A73";
 
               return (
                 <Flex
@@ -213,6 +266,7 @@ const TopVillages = () => {
                   direction="column"
                   align="center"
                   {...(order ? { order } : {})}
+                  mx={arr.length === 1 ? 4 : 2}
                 >
                   <Text fontWeight="semibold" mb={2} textAlign="center" fontSize="15">
                     {item.name}

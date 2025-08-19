@@ -147,6 +147,7 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({ onSelectVillage }) => {
 
         const klaimInovasiRef = collection(db, "claimInnovations");
         let klaimDocs: QueryDocumentSnapshot<DocumentData>[] = [];
+
         for (let i = 0; i < inovasiIds.length; i += chunkSize) {
           const chunk = inovasiIds.slice(i, i + chunkSize);
           const qKlaim = query(klaimInovasiRef, where("inovasiId", "in", chunk));
@@ -156,36 +157,49 @@ const DetailVillages: React.FC<DetailVillagesProps> = ({ onSelectVillage }) => {
 
         const desaMap = new Map<
           string,
-          { namaDesa: string; inovasiIdSet: Set<string> }
+          {
+            desaId: string;
+            namaDesa: string;
+            inovasiIdSet: Set<string>
+          }
         >();
 
         for (const docSnap of klaimDocs) {
           const data = docSnap.data();
+          const desaId = data.desaId;
           const namaDesa = data.namaDesa;
           const inovasiId = data.inovasiId;
 
-          if (!desaMap.has(namaDesa)) {
-            desaMap.set(namaDesa, {
+          if (!desaMap.has(desaId)) {
+            desaMap.set(desaId, {
+              desaId,
               namaDesa,
               inovasiIdSet: new Set<string>(),
             });
           }
-          desaMap.get(namaDesa)!.inovasiIdSet.add(inovasiId);
+          desaMap.get(desaId)!.inovasiIdSet.add(inovasiId);
         }
 
-        const result: Implementation[] = Array.from(desaMap.entries()).map(([namaDesa, data]) => {
-          const exampleInovasiId = [...data.inovasiIdSet][0];
+        const result: Implementation[] = Array.from(desaMap.values()).map((data) => {
           return {
-            namaDesa,
+            namaDesa: data.namaDesa,
             namaInovator: profileData.namaInovator || "-",
             jumlahInovasi: data.inovasiIdSet.size,
-            villageId: exampleInovasiId || "",
+            villageId: data.desaId || "",
           };
         });
 
         setImplementationData(
-          result.sort((a, b) => a.namaDesa.localeCompare(b.namaDesa))
+          result.sort((a, b) => {
+            if (b.jumlahInovasi === a.jumlahInovasi) {
+              // Kalau jumlahInovasi sama, urutkan berdasarkan namaDesa (A-Z)
+              return a.namaDesa.localeCompare(b.namaDesa);
+            }
+            // Kalau jumlahInovasi berbeda, urutkan dari nilai yang terbesar
+            return b.jumlahInovasi - a.jumlahInovasi;
+          })
         );
+        
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

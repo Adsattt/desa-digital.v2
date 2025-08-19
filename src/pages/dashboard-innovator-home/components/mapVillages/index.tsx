@@ -56,8 +56,9 @@ interface DesaPin {
   namaDesa: string;
   lat: number;
   lng: number;
+  provinsi: string;
   inovasiId: string;
-  inovasiName?: string;
+  inovasiList: string[];
 }
 
 const cleanName = (name: string) => {
@@ -91,7 +92,7 @@ const onEachFeature = (totals: Record<string, number>) => (
   const rawName = feature?.properties?.Propinsi || "Unknown";
   const name = cleanName(rawName);
   const total = totals[name] ?? 0;
-  layer.bindPopup(`${rawName}: ${total} desa digital`);
+  layer.bindPopup(`${rawName}: ${total} desa dampingan`);
   console.log("rawName:", rawName, "cleaned:", name, "total:", total, "totals:", totals);
 };
 
@@ -168,7 +169,7 @@ const MapVillages = () => {
       );
 
       const pinResults: DesaPin[] = [];
-      const dynamicTotals: Record<string, number> = {};
+      const dynamicTotals: Record<string, Set<string>> = {};
       const exportTemp: any[] = [];
 
       const produkInovator = inovasiDocs
@@ -197,16 +198,27 @@ const MapVillages = () => {
         const provinsi = cleanName(provinsiRaw);
 
         if (lat && lng) {
-          pinResults.push({
-            desaId,
-            namaDesa: desaData.namaDesa ?? "Desa",
-            lat,
-            lng,
-            inovasiId,
-            inovasiName: inovasiData.namaInovasi,
-          });
+          const existingPin = pinResults.find((p) => p.desaId === desaId);
 
-          dynamicTotals[provinsi] = (dynamicTotals[provinsi] || 0) + 1;
+          if (existingPin) {
+            existingPin.inovasiList = [
+              ...(existingPin.inovasiList || []),
+              inovasiData.namaInovasi,
+            ];
+          } else {
+            pinResults.push({
+              desaId,
+              namaDesa: desaData.namaDesa ?? "Desa",
+              lat,
+              lng,
+              provinsi,
+              inovasiId,
+              inovasiList: [inovasiData.namaInovasi],
+            });
+          }
+          
+          if (!dynamicTotals[provinsi]) dynamicTotals[provinsi] = new Set();
+          dynamicTotals[provinsi].add(desaId);
 
           const capitalizeWords = (str: string) =>
             str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
@@ -232,11 +244,26 @@ const MapVillages = () => {
         }
       }
 
+      exportTemp.sort((a, b) => {
+        const yearA = typeof a.tanggalKlaim === "number" ? a.tanggalKlaim : 0;
+        const yearB = typeof b.tanggalKlaim === "number" ? b.tanggalKlaim : 0;
+
+        // Mengurutkan data sesuai tahun klaim, kemudian abjad nama desa
+        if (yearB !== yearA) return yearB - yearA;
+        return a.namaDesa.localeCompare(b.namaDesa);
+      });
+
+      setExportData(exportTemp);
       console.log("Exported Data:", exportTemp);
+
+      const totalsCount: Record<string, number> = {};
+      Object.keys(dynamicTotals).forEach((prov) => {
+        totalsCount[prov] = dynamicTotals[prov].size;
+      });
 
       setExportData(exportTemp);
       setDesaPins(pinResults);
-      setTotals(dynamicTotals);
+      setTotals(totalsCount);
     };
 
     fetchDesaPins();
@@ -250,7 +277,7 @@ const MapVillages = () => {
       year: "numeric",
     });
 
-    const inovatorProfile = exportData[0]; // Assuming exportData has at least one entry from the same inovator
+    const inovatorProfile = exportData[0];
 
     // Header with green background
     doc.setFillColor(0, 128, 0);
@@ -303,11 +330,11 @@ const MapVillages = () => {
 
     doc.text("Model Bisnis", labelX, y);
     doc.text(`: ${inovatorProfile.modelBisnis || "-"}`, valueX, y);
-    y += 10;
+    y += lineHeight;
 
     doc.text("Produk", labelX, y);
     doc.text(`: ${inovatorProfile.produk || "-"}`, valueX, y);
-    y += lineHeight;
+    y += 10;
 
     // Table starts after profile
     y += 5;
@@ -321,9 +348,9 @@ const MapVillages = () => {
       startY: y,
       head: [[
         "No.",
+        "Nama Desa",
         "Nama Inovasi",
         "Kategori Inovasi",
-        "Nama Desa",
         "Kecamatan",
         "Kabupaten",
         "Provinsi",
@@ -331,9 +358,9 @@ const MapVillages = () => {
       ]],
       body: exportData.map((row, idx) => [
         idx + 1,
+        row.desaKelurahan,
         row.namaInovasi,
         row.kategoriInovasi,
-        row.desaKelurahan,
         row.kecamatan,
         row.kabupatenKota,
         row.provinsi,
@@ -407,12 +434,14 @@ const MapVillages = () => {
                 onEachFeature={onEachFeature(totals)}
               />
             )}
-            {desaPins.map((desa) => (
+            {desaPins
+            .filter(d => !selectedProvince || d.provinsi === cleanName(selectedProvince))
+            .map((desa) => (
               <Marker key={desa.desaId} position={[desa.lat, desa.lng]}>
                 <Popup>
                   <strong>{desa.namaDesa}</strong>
                   <br />
-                  Inovasi: {desa.inovasiName ?? "-"}
+                  Inovasi: {desa.inovasiList.join(", ")}
                 </Popup>
               </Marker>
             ))}

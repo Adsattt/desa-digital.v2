@@ -21,18 +21,14 @@ const DashboardInnovatorVillage = () => {
         title={`Dashboard ${userName} - Desa`}
         onBack={() => navigate(-1)}
       />
-
       <TopInnovations />
-
       <>
         <DetailVillages onSelectVillage={(id, nama) => setSelectedDesa({ id, nama })} />
-        {selectedDesa && (
-          <DetailInnovations
-            innovationId={selectedDesa.id}
-            namaDesa={selectedDesa.nama}
-            onBack={() => setSelectedDesa(null)}
-          />
-        )}
+        <DetailInnovations
+          villageId={selectedDesa?.id || ""}
+          namaDesa={selectedDesa?.nama || ""}
+          onBack={() => setSelectedDesa(null)}
+        />
       </>
     </Container>
   );
