@@ -235,11 +235,13 @@ const MapVillages = () => {
         kecamatan: capitalizeWords(desa.lokasi?.kecamatan),
         kabupatenKota: capitalizeWords(desa.lokasi?.kabupatenKota),
         provinsi: capitalizeWords(desa.lokasi?.provinsi),
-        lat: desa.latitude,
-        lng: desa.longitude,
+        lat: desa?.latitude,
+        lng: desa?.longitude,
         inovasiId: null,
         inovasiList: [],
       }));
+
+      console.log("xxxxx", pinsTemp)
 
       // Update kalau ada klaim inovasi
       claimInnovations.forEach((claim) => {
@@ -401,8 +403,15 @@ const MapVillages = () => {
                 onEachFeature={(feature, layer) => onEachFeature(feature, layer, totals)}
               />
             )}
-            {desaPins
-            .filter((desa) => !selectedProvince || cleanName(desa.provinsi) === cleanName(selectedProvince))
+          {desaPins
+            .filter(
+              (desa) =>
+                desa.lat !== undefined &&
+                desa.lng !== undefined &&
+                !isNaN(desa.lat) &&
+                !isNaN(desa.lng) &&
+                (!selectedProvince || cleanName(desa.provinsi) === cleanName(selectedProvince))
+            )
             .map((desa) => (
               <Marker key={desa.desaId} position={[desa.lat, desa.lng]}>
                 <Popup>
