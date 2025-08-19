@@ -99,7 +99,6 @@ const InfoCards = () => {
         return matchedDesa.size;
       };
 
-
       const [currInovasi, prevInovasi, currDesa, prevDesa] = await Promise.all([
         getInovasiCount(fromUTC, toUTC),
         getInovasiCount(prevFromUTC, prevToUTC),
